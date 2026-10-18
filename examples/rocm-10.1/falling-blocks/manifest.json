@@ -1,0 +1,200 @@
+[
+  {
+    "fleet": "single-card",
+    "agent": 1,
+    "seed": 101,
+    "file": "single-card/agent-1/index.html",
+    "exit_status": 0,
+    "bytes": 22877,
+    "sha256": "ae3568ce6d75499c9bc406f5d823b4810ff84212a27ee6ff79de5ab004d511ec",
+    "original_bytes": 22873,
+    "original_sha256": "317e4107d7bc0fed65b6c1826af22c6fa650896abaa63f31a03c18175dc178da",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the single GPU A (TP1, 131070 context, MTP4, 10 GiB CPU KV tier), ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification. Four-line-clear banner text and sound-effect identifiers renamed for public naming; game rules unchanged."
+  },
+  {
+    "fleet": "single-card",
+    "agent": 2,
+    "seed": 102,
+    "file": "single-card/agent-2/index.html",
+    "exit_status": 124,
+    "bytes": 20394,
+    "sha256": "97bd7dea46d988104d77ea6cef8b87e568aab76b92a276a637582bd237588879",
+    "original_bytes": 20394,
+    "original_sha256": "97bd7dea46d988104d77ea6cef8b87e568aab76b92a276a637582bd237588879",
+    "renamed": false,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the single GPU A (TP1, 131070 context, MTP4, 10 GiB CPU KV tier), ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification."
+  },
+  {
+    "fleet": "single-card",
+    "agent": 3,
+    "seed": 103,
+    "file": "single-card/agent-3/index.html",
+    "exit_status": 124,
+    "bytes": 22387,
+    "sha256": "14743704b583e9ebf66ee23a70d92d793aa70090c3dfca105c3527e813c17a4a",
+    "original_bytes": 22387,
+    "original_sha256": "14743704b583e9ebf66ee23a70d92d793aa70090c3dfca105c3527e813c17a4a",
+    "renamed": false,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the single GPU A (TP1, 131070 context, MTP4, 10 GiB CPU KV tier), ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification."
+  },
+  {
+    "fleet": "dual-card",
+    "agent": 0,
+    "seed": 100,
+    "file": "dual-card/agent-0/index.html",
+    "exit_status": 0,
+    "bytes": 24939,
+    "sha256": "13ac48a98ae1c334c6f91cb2c3522ed28ee8e622e8824aca1a6272cda9580240",
+    "original_bytes": 24935,
+    "original_sha256": "811eaac8de84e07fbda06852b8c218f4c4af21a69254cae9199587c957090cc9",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the dual card (TP2, 168000 context, MTP8, 10 GiB CPU KV tier), ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification. Four-line-clear banner text and sound-effect identifiers renamed for public naming; game rules unchanged."
+  },
+  {
+    "fleet": "dual-card",
+    "agent": 1,
+    "seed": 101,
+    "file": "dual-card/agent-1/index.html",
+    "exit_status": 0,
+    "bytes": 24074,
+    "sha256": "91464b05c99d38d59ebf06b62507bdea0889c3bd811f6370ff9be944feba6024",
+    "original_bytes": 24070,
+    "original_sha256": "d49e28b5813f625cc157492488dffa8f9eb804b43db709ad84c83e6e2e3b342a",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the dual card (TP2, 168000 context, MTP8, 10 GiB CPU KV tier), ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification. Four-line-clear banner text and sound-effect identifiers renamed for public naming; game rules unchanged."
+  },
+  {
+    "fleet": "dual-card",
+    "agent": 2,
+    "seed": 102,
+    "file": "dual-card/agent-2/index.html",
+    "exit_status": 0,
+    "bytes": 25022,
+    "sha256": "7e12b58e134ce36c4dfaa975c419d31e3715e2bb418cea54375529ec46a0e548",
+    "original_bytes": 25026,
+    "original_sha256": "643e9f9c21355f2c91ef1048020b91d8636465372f5e1b26fe7daaf14aa93132",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the dual card (TP2, 168000 context, MTP8, 10 GiB CPU KV tier), ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification. Four-line-clear banner text and sound-effect identifiers renamed for public naming; game rules unchanged."
+  },
+  {
+    "fleet": "dual-card",
+    "agent": 3,
+    "seed": 103,
+    "file": "dual-card/agent-3/index.html",
+    "exit_status": 0,
+    "bytes": 22429,
+    "sha256": "17d5e33c2c099a406fe99eb1ff0786de2a2265150e04961cdb1069555393a267",
+    "original_bytes": 22429,
+    "original_sha256": "17d5e33c2c099a406fe99eb1ff0786de2a2265150e04961cdb1069555393a267",
+    "renamed": false,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the dual card (TP2, 168000 context, MTP8, 10 GiB CPU KV tier), ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification."
+  },
+  {
+    "fleet": "single-card-retry",
+    "agent": 0,
+    "seed": 100,
+    "file": "single-card-retry/agent-0/index.html",
+    "exit_status": 0,
+    "bytes": 26083,
+    "sha256": "25028047bfad8bb46e534133ee92bcbe9f4c17fe96f4900ae85fe32116f98277",
+    "original_bytes": 26079,
+    "original_sha256": "d3a5c44ccfb000bacfe07bfd9f6912a0b90c1614c8c4bcf3ada3fc78f1c148ce",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the single GPU A (TP1, 131070 context, MTP4) with raised per-request output budget 65536 and 5400 s per-agent wall, ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification. Four-line-clear banner text and sound-effect identifiers renamed for public naming; game rules unchanged."
+  },
+  {
+    "fleet": "single-card-retry",
+    "agent": 1,
+    "seed": 101,
+    "file": "single-card-retry/agent-1/index.html",
+    "exit_status": 0,
+    "bytes": 27055,
+    "sha256": "4a151cf7034e2dc691f3d753cc33a7e2ee3f7594584541ed98912486a5ba447d",
+    "original_bytes": 27055,
+    "original_sha256": "4a151cf7034e2dc691f3d753cc33a7e2ee3f7594584541ed98912486a5ba447d",
+    "renamed": false,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the single GPU A (TP1, 131070 context, MTP4) with raised per-request output budget 65536 and 5400 s per-agent wall, ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification."
+  },
+  {
+    "fleet": "single-card-retry",
+    "agent": 2,
+    "seed": 102,
+    "file": "single-card-retry/agent-2/index.html",
+    "exit_status": 0,
+    "bytes": 23562,
+    "sha256": "cd3d1fd677bae39c28041000573dba79918cfb4ceb8be44a3fd81fda88b8d39c",
+    "original_bytes": 23558,
+    "original_sha256": "cd7fbf47db0aa9087aed3195f97162ada7527b33cd59bcc385a21f8069e52a42",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the single GPU A (TP1, 131070 context, MTP4) with raised per-request output budget 65536 and 5400 s per-agent wall, ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification. Four-line-clear banner text and sound-effect identifiers renamed for public naming; game rules unchanged."
+  },
+  {
+    "fleet": "single-card-retry",
+    "agent": 3,
+    "seed": 103,
+    "file": "single-card-retry/agent-3/index.html",
+    "exit_status": 0,
+    "bytes": 25991,
+    "sha256": "3d476f77081811cec037a6cafb576414738b54fce3c6f1878d4c7bcc7662f94f",
+    "original_bytes": 25987,
+    "original_sha256": "ae949513d3ea0f2cfe981508c11569cac362d71d9063ec3f85ff675e48c9deab",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS",
+      "behaviour": "PASS",
+      "line_clear": "CONFIRMED"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet on the single GPU A (TP1, 131070 context, MTP4) with raised per-request output budget 65536 and 5400 s per-agent wall, ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification. Four-line-clear banner text and sound-effect identifiers renamed for public naming; game rules unchanged."
+  }
+]

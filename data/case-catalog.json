@@ -1,0 +1,386 @@
+[
+  {
+    "legacy_id": "CASE-01",
+    "title": "comparison trial, 3 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "7eac559b0ce1a210c6150da3e51e37188f411c4cc7e70f5df9a06ff5c41cb72d"
+  },
+  {
+    "legacy_id": "CASE-02",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "b27c469651d97db0b737a082c681f7f05a0e9288ebb9d8a01fbb9eb502e31507"
+  },
+  {
+    "legacy_id": "CASE-03",
+    "title": "comparison trial, 2 agents, 110.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "db88dcba3f82d6f9742e50669527fae85f06b0817cb2fb946fb422ff178cdfcc"
+  },
+  {
+    "legacy_id": "CASE-04",
+    "title": "comparison trial, 3 agents, 110.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "66b7cf043bf5ed1c450c7f0bc970e37ee504655747635efc7874a626e9328f8b"
+  },
+  {
+    "legacy_id": "CASE-05",
+    "title": "comparison trial, 4 agents, 110.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "2d0d932f7ff1e42399f6cee80c003507be961a0b8853a421f8c0bb29e1d54781"
+  },
+  {
+    "legacy_id": "CASE-06",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "57255764a713d7a186d7f8609013c10a30881e1786be985f104537155af86950"
+  },
+  {
+    "legacy_id": "CASE-07",
+    "title": "comparison trial, 1 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "5029be415d05be223c2c9152438410b98b2d83bb3a2aa7491031e5561bd4859e"
+  },
+  {
+    "legacy_id": "CASE-08",
+    "title": "comparison trial, 2 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "affe37011b19ecfb0c61ed239482ab3a3c60feccfbf5a5979c2b1815f20a288d"
+  },
+  {
+    "legacy_id": "CASE-09",
+    "title": "comparison trial, 3 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "d411eef53cbafdd205b01482a177ecaa4e4ab4c629e92ba9a522512659266dc7"
+  },
+  {
+    "legacy_id": "CASE-10",
+    "title": "compaction trial, 3 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "a000f97d5670b726842439103df932685f1a8feca1cc83e02bc6214439c7d87d"
+  },
+  {
+    "legacy_id": "CASE-11",
+    "title": "compaction trial, 3 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "00f9e92c0b6743843a3cdeb7e35c9232d2b3e6d6300e568944b5cd5dd0b57f99"
+  },
+  {
+    "legacy_id": "CASE-12",
+    "title": "compaction trial, 3 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "abf38445093e0bdcb0000ed55bb7993d32cd24dcfd1c410a0f15a79f3e69c6ac"
+  },
+  {
+    "legacy_id": "CASE-13",
+    "title": "compaction trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "471fb0e24ab706288fe5df525ecaa2e127212815b40577d14d496c006106fccb"
+  },
+  {
+    "legacy_id": "CASE-14",
+    "title": "compaction trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "bd7b8d891e251a1f608f232cef5e1c309ef3350f8acc10ca3f2952b434e8c86c"
+  },
+  {
+    "legacy_id": "CASE-15",
+    "title": "compaction trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "79522ded4fd2461f841a8318aad420f9254f08c419dc4927a8c1914aaff66532"
+  },
+  {
+    "legacy_id": "CASE-16",
+    "title": "compaction trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "0f1345eb5cd2b83170f3d09df147230c3ab38f1194bdec767edd4b04d1fc8eaa"
+  },
+  {
+    "legacy_id": "CASE-17",
+    "title": "comparison trial, 2 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "3d10448b6ecb61fc37c29cd9df94715a05573007b9a2f6140b1beff6e8564366"
+  },
+  {
+    "legacy_id": "CASE-18",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "fa15f1adc0a41926dca247ce3de48d07c60cc9a7c62ff7330d4819012499a52b"
+  },
+  {
+    "legacy_id": "CASE-19",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "8f36ef5ed1a2bd68875ac294d794414d8172738d53cc1a932c83b484a001f1fa"
+  },
+  {
+    "legacy_id": "CASE-20",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "c871af034b961824c2ed25a7ba39187755db54629096bb025f93fb4df5b793ff"
+  },
+  {
+    "legacy_id": "CASE-21",
+    "title": "comparison trial, 4 agents, 110.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "2fa1a75d67785343ba8eac19cd9b6920a2f8dfdef9518c957ef222cc4a4605e9"
+  },
+  {
+    "legacy_id": "CASE-22",
+    "title": "comparison trial, 4 agents, 110.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "c4b7f0881f811f5c435cf718e45f1642823d27cdbec00189b677b42bdbc2fa08"
+  },
+  {
+    "legacy_id": "CASE-23",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "0fc97ec7467390dfd08c86538e2ad304f1657b29c20d7f9507867a32e609a1ce"
+  },
+  {
+    "legacy_id": "CASE-24",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "152e7cdd0c1daebbb0910285752231cb57c5f72e36a377294d614a38aaa530db"
+  },
+  {
+    "legacy_id": "CASE-25",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "f204721abb8bc2d6d5a432ce8f3f32ca801c5330d90bb8d308f2d647bff225cb"
+  },
+  {
+    "legacy_id": "CASE-26",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "cd3249e3ac2a0813ab91aeb2d9a3ce9a7d21c1aa0de6f2c04b1d77f5d9accb4c"
+  },
+  {
+    "legacy_id": "CASE-27",
+    "title": "Single-card RAM16, four agents",
+    "version": "rocm-7.14",
+    "included": true,
+    "selection_reason": "Single-card RAM16, four agents",
+    "source_label_sha256": "c33d532441fd5bf58313bf291f7419fca7bc85ada742b99bb76051118111c94f"
+  },
+  {
+    "legacy_id": "CASE-28",
+    "title": "Single-card RAM16, three agents",
+    "version": "rocm-7.14",
+    "included": true,
+    "selection_reason": "Single-card RAM16, three agents",
+    "source_label_sha256": "8ba0a10afce1e4fc512d67d4139c16332a348cf013f9cb9802c2e4c566e2a218"
+  },
+  {
+    "legacy_id": "CASE-29",
+    "title": "capacity trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "86ee8c83ec89f6fb525f39386dc75b1d7e5f372ddf5c178467979b52b5fb8a42"
+  },
+  {
+    "legacy_id": "CASE-30",
+    "title": "capacity trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "235a4f2f802d17f8f9f3b8125f4bfc00a7db58ad08992189e22cc403d96be0ca"
+  },
+  {
+    "legacy_id": "CASE-31",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "ecfe172fba326ddb2a115bc30398a592648f8afdbf8e33defb0aa9b557283dd3"
+  },
+  {
+    "legacy_id": "CASE-32",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "1bca6a5c48cfe4215943b07659cc0bd787ae1537373e4591e6cf3611b5f66e3d"
+  },
+  {
+    "legacy_id": "CASE-33",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "60394f7a76a492b44d45fab8ebb9fb4e7aaaf16f00d7e3c7ba42a3a773a0e51c"
+  },
+  {
+    "legacy_id": "CASE-34",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "c60436c286320a4a8c7537b85b6f398c13251d906443620170657764baf084a1"
+  },
+  {
+    "legacy_id": "CASE-35",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "39906aebc8d27f2cd2509be7c4ba9675195dc61bdaa6406cba8441266b3cc9a5"
+  },
+  {
+    "legacy_id": "CASE-36",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "56f81dc57700575e2d9a06c43a0c3e1e6b13aba6bf7e35b61c2a6487545b59ef"
+  },
+  {
+    "legacy_id": "CASE-37",
+    "title": "ROCm 10.1 four-agent stress reference",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "ROCm 10.1 four-agent stress reference",
+    "source_label_sha256": "21776de070abf541435c9748240e7e2e450e70aad56562852f65f444c7c9b65f"
+  },
+  {
+    "legacy_id": "CASE-38",
+    "title": "comparison trial, 4 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "7f58726b16c9dc121d7b357c9f8b8bae38f915c5403260cd38325a44732542f9"
+  },
+  {
+    "legacy_id": "CASE-39",
+    "title": "comparison trial, 1 agents, 32.0k target, with-images",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "088a8664e67ba20c16dbbcfbad5a2bbda581c418d487a14d315278b3c378c682"
+  },
+  {
+    "legacy_id": "CASE-40",
+    "title": "comparison trial, 2 agents, 32.0k target, with-images",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "d1a7ee0a3ef08cd900494268d69ebbc95f0a6d2c65c27dac798183c6c87efdbb"
+  },
+  {
+    "legacy_id": "CASE-41",
+    "title": "comparison trial, 3 agents, 32.0k target, with-images",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "4eb834779572e59ff638b214bc42e2e8ba85d7b900f50da1cba85436b8b282d6"
+  },
+  {
+    "legacy_id": "CASE-42",
+    "title": "comparison trial, 4 agents, 32.0k target, with-images",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "c0034f8a95ae7de58df478a410b2982bbbdcd79b8d5fd7f2ca771533b9f2bdb5"
+  },
+  {
+    "legacy_id": "CASE-43",
+    "title": "Single-card one-agent context-growth reference",
+    "version": "rocm-7.14",
+    "included": true,
+    "selection_reason": "Single-card one-agent context-growth reference",
+    "source_label_sha256": "9e35f7f02a0858829a10a2a6cc8a679255a9286d55c12de43d4aaa5d9e0c45bd"
+  },
+  {
+    "legacy_id": "CASE-44",
+    "title": "Single-card two-agent context-growth reference",
+    "version": "rocm-7.14",
+    "included": true,
+    "selection_reason": "Single-card two-agent context-growth reference",
+    "source_label_sha256": "29959b9195db9d3028a8f0e226f53a6c87a222970a51670fc49cc180e0e432c9"
+  },
+  {
+    "legacy_id": "CASE-45",
+    "title": "comparison trial, 3 agents, 126.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "00e194975a096d4c0ddff0447a407fe30564846838e9fd94b62aa6a40d5a94ca"
+  },
+  {
+    "legacy_id": "CASE-46",
+    "title": "capacity trial, 1 agents, 100.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "e380c550975acde6141f9704fab3a971fcf06001eed4fda6d9cf606d2467a360"
+  },
+  {
+    "legacy_id": "CASE-47",
+    "title": "capacity trial, 2 agents, 100.0k target, text-only",
+    "version": "rocm-7.14",
+    "included": false,
+    "selection_reason": "Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison",
+    "source_label_sha256": "82c2f091dcbcd72bbf456c1023569c9caf7500342ccd039493903fb644149ddb"
+  },
+  {
+    "legacy_id": "CASE-48",
+    "title": "Older-stack four-agent 100k reference; unmatched comparison",
+    "version": "rocm-7.14",
+    "included": true,
+    "selection_reason": "Older-stack four-agent 100k reference; unmatched comparison",
+    "source_label_sha256": "efc7e17d27f3f47bd79ac90fd5036b9a739d1fbf105abc808fbc37edde3ec2bc"
+  }
+]

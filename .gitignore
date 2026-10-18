@@ -1,0 +1,49 @@
+_site/
+.venv*/
+__pycache__/
+.DS_Store
+
+# Private operator handover: contains private LAN address, GPU UUIDs and
+# local workspace paths. Excluded from the site via _config.yml; keep it
+# out of the repository entirely.
+runbook.md
+
+.sass-cache/
+.jekyll-cache/
+
+# macOS metadata and Python bytecode
+._*
+*.py[cod]
+
+# Exploratory CSVs retained locally; public coverage is summary-only.
+# Archived SVGs remain included with their individual exclusion reasons.
+/data/rocm-7.14/three-agent-compaction-chain-at-a-100k-target.csv
+/data/rocm-7.14/three-agent-compaction-chain-extended-to-110k.csv
+/data/rocm-7.14/three-agent-compaction-chain-at-90k.csv
+/data/rocm-7.14/four-agent-compaction-at-64k.csv
+/data/rocm-7.14/four-agent-compaction-at-80k.csv
+/data/rocm-7.14/four-agent-compaction-at-86k.csv
+/data/rocm-7.14/four-agent-compaction-at-90k.csv
+/data/rocm-7.14/clean-rerun-after-a-prefill-threshold-change.csv
+/data/rocm-7.14/foreign-traffic-contaminated-threshold-trial.csv
+/data/rocm-7.14/gpu-link-upgrade-comparison-at-the-four-agent-storm-point.csv
+/data/rocm-7.14/clean-storage-four-agent-storm-trial.csv
+/data/rocm-7.14/loop-backed-fast-storage-trial.csv
+/data/rocm-7.14/eight-agent-overflow-ram-tier-boundary.csv
+/data/rocm-7.14/reduced-host-tier-capacity-at-four-agent-load.csv
+/data/rocm-7.14/guardrail-correctness-trial-at-four-agents.csv
+/data/rocm-7.14/speculative-depth-eight-versus-the-four-agent-baseline.csv
+/data/rocm-7.14/six-agent-capacity-bound-run-incomplete.csv
+/data/rocm-7.14/real-coding-agent-fleet-six-agents.csv
+/data/rocm-7.14/single-agent-real-coding-task.csv
+/data/rocm-7.14/instrumentation-sanity-pass.csv
+/data/rocm-7.14/second-instrumentation-sanity-pass.csv
+/data/rocm-7.14/compaction-jitter-and-prefix-head-preservation.csv
+/data/rocm-7.14/runtime-jit-instrumentation-sanity.csv
+/data/rocm-7.14/second-runtime-jit-sanity-pass.csv
+/data/rocm-7.14/host-memory-and-storage-telemetry-during-the-link-storage-campaign.csv
+/data/rocm-7.14/host-memory-trace-for-overflow-stress.csv
+/data/rocm-7.14/host-memory-trace-for-the-reduced-tier-comparison.csv
+/data/rocm-7.14/host-memory-trace-for-the-guardrail-trial.csv
+/data/rocm-7.14/host-memory-trace-for-the-speculative-depth-a-b.csv
+/data/rocm-7.14/host-memory-trace-for-the-six-agent-real-agent-campaign.csv

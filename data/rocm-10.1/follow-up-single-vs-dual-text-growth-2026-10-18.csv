@@ -1,0 +1,9 @@
+profile,agents,completed_turns,client_errors,max_observed_context_tokens,mean_ttft_seconds,max_ttft_seconds,mean_request_decode_tokens_s,client_wall_seconds,process_exit_status,rocm
+gpu-a,1,27,0,123462,7.46,18.78,40.0,339.8,0,10.1
+gpu-a,2,63,0,127278,11.92,40.64,32.4,613.6,0,10.1
+gpu-a,3,94,0,127658,71.46,456.19,26.0,2828.0,0,10.1
+gpu-a,4,114,0,126691,101.38,654.91,25.5,3950.3,0,10.1
+dual,1,28,0,130399,5.19,12.66,45.4,290.4,0,10.1
+dual,2,63,0,129187,6.36,22.34,26.9,426.6,0,10.1
+dual,3,94,0,130156,7.74,25.56,18.3,642.9,0,10.1
+dual,4,118,0,130678,10.85,27.23,16.4,803.0,0,10.1

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falling Blocks</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #101018; color: #cfd2e0;
+    font-family: "Courier New", monospace;
+    overflow: hidden;
+  }
+  #wrap {
+    width: 100vw; height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px;
+  }
+  canvas { display: block; }
+  #help {
+    font-size: 12px; color: #6b6f85; letter-spacing: .5px;
+    text-align: center; padding-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game"></canvas>
+  <div id="help">&#8592;/&#8594; move &nbsp; &#8595; soft drop &nbsp; C hard drop &nbsp; Z/X rotate &nbsp; SPACE hold &nbsp; P pause &nbsp; M mute &nbsp; ENTER restart</div>
+</div>
+<script>
+'use strict';
+/* ================= CONSTANTS (rules.md §1-§7) ================= */
+const COLS = 10, ROWS = 22, HIDDEN = 2;
+const DAS = 160, ARR = 33, LOCK_DELAY = 500, MAX_RESETS = 15;
+const LEVEL_MAX = 10, LINES_PER_LEVEL = 5;
+const HS_KEY = 'falling_blocks_highscore_v1';
+
+const COLORS = { I:'#00f0f0', O:'#f0f000', T:'#a000f0', S:'#00f000',
+                 Z:'#f00000', J:'#2040e0', L:'#f0a000' };
+
+/* Piece cell tables per bounding box — ground truth from the state diagrams (rules §2) */
+const PIECES = {
+  I: { size: 4, cells: [
+    [[0,1],[1,1],[2,1],[3,1]],
+    [[2,0],[2,1],[2,2],[2,3]],
+    [[0,2],[1,2],[2,2],[3,2]],
+    [[1,0],[1,1],[1,2],[1,3]] ]},
+  O: { size: 2, cells: [
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]] ]},
+  T: { size: 3, cells: [
+    [[1,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[2,1],[1,2]],
+    [[0,1],[1,1],[2,1],[1,2]],
+    [[1,0],[0,1],[1,1],[1,2]] ]},
+  S: { size: 3, cells: [
+    [[1,0],[2,0],[0,1],[1,1]],
+    [[1,0],[1,1],[2,1],[2,2]],
+    [[1,1],[2,1],[0,2],[1,2]],
+    [[0,0],[0,1],[1,1],[1,2]] ]},
+  Z: { size: 3, cells: [
+    [[0,0],[1,0],[1,1],[2,1]],
+    [[2,0],[1,1],[2,1],[1,2]],
+    [[0,1],[1,1],[1,2],[2,2]],
+    [[1,0],[0,1],[1,1],[0,2]] ]},
+  J: { size: 3, cells: [
+    [[0,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[1,2],[2,2]],
+    [[0,1],[1,1],[2,1],[2,2]],
+    [[0,0],[1,0],[0,1],[0,2]] ]},
+  L: { size: 3, cells: [
+    [[2,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[1,2],[0,2]],
+    [[0,1],[1,1],[2,1],[0,2]],
+    [[1,0],[1,1],[0,1],[0,2]] ]}
+};
+
+/* SRS wall kick tables, dy already converted to row delta (+ = down) (rules §4) */
+const KICKS_JLSTZ = {
+  '0>1': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+  '1>0': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+  '1>2': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+  '2>1': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+  '2>3': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+  '3>2': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+  '3>0': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+  '0>3': [[0,0],[1,0],[1,-1],[0,2],[1,2]]
+};
+const KICKS_I = {
+  '0>1': [[0,0],[-2,0],[1,0],[-2,1],[1,-2]],
+  '1>0': [[0,0],[2,0],[-1,0],[2,-1],[-1,2]],
+  '1>2': [[0,0],[-1,0],[2,0],[-1,-2],[2,1]],
+  '2>1': [[0,0],[1,0],[-2,0],[1,2],[-2,-1]],
+  '2>3': [[0,0],[2,0],[-1,0],[2,-1],[-1,2]],
+  '3>2': [[0,0],[-2,0],[1,0],[-2,1],[1,-2]],
+  '3>0': [[0,0],[1,0],[-2,0],[1,2],[-2,-1]],
+  '0>3': [[0,0],[-1,0],[2,0],[-1,-2],[2,1]]
+};
+
+/* T "back" corners per state (diagonals opposite the stem) (rules §9) */
+const T_BACK = {
+  0: [[-1,1],[1,1]],
+  1: [[-1,-1],[-1,1]],
+  2: [[-1,-1],[1,-1]],
+  3: [[1,-1],[1,1]]
+};
+
+/* ================= GAME STATE (plan §2) ================= */
+const G = {
+  mode: 'playing',                 // 'playing' | 'paused' | 'over'
+  score: 0, lines: 0, level: 1, combo: 0, b2b: false,
+  matrix: null, active: null,
+  queue: [], hold: null, holdLock: false,
+  gravityT: 0, lockT: 0, dasT: 0, arrT: 0,
+  dasDir: null, resetCount: 0, lastMaxRow: 0,
+  lastAction: null, lastKick: null,
+  effects: [], highScore: 0, overCause: ''
+};
+const keys = {};
+
+let matrix; // alias used in helpers
+
+/* ================= LAYOUT / CANVAS (plan §1, rules §19) ================= */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let cell = 24, bx = 0, by = 0, cw = 0, ch = 0;
+
+function layout() {
+  const dpr = window.devicePixelRatio || 1;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  cell = Math.max(10, Math.min(48, Math.floor(Math.min((vh - 70) / 20, (vw - 340) / 10))));
+  const boardW = COLS * cell, boardH = 20 * cell;
+  const leftW = Math.ceil(4.5 * cell), rightW = Math.ceil(5.5 * cell);
+  cw = leftW + rightW + boardW + 24;
+  ch = boardH + 32;
+  canvas.width = Math.round(cw * dpr);
+  canvas.height = Math.round(ch * dpr);
+  canvas.style.width = cw + 'px';
+  canvas.style.height = ch + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  bx = leftW + 8; by = 16;
+}
+window.addEventListener('resize', layout);
+
+/* ================= AUDIO (rules §18) ================= */
+let audioCtx = null, masterGain = null, muted = false;
+function ensureAudio() {
+  if (!audioCtx) {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audioCtx = new AC();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.5;
+      masterGain.connect(audioCtx.destination);
+    } catch (e) { audioCtx = null; }
+  }
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}
+function tone(freq, start, dur, type, vol) {
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type || 'square'; o.frequency.value = freq;
+  const t0 = audioCtx.currentTime + start;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.linearRampToValueAtTime(vol || 0.15, t0 + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+  o.connect(g); g.connect(masterGain);
+  o.start(t0); o.stop(t0 + dur + 0.03);
+}
+function sfx(kind, lines) {
+  if (muted || !audioCtx) return;
+  if (kind === 'quad') {
+    [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.07, 0.11, 'square', 0.16));
+  } else if (kind === 'clear') {
+    const seq = [330, 440, 554, 659].slice(0, Math.max(2, lines + 1));
+    seq.forEach((f, i) => tone(f, i * 0.06, 0.11, 'square', 0.15));
+  } else if (kind === 'over') {
+    [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.09, 0.13, 'sawtooth', 0.14));
+  }
+}
+
+/* ================= HIGH SCORE (rules §17) ================= */
+function loadHighScore() {
+  try { const v = JSON.parse(localStorage.getItem(HS_KEY)); return (typeof v === 'number' && isFinite(v)) ? v : 0; }
+  catch (e) { return 0; }
+}
+function saveHighScore(s) {
+  try { if (s > G.highScore) { G.highScore = s; localStorage.setItem(HS_KEY, JSON.stringify(s)); } }
+  catch (e) { /* corrupt/unavailable storage: ignore */ }
+}
+
+/* ================= RANDOMIZER (rules §5) ================= */
+function refillBag() {
+  const bag = ['I','O','T','S','Z','J','L'];
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  for (const p of bag) G.queue.push(p);
+}
+function ensureQueue() { while (G.queue.length < 4) refillBag(); }
+
+/* ================= CORE LOGIC (rules §1-§4) ================= */
+function canPlace(type, rot, col, row) {
+  const cells = PIECES[type].cells[rot];
+  for (let i = 0; i < cells.length; i++) {
+    const c = col + cells[i][0], r = row + cells[i][1];
+    if (c < 0 || c >= COLS || r >= ROWS) return false;
+    if (r >= 0 && matrix[r][c]) return false;
+  }
+  return true;
+}
+function maxRowOf(p) {
+  let m = -1;
+  for (const [x, y] of PIECES[p.type].cells[p.rot]) m = Math.max(m, p.row + y);
+  return m;
+}
+function gravityMs(level) {
+  const s = Math.pow(0.8 - (level - 1) * 0.007, level - 1);
+  return Math.max(0.05, s) * 1000;
+}
+function grounded() {
+  return !canPlace(G.active.type, G.active.rot, G.active.col, G.active.row + 1);
+}
+
+function onDownStep() {
+  const mr = maxRowOf(G.active);
+  if (mr > G.lastMaxRow) { G.resetCount = 0; G.lastMaxRow = mr; } // landed on a new lowest row
+}
+function onPieceAction() {
+  if (grounded() && G.resetCount < MAX_RESETS) { G.lockT = 0; G.resetCount++; }
+}
+
+function spawnPiece(type) {
+  const col = (type === 'O') ? 4 : 3;
+  if (!canPlace(type, 0, col, 0)) { gameOver('block out'); return false; } // block out: ANY cell occupied
+  G.active = { type, rot: 0, col, row: 0 };
+  G.gravityT = 0; G.lockT = 0; G.resetCount = 0;
+  G.lastAction = null; G.lastKick = null;
+  G.lastMaxRow = maxRowOf(G.active);
+  return true;
+}
+function spawnNext() {
+  ensureQueue();
+  spawnPiece(G.queue.shift());
+}
+
+/* ================= PLAYER ACTIONS (rules §6-§7) ================= */
+function tryMove(dx, dy) {
+  const a = G.active;
+  if (canPlace(a.type, a.rot, a.col + dx, a.row + dy)) {
+    a.col += dx; a.row += dy;
+    G.lastAction = 'move';
+    if (dy > 0) onDownStep();
+    onPieceAction();
+    return true;
+  }
+  return false;
+}
+function softStep() {
+  if (tryMove(0, 1)) { G.score += 1; G.gravityT = 0; return true; }
+  return false;
+}
+function hardDrop() {
+  const a = G.active;
+  let dist = 0;
+  while (canPlace(a.type, a.rot, a.col, a.row + 1)) { a.row++; dist++; }
+  G.score += dist * 2;
+  lockPiece();
+}
+function tryRotate(dir) {
+  const a = G.active;
+  if (a.type === 'O') return; // O rotation is a no-op, never kicks
+  const from = a.rot, to = (from + (dir > 0 ? 1 : 3)) % 4;
+  const table = (a.type === 'I') ? KICKS_I : KICKS_JLSTZ;
+  const kicks = table[from + '>' + to];
+  for (let i = 0; i < kicks.length; i++) {
+    const kx = kicks[i][0], ky = kicks[i][1];
+    if (canPlace(a.type, to, a.col + kx, a.row + ky)) {
+      a.rot = to; a.col += kx; a.row += ky;
+      G.lastAction = 'rotate';
+      G.lastKick = [kx, ky];
+      if (ky > 0) onDownStep();
+      onPieceAction();
+      return true;
+    }
+  }
+  return false;
+}
+function doHold() {
+  if (G.holdLock) return;
+  const cur = G.active.type;
+  const inc = G.hold;
+  G.hold = cur;
+  G.holdLock = true;
+  if (inc !== null) {
+    ensureQueue();
+    spawnPiece(inc);
+  } else {
+    spawnNext();
+  }
+}
+
+/* ================= T-SPIN DETECTION (rules §9) ================= */
+function detectTSpin() {
+  const a = G.active;
+  if (a.type !== 'T' || G.lastAction !== 'rotate' || !grounded()) return { spin: 0 };
+  const cx = a.col + 1, cy = a.row + 1;
+  const occ = (c, r) => {
+    if (c < 0 || c >= COLS || r >= ROWS) return true;   // wall / floor
+    if (r < 0) return false;                            // open top
+    return !!matrix[r][c];
+  };
+  const corners = [[cx-1,cy-1],[cx+1,cy-1],[cx-1,cy+1],[cx+1,cy+1]];
+  let n = 0;
+  for (const [c, r] of corners) if (occ(c, r)) n++;
+  if (n < 3) return { spin: 0 };
+  let full = false;
+  const back = T_BACK[a.rot];
+  if (occ(cx + back[0][0], cy + back[0][1]) && occ(cx + back[1][0], cy + back[1][1])) full = true;
+  if (G.lastKick && G.lastKick[0] === 0 && Math.abs(G.lastKick[1]) === 2) full = true; // two-row kick upgrades mini
+  return { spin: full ? 2 : 1 };
+}
+
+/* ================= LINE CLEAR (rules §8) ================= */
+function clearLines() {
+  const full = [];
+  for (let r = ROWS - 1; r >= 0; r--) {
+    let f = true;
+    for (let c = 0; c < COLS; c++) if (!matrix[r][c]) { f = false; break; }
+    if (f) full.push(r);
+  }
+  if (!full.length) return [];
+  const set = new Set(full);
+  const kept = [];
+  for (let r = 0; r < ROWS; r++) if (!set.has(r)) kept.push(matrix[r]);
+  while (kept.length < ROWS) kept.unshift(new Array(COLS).fill(0));
+  matrix = kept;
+  return full;
+}
+
+/* ================= SCORING (rules §10) ================= */
+function awardScore(n, spin) {
+  const L = G.level;
+  let base = 0, label = '';
+  if (spin === 2) {
+    if (n === 0)      { base = 100;    label = 'T-SPIN'; }
+    else if (n === 1) { base = 800*L;  label = 'T-SPIN'; }
+    else if (n === 2) { base = 1200*L; label = 'T-SPIN'; }
+    else              { base = 1600*L; label = 'T-SPIN TRIPLE'; }
+  } else if (spin === 1) {
+    if (n === 0)      { base = 100;    label = 'T-SPIN MINI'; }
+    else if (n === 1) { base = 200*L;  label = 'T-SPIN MINI'; }
+    else              { base = 400*L;  label = 'T-SPIN MINI'; }
+  } else {
+    const tbl = [0, 100, 300, 500, 800];
+    base = tbl[n] * L;
+    label = ['', 'SINGLE', 'DOUBLE', 'TRIPLE', 'FALLING BLOCKS'][n];
+  }
+  const difficult = (n === 4) || spin === 2;
+  if (difficult && G.b2b && base > 0) base = Math.floor(base * 1.5);
+  let pts = base;
+  if (n > 0) {
+    if (G.combo > 0) pts += 50 * G.combo * L;
+    G.combo++;
+  } else {
+    G.combo = 0;
+  }
+  G.b2b = difficult ? true : (n > 0 ? false : G.b2b);
+  G.score += pts;
+  if (n > 0 && pts > 0) {
+    G.effects.push({ kind: 'text', text: label, sub: (difficult && G.b2b ? 'B2B ' : '') + '+' + pts,
+                     t: 0, dur: 900, color: (n === 4 || spin === 2) ? '#ffd75e' : '#ffffff' });
+  }
+}
+
+/* ================= LOCK (rules §7, §9, §16) ================= */
+function lockPiece() {
+  const a = G.active;
+  const cells = PIECES[a.type].cells[a.rot];
+  let allHidden = true;
+  for (const [x, y] of cells) {
+    const r = a.row + y;
+    if (r >= 0) { matrix[r][a.col + x] = a.type; if (r >= HIDDEN) allHidden = false; }
+  }
+  const spin = detectTSpin().spin;
+  const cleared = clearLines();
+  const n = cleared.length;
+  awardScore(n, spin);
+  G.lines += n;
+  const oldLevel = G.level;
+  G.level = Math.min(LEVEL_MAX, 1 + Math.floor(G.lines / LINES_PER_LEVEL));
+  if (G.level > oldLevel) {
+    G.effects.push({ kind: 'text', text: 'LEVEL ' + G.level, sub: '', t: 0, dur: 1200, color: '#7ee7ff' });
+  }
+  if (n > 0) {
+    G.effects.push({ kind: 'flash', rows: cleared, t: 0, dur: 300 });
+    sfx(n === 4 ? 'quad' : 'clear', n);
+  }
+  if (allHidden) { gameOver('lock out'); return; } // lock out: fully in hidden rows
+  G.holdLock = false; // new piece may be held
+  spawnNext();
+}
+
+function gameOver(cause) {
+  G.mode = 'over';
+  G.overCause = cause;
+  G.active = null;
+  saveHighScore(G.score);
+  sfx('over');
+}
+
+function resetGame() {
+  matrix = [];
+  for (let r = 0; r < ROWS; r++) matrix.push(new Array(COLS).fill(0));
+  G.mode = 'playing';
+  G.score = 0; G.lines = 0; G.level = 1; G.combo = 0; G.b2b = false;
+  G.queue = []; G.hold = null; G.holdLock = false;
+  G.gravityT = 0; G.lockT = 0; G.dasT = 0; G.arrT = 0; G.dasDir = null;
+  G.resetCount = 0; G.lastAction = null; G.lastKick = null;
+  G.effects = []; G.overCause = '';
+  ensureQueue();
+  spawnNext();
+}
+
+/* ================= UPDATE LOOP (rules §7, §20) ================= */
+function update(dt) {
+  // DAS / ARR auto-shift
+  if (keys.left || keys.right) {
+    G.dasT += dt;
+    if (G.dasT >= DAS) {
+      G.arrT += dt;
+      while (G.arrT >= ARR) {
+        G.arrT -= ARR;
+        tryMove(G.dasDir === 'right' ? 1 : -1, 0);
+      }
+    }
+  }
+  if (!G.active) return;
+
+  // Gravity (soft drop accelerates: interval/20, floored at 50 ms)
+  const interval = keys.down ? Math.max(50, gravityMs(G.level) / 20) : gravityMs(G.level);
+  G.gravityT += dt;
+  let guard = 0;
+  while (G.gravityT >= interval && guard++ < 64) {
+    G.gravityT -= interval;
+    if (tryMove(0, 1)) {
+      if (keys.down) G.score += 1; // soft-drop points per cell
+      G.lastAction = 'gravity';
+    } else break;
+  }
+
+  // Lock delay
+  if (G.active) {
+    if (grounded()) {
+      G.lockT += dt;
+      if (G.lockT >= LOCK_DELAY) lockPiece();
+    } else {
+      G.lockT = 0;
+    }
+  }
+}
+
+function updateEffects(dt) {
+  for (let i = G.effects.length - 1; i >= 0; i--) {
+    G.effects[i].t += dt;
+    if (G.effects[i].t >= G.effects[i].dur) G.effects.splice(i, 1);
+  }
+}
+
+/* ================= INPUT (rules §6) ================= */
+const KEYMAP = {
+  ArrowLeft: 'left', ArrowRight: 'right', ArrowDown: 'down', ArrowUp: 'up',
+  Space: 'space', KeyC: 'c', KeyZ: 'z', KeyX: 'x',
+  KeyP: 'p', KeyM: 'm', Enter: 'enter'
+};
+function handlePress(k) {
+  if (k === 'm') { muted = !muted; return; }
+  if (k === 'p') {
+    if (G.mode === 'playing') G.mode = 'paused';
+    else if (G.mode === 'paused') G.mode = 'playing';
+    return;
+  }
+  if (k === 'enter') {
+    if (G.mode === 'over') resetGame();
+    return;
+  }
+  if (G.mode !== 'playing' || !G.active) return;
+  switch (k) {
+    case 'left':
+      tryMove(-1, 0); G.dasDir = 'left'; G.dasT = 0; G.arrT = 0; break;
+    case 'right':
+      tryMove(1, 0); G.dasDir = 'right'; G.dasT = 0; G.arrT = 0; break;
+    case 'down':
+      softStep(); break;
+    case 'c':
+      hardDrop(); break;
+    case 'z':
+      tryRotate(-1); break;
+    case 'x':
+    case 'up':
+      tryRotate(1); break;
+    case 'space':
+      doHold(); break;
+  }
+}
+window.addEventListener('keydown', (e) => {
+  const k = KEYMAP[e.code];
+  if (!k) return;
+  e.preventDefault();
+  ensureAudio();
+  if (e.repeat) return; // repeats handled via DAS/ARR
+  keys[k] = true;
+  handlePress(k);
+});
+window.addEventListener('keyup', (e) => {
+  const k = KEYMAP[e.code];
+  if (!k) return;
+  e.preventDefault();
+  keys[k] = false;
+  if (k === 'left' && keys.right) { G.dasDir = 'right'; G.dasT = 0; G.arrT = 0; }
+  if (k === 'right' && keys.left) { G.dasDir = 'left'; G.dasT = 0; G.arrT = 0; }
+});
+window.addEventListener('blur', () => {
+  for (const k in keys) keys[k] = false;
+});
+
+/* ================= RENDERING (rules §19) ================= */
+function px(c) { return bx + c * cell; }
+function py(r) { return by + (r - HIDDEN) * cell; }
+
+function drawBlock(x, y, size, color, alpha) {
+  const b = Math.max(2, size * 0.12);
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, size, size);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(x, y, size, b);
+  ctx.fillRect(x, y, b, size);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(x, y + size - b, size, b);
+  ctx.fillRect(x + size - b, y, b, size);
+  ctx.globalAlpha = 1;
+}
+
+function drawMiniPiece(x, y, type, scale) {
+  const p = PIECES[type];
+  const off = (4 - p.size) / 2;
+  for (const [cx, cy] of p.cells[0]) {
+    drawBlock(x + (off + cx) * scale, y + (off + cy) * scale, scale - 1, COLORS[type]);
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.fillStyle = '#101018';
+  ctx.fillRect(0, 0, cw, ch);
+
+  const fs = Math.max(10, Math.round(cell * 0.38));
+  const fsBig = Math.max(14, Math.round(cell * 0.6));
+
+  // board background + grid
+  ctx.fillStyle = '#181826';
+  ctx.fillRect(bx, by, COLS * cell, 20 * cell);
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let c = 1; c < COLS; c++) { ctx.moveTo(bx + c * cell + 0.5, by); ctx.lineTo(bx + c * cell + 0.5, by + 20 * cell); }
+  for (let r = 1; r < 20; r++) { ctx.moveTo(bx, by + r * cell + 0.5); ctx.lineTo(bx + COLS * cell, by + r * cell + 0.5); }
+  ctx.stroke();
+
+  const playingView = (G.mode === 'playing');
+
+  if (playingView) {
+    // settled blocks
+    for (let r = HIDDEN; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        if (matrix[r][c]) drawBlock(px(c) + 1, py(r) + 1, cell - 2, COLORS[matrix[r][c]]);
+      }
+    }
+    // ghost (straight-down projection of current state)
+    if (G.active) {
+      const a = G.active;
+      let gr = a.row;
+      while (canPlace(a.type, a.rot, a.col, gr + 1)) gr++;
+      if (gr > a.row) {
+        for (const [x, y] of PIECES[a.type].cells[a.rot]) {
+          const r = gr + y;
+          if (r >= HIDDEN) {
+            ctx.globalAlpha = 0.3;
+            ctx.strokeStyle = COLORS[a.type];
+            ctx.lineWidth = 2;
+            ctx.strokeRect(px(a.col + x) + 2, py(r) + 2, cell - 4, cell - 4);
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+      // active piece
+      for (const [x, y] of PIECES[a.type].cells[a.rot]) {
+        const r = a.row + y;
+        if (r >= HIDDEN) drawBlock(px(a.col + x) + 1, py(r) + 1, cell - 2, COLORS[a.type]);
+      }
+    }
+    // effects: clear flash + popups
+    for (const ef of G.effects) {
+      const k = 1 - ef.t / ef.dur;
+      if (ef.kind === 'flash') {
+        ctx.globalAlpha = 0.55 * k;
+        ctx.fillStyle = '#ffffff';
+        for (const r of ef.rows) ctx.fillRect(bx, py(r), COLS * cell, cell);
+        ctx.globalAlpha = 1;
+      } else if (ef.kind === 'text') {
+        const yy = by + 6 * cell - ef.t * 0.02;
+        ctx.textAlign = 'center';
+        ctx.globalAlpha = Math.min(1, k * 2);
+        ctx.fillStyle = ef.color;
+        ctx.font = 'bold ' + fsBig + 'px "Courier New", monospace';
+        ctx.fillText(ef.text, bx + COLS * cell / 2, yy);
+        if (ef.sub) {
+          ctx.font = 'bold ' + fs + 'px "Courier New", monospace';
+          ctx.fillText(ef.sub, bx + COLS * cell / 2, yy + fsBig * 0.8);
+        }
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  // board walls / floor
+  ctx.strokeStyle = '#4a4f6a';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(bx - 1, by - 1, COLS * cell + 2, 20 * cell + 2);
+
+  // --- left panel: hold
+  ctx.fillStyle = '#22243a';
+  ctx.fillRect(8, by, 4 * cell, 4 * cell + 14);
+  ctx.strokeStyle = '#4a4f6a';
+  ctx.strokeRect(8, by, 4 * cell, 4 * cell + 14);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#8a8fa8';
+  ctx.font = 'bold ' + fs + 'px "Courier New", monospace';
+  ctx.fillText('HOLD', 8, by + 4 * cell + 10);
+  if (G.hold) drawMiniPiece(8, by, G.hold, cell);
+
+  // --- right panel: NEXT queue + HUD
+  const rx = bx + COLS * cell + 8;
+  const rw = Math.ceil(5.5 * cell);
+  const rs = cell * 0.7;              // mini cell size
+  const rowH = 3.2 * cell;            // vertical spacing per next slot
+  const nextH = 3 * rowH + 0.4 * cell + 14;
+  ctx.fillStyle = '#22243a';
+  ctx.fillRect(rx, by, rw, nextH);
+  ctx.strokeStyle = '#4a4f6a';
+  ctx.strokeRect(rx, by, rw, nextH);
+  ctx.fillStyle = '#8a8fa8';
+  ctx.fillText('NEXT', rx, by + nextH - 4);
+  for (let i = 0; i < 3; i++) {
+    const t = G.queue[i];
+    if (t) {
+      drawMiniPiece(rx + (5.5 * cell - 4 * rs) / 2, by + 0.2 * cell + i * rowH, t, rs);
+    }
+  }
+  // --- stats
+  const sy = by + nextH + 24;
+  ctx.fillStyle = '#8a8fa8';
+  ctx.fillText('SCORE', rx, sy);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold ' + (fs + 2) + 'px "Courier New", monospace';
+  ctx.fillText(String(G.score), rx, sy + fs + 4);
+  ctx.font = 'bold ' + fs + 'px "Courier New", monospace';
+  ctx.fillStyle = '#8a8fa8';
+  ctx.fillText('BEST', rx, sy + fs * 2 + 4);
+  ctx.fillStyle = '#ffd75e';
+  ctx.fillText(String(Math.max(G.highScore, G.score)), rx, sy + fs * 3 + 8);
+  ctx.fillStyle = '#8a8fa8';
+  ctx.fillText('LEVEL', rx, sy + fs * 4 + 12);
+  ctx.fillStyle = '#7ee7ff';
+  ctx.fillText(String(G.level), rx, sy + fs * 5 + 16);
+  ctx.fillStyle = '#8a8fa8';
+  ctx.fillText('LINES', rx, sy + fs * 6 + 20);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(String(G.lines), rx, sy + fs * 7 + 24);
+  if (G.combo > 1) {
+    ctx.fillStyle = '#ff9ecb';
+    ctx.fillText('COMBO x' + G.combo, rx, sy + fs * 8 + 30);
+  }
+  if (G.b2b) {
+    ctx.fillStyle = '#ffd75e';
+    ctx.fillText('B2B', rx, sy + fs * 9 + 34);
+  }
+
+  // overlays
+  ctx.textAlign = 'center';
+  if (G.mode === 'paused') {
+    ctx.fillStyle = 'rgba(8,8,14,0.92)';
+    ctx.fillRect(bx - 4, by - 4, COLS * cell + 8, 20 * cell + 8);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold ' + (fsBig + 6) + 'px "Courier New", monospace';
+    ctx.fillText('PAUSED', bx + COLS * cell / 2, by + 10 * cell);
+    ctx.font = fs + 'px "Courier New", monospace';
+    ctx.fillStyle = '#8a8fa8';
+    ctx.fillText('press P to resume', bx + COLS * cell / 2, by + 10 * cell + fs * 2);
+  } else if (G.mode === 'over') {
+    ctx.fillStyle = 'rgba(8,8,14,0.9)';
+    ctx.fillRect(bx - 4, by - 4, COLS * cell + 8, 20 * cell + 8);
+    const cxm = bx + COLS * cell / 2;
+    ctx.fillStyle = '#ff5e6c';
+    ctx.font = 'bold ' + (fsBig + 8) + 'px "Courier New", monospace';
+    ctx.fillText('GAME OVER', cxm, by + 7 * cell);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold ' + (fsBig) + 'px "Courier New", monospace';
+    ctx.fillText('SCORE  ' + G.score, cxm, by + 10 * cell);
+    ctx.fillStyle = '#cfd2e0';
+    ctx.font = fsBig + 'px "Courier New", monospace';
+    ctx.fillText('LINES  ' + G.lines, cxm, by + 12 * cell);
+    ctx.fillStyle = '#ffd75e';
+    ctx.font = fs + 'px "Courier New", monospace';
+    ctx.fillText('best ' + Math.max(G.highScore, G.score), cxm, by + 13.5 * cell);
+    ctx.fillStyle = '#8a8fa8';
+    ctx.fillText('press ENTER to restart', cxm, by + 15.5 * cell);
+  }
+
+  if (muted) {
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#6b6f85';
+    ctx.font = fs + 'px "Courier New", monospace';
+    ctx.fillText('MUTED (M)', cw - 8, ch - 8);
+  }
+}
+
+/* ================= MAIN LOOP (rules §20) ================= */
+let lastTs = 0;
+function frame(ts) {
+  requestAnimationFrame(frame);
+  let dt = ts - lastTs;
+  lastTs = ts;
+  if (dt > 100) dt = 100; // tab-switch guard; behavior stays dt-based
+  if (G.mode === 'playing') update(dt);
+  if (G.mode !== 'paused') updateEffects(dt);
+  render();
+}
+
+/* ================= BOOT ================= */
+G.highScore = loadHighScore();
+matrix = [];
+for (let r = 0; r < ROWS; r++) matrix.push(new Array(COLS).fill(0));
+layout();
+resetGame();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

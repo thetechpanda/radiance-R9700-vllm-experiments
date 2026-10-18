@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Falling Blocks</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #0b0e14; overflow: hidden;
+  }
+  #wrap {
+    display: flex; align-items: center; justify-content: center; height: 100vh;
+  }
+  canvas { display: block; background: #000; }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="game"></canvas></div>
+<script>
+"use strict";
+/* ============================================================
+   FALLING BLOCKS — 12-column variant
+   Single-file implementation of rules.md / plan.md
+   ============================================================ */
+
+/* ---------- constants (rules.md §2, §8, §11, §19) ---------- */
+const COLS = 12, VISIBLE = 20, HIDDEN = 2, ROWS = VISIBLE + HIDDEN;
+const CELL = 32;
+const BW = COLS * CELL, BH = VISIBLE * CELL;
+const BX = 166, BY = 20;                 // board origin in logical canvas space
+const LW = 756, LH = 680;                // logical canvas size
+const DAS = 160, ARR = 33;               // auto-shift timing (ms)
+const LOCK_DELAY = 500, MAX_RESETS = 15; // lock delay (ms) and max resets
+const MAX_LEVEL = 10, LINES_PER_LEVEL = 5;
+
+const COLORS = {
+  I: '#00e0e0', O: '#e0e000', T: '#9000d0', S: '#00c000',
+  Z: '#d00000', J: '#0040e0', L: '#e09000'
+};
+
+/* piece cell sets per rotation state — match reference diagrams exactly (rules.md §3) */
+const SHAPES = {
+  I: { size: 4, cells: [
+    [[0,1],[1,1],[2,1],[3,1]],
+    [[2,0],[2,1],[2,2],[2,3]],
+    [[0,2],[1,2],[2,2],[3,2]],
+    [[1,0],[1,1],[1,2],[1,3]] ] },
+  O: { size: 2, cells: [
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]] ] },
+  T: { size: 3, cells: [
+    [[1,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[2,1],[1,2]],
+    [[2,0],[0,1],[1,1],[2,1]],
+    [[1,0],[0,1],[1,1],[1,2]] ] },
+  S: { size: 3, cells: [
+    [[1,0],[2,0],[0,1],[1,1]],
+    [[1,0],[1,1],[2,1],[2,2]],
+    [[1,1],[2,1],[0,2],[1,2]],
+    [[0,0],[0,1],[1,1],[1,2]] ] },
+  Z: { size: 3, cells: [
+    [[0,0],[1,0],[1,1],[2,1]],
+    [[2,0],[1,1],[2,1],[1,2]],
+    [[0,1],[1,1],[1,2],[2,2]],
+    [[1,0],[0,1],[1,1],[0,2]] ] },
+  J: { size: 3, cells: [
+    [[0,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[1,2],[2,2]],
+    [[0,1],[1,1],[2,1],[2,2]],
+    [[0,0],[0,1],[1,1],[0,2]] ] },
+  L: { size: 3, cells: [
+    [[2,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[1,2],[0,2]],
+    [[0,1],[1,1],[2,1],[0,2]],
+    [[1,0],[0,1],[1,1],[0,2]] ] }
+};
+
+/* SRS kick tables — [dx,dy], +y is UP so matrix dy = -dy (rules.md §5) */
+const KICKS = {
+  JLSTZ: {
+    '0>1': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '1>0': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    '1>2': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+    '2>1': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+    '2>3': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+    '3>2': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '3>0': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+    '0>3': [[0,0],[1,0],[1,1],[0,-2],[1,-2]]
+  },
+  I: {
+    '0>1': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '1>0': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+    '1>2': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+    '2>1': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+    '2>3': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+    '3>2': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+    '3>0': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+    '0>3': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]]
+  }
+};
+
+/* T center back-corner pairs per rotation state (rules.md §10) */
+const BACK_CORNERS = {
+  0: [[0,2],[2,2]],  // stem up   -> back is down
+  1: [[0,0],[0,2]],  // stem right -> back is left
+  2: [[0,0],[2,0]],  // stem down  -> back is up
+  3: [[2,0],[2,2]]   // stem left  -> back is right
+};
+
+/* ---------- game state ---------- */
+let matrix, active, queue, hold, canHold;
+let score, lines, level, combo, b2b, highScore;
+let state;              // 'play' | 'pause' | 'over'
+let gravT, lockT, resetCount, maxRow, lastRot, lastKick;
+let effects = [];
+let dasDir = 0, dasT = 0, arrT = 0;
+let keys = { left: false, right: false, down: false };
+let muted = false;
+let overBtn = { x: LW / 2 - 100, y: BY + BH * 0.62, w: 200, h: 46 };
+
+/* ---------- canvas ---------- */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+function fit() {
+  const dpr = window.devicePixelRatio || 1;
+  const scale = Math.min(window.innerWidth / LW, window.innerHeight / LH);
+  canvas.style.width = (LW * scale) + 'px';
+  canvas.style.height = (LH * scale) + 'px';
+  canvas.width = Math.round(LW * dpr);
+  canvas.height = Math.round(LH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', fit);
+fit();
+
+/* ---------- core rules helpers (rules.md §2-§6) ---------- */
+function newMatrix() {
+  return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+}
+function cellsOf(p) { return SHAPES[p.type].cells[p.rot]; }
+function fits(cells, px, py) {
+  for (const [cx, cy] of cells) {
+    const x = px + cx, y = py + cy;
+    if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+    if (matrix[y][x]) return false;
+  }
+  return true;
+}
+function cellMaxRow(p) {
+  let m = -1;
+  for (const [cx, cy] of cellsOf(p)) m = Math.max(m, p.y + cy);
+  return m;
+}
+
+/* 7-bag randomizer (rules.md §6) */
+function refill() {
+  const bag = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = (Math.random() * (i + 1)) | 0;
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  queue.push(...bag);
+}
+
+/* ---------- spawn (rules.md §4) ---------- */
+function spawn(type) {
+  active = {
+    type, rot: 0,
+    x: Math.floor((COLS - SHAPES[type].size) / 2),
+    y: 0
+  };
+  gravT = 0; lockT = 0; resetCount = 0;
+  lastRot = false; lastKick = null;
+  maxRow = cellMaxRow(active);
+  canHold = true;
+  if (!fits(cellsOf(active), active.x, active.y)) {
+    gameOver('BLOCK OUT');
+    return false;
+  }
+  return true;
+}
+function nextPiece() {
+  while (queue.length < 4) refill();
+  return spawn(queue.shift());
+}
+
+/* ---------- game over / restart (rules.md §14) ---------- */
+function gameOver(reason) {
+  state = 'over';
+  if (score > highScore) { highScore = score; saveHigh(); }
+  sfxOver();
+}
+function restart() {
+  matrix = newMatrix();
+  queue = [];
+  hold = null;
+  score = 0; lines = 0; level = 1;
+  combo = 0; b2b = false;
+  effects = [];
+  dasDir = 0; dasT = 0; arrT = 0;
+  keys = { left: false, right: false, down: false };
+  state = 'play';
+  if (actx) actx.resume().catch(() => {});
+  nextPiece();
+}
+function togglePause() {
+  if (state === 'play') {
+    state = 'pause';
+    if (actx) actx.suspend().catch(() => {});
+  } else if (state === 'pause') {
+    state = 'play';
+    if (actx) actx.resume().catch(() => {});
+  }
+}
+
+/* ---------- movement (rules.md §7) ---------- */
+function tryMove(dx) {
+  if (state !== 'play' || !active) return false;
+  if (fits(cellsOf(active), active.x + dx, active.y)) {
+    active.x += dx;
+    afterMove();
+    return true;
+  }
+  return false;
+}
+/* lock-delay reset on a successful position change (rules.md §8) */
+function afterMove() {
+  if (!fits(cellsOf(active), active.x, active.y + 1)) {
+    if (resetCount < MAX_RESETS) { lockT = 0; resetCount++; }
+  }
+}
+
+/* ---------- SRS rotation with kicks (rules.md §5) ---------- */
+function tryRotate(dir) {
+  if (state !== 'play' || !active) return false;
+  if (active.type === 'O') return false; // O never rotates, never kicks
+  const from = active.rot, to = (from + dir + 4) % 4;
+  const table = active.type === 'I' ? KICKS.I : KICKS.JLSTZ;
+  const cells = SHAPES[active.type].cells[to];
+  for (const [dx, dy] of table[from + '>' + to]) {
+    const nx = active.x + dx, ny = active.y - dy;
+    if (fits(cells, nx, ny)) {
+      active.x = nx; active.y = ny; active.rot = to;
+      lastRot = true; lastKick = { dx, dy };
+      afterMove();
+      return true;
+    }
+  }
+  return false;
+}
+
+/* ---------- hard drop / hold (rules.md §7, §12) ---------- */
+function hardDrop() {
+  if (state !== 'play' || !active) return;
+  let d = 0;
+  while (fits(cellsOf(active), active.x, active.y + 1)) { active.y++; d++; }
+  score += 2 * d;
+  sfxDrop();
+  doLock();
+}
+function doHold() {
+  if (state !== 'play' || !active || !canHold) return;
+  const t = active.type;
+  if (hold) {
+    const h = hold; hold = t;
+    if (!spawn(h)) return;
+  } else {
+    hold = t;
+    if (!nextPiece()) return;
+  }
+  canHold = false; // hold lock: no double hold on the fresh piece
+  sfxMenu();
+}
+
+/* ---------- gravity & lock delay (rules.md §8) ---------- */
+function gravityMs() {
+  const l = level;
+  return Math.max(50, Math.pow(0.8 - (l - 1) * 0.007, l - 1) * 1000);
+}
+function updateDAS(dt) {
+  if (!dasDir) return;
+  dasT += dt;
+  if (dasT < DAS) return;
+  arrT += dt;
+  while (arrT >= ARR) {
+    arrT -= ARR;
+    if (!tryMove(dasDir)) { arrT = 0; break; }
+  }
+}
+function updatePlay(dt) {
+  if (state !== 'play') return; // pause freezes all timers
+  updateDAS(dt);
+  if (!active) return;
+  const grounded = !fits(cellsOf(active), active.x, active.y + 1);
+  if (grounded) {
+    gravT = 0;
+    lockT += dt;
+    if (lockT >= LOCK_DELAY) { doLock(); return; }
+  } else {
+    lockT = 0;
+    gravT += dt;
+    let iv = gravityMs();
+    if (keys.down) iv = Math.max(50, iv / 20); // soft drop: 20x, 20 c/s cap
+    while (gravT >= iv && active) {
+      gravT -= iv;
+      if (fits(cellsOf(active), active.x, active.y + 1)) {
+        active.y++;
+        if (keys.down) score += 1; // soft drop point per cell
+        const mr = cellMaxRow(active);
+        if (mr > maxRow) { maxRow = mr; resetCount = 0; } // new lowest row
+      } else break;
+    }
+  }
+  updateEffects(dt);
+}
+
+/* ---------- lock, T-spin, clears, scoring (rules.md §9-§11) ---------- */
+function doLock() {
+  const cells = cellsOf(active);
+  let allHidden = true;
+  for (const [cx, cy] of cells) {
+    const x = active.x + cx, y = active.y + cy;
+    matrix[y][x] = active.type;
+    if (y >= HIDDEN) allHidden = false;
+  }
+  if (allHidden) { gameOver('LOCK OUT'); return; }
+
+  /* T-spin detection: 3-corner rule (rules.md §10) */
+  let ts = null;
+  if (active.type === 'T' && lastRot) {
+    const bx = active.x, by = active.y;
+    const occ = (x, y) => {
+      if (y < 0) return false;               // open top: not a corner
+      if (x < 0 || x >= COLS || y >= ROWS) return true; // walls / floor
+      return matrix[y][x] !== 0;
+    };
+    const total = occ(bx, by) + occ(bx + 2, by) + occ(bx, by + 2) + occ(bx + 2, by + 2);
+    if (total >= 3) {
+      const [a, b] = BACK_CORNERS[active.rot];
+      const backFull = occ(bx + a[0], by + a[1]) && occ(bx + b[0], by + b[1]);
+      ts = (backFull || (lastKick && lastKick.dy === -2)) ? 'full' : 'mini';
+    }
+  }
+
+  /* clear full rows */
+  const fullRows = [];
+  for (let y = ROWS - 1; y >= 0; y--) {
+    if (matrix[y].every(v => v)) fullRows.push(y);
+  }
+  const n = fullRows.length;
+
+  /* base score */
+  let base = 0;
+  if (n === 0) {
+    if (ts) base = 100;
+  } else if (ts === 'full') {
+    base = [0, 800, 1200, 1600][n] * level;
+  } else if (ts === 'mini') {
+    base = (n === 3) ? 1600 * level : [0, 200, 400, 0][n] * level;
+  } else {
+    base = [0, 100, 300, 500, 800][n] * level;
+  }
+
+  /* back-to-back (rules.md §11) */
+  const difficult = (n === 4) || ts === 'full';
+  if (n > 0 && difficult && b2b) base = Math.round(base * 1.5);
+  if (n > 0) b2b = difficult; // dry lock does not break B2B
+
+  /* combo */
+  if (n > 0) { score += 50 * combo * level; combo++; }
+  else combo = 0;
+  score += base;
+
+  /* lines and level (variant: 10 levels, every 5 lines) */
+  lines += n;
+  const nl = Math.min(MAX_LEVEL, 1 + Math.floor(lines / LINES_PER_LEVEL));
+  if (nl > level) { level = nl; effects.push({ kind: 'level', t: 0, dur: 1200 }); sfxLevel(); }
+
+  /* collapse + effects */
+  if (n > 0) {
+    const kept = [];
+    for (let y = 0; y < ROWS; y++) if (!fullRows.includes(y)) kept.push(matrix[y]);
+    while (kept.length < ROWS) kept.unshift(Array(COLS).fill(0));
+    matrix = kept;
+    effects.push({ kind: 'clear', rows: fullRows, t: 0, dur: 300 });
+  }
+
+  /* popups + sounds */
+  if (ts === 'full') {
+    const label = n === 0 ? 'T-SPIN' : (n === 1 ? 'T-SPIN' : (n === 2 ? 'T-SPIN DOUBLE' : 'T-SPIN TRIPLE'));
+    effects.push({ kind: 'popup', text: label, t: 0, dur: 1200 });
+    sfxTspin();
+  } else if (ts === 'mini') {
+    effects.push({ kind: 'popup', text: 'T-SPIN MINI', t: 0, dur: 1200 });
+    sfxTspin();
+  }
+  if (n === 4) {
+    effects.push({ kind: 'popup', text: 'FALLING BLOCKS', t: 0, dur: 1200 });
+    sfxQuad();
+  } else if (n > 0) {
+    sfxClear();
+  } else if (!ts) {
+    sfxLock();
+  }
+
+  /* next piece (block out possible) */
+  if (!nextPiece()) return;
+}
+
+/* ---------- effects ---------- */
+function updateEffects(dt) {
+  for (const e of effects) e.t += dt;
+  effects = effects.filter(e => e.t < e.dur);
+}
+
+/* ---------- high score persistence (rules.md §15) ---------- */
+function loadHigh() {
+  try {
+    const v = JSON.parse(localStorage.getItem('fb_highscore'));
+    return (v && typeof v.score === 'number') ? v.score : 0;
+  } catch (e) { return 0; }
+}
+function saveHigh() {
+  try {
+    localStorage.setItem('fb_highscore', JSON.stringify({
+      score: highScore, lines, level, date: new Date().toISOString()
+    }));
+  } catch (e) { /* corrupt/forbidden storage must not crash the game */ }
+}
+
+/* ---------- audio (rules.md §16) ---------- */
+let actx = null, master = null;
+function ensureAudio() {
+  if (actx) {
+    if (actx.state === 'suspended' && state !== 'pause') actx.resume().catch(() => {});
+    return;
+  }
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    master = actx.createGain();
+    master.gain.value = muted ? 0 : 0.5;
+    master.connect(actx.destination);
+  } catch (e) { actx = null; }
+}
+function tone(freq, dur, delay, type, vol) {
+  if (!actx || muted) return;
+  try {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type || 'square';
+    o.frequency.value = freq;
+    const t0 = actx.currentTime + (delay || 0);
+    g.gain.setValueAtTime(vol || 0.25, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    o.connect(g); g.connect(master);
+    o.start(t0); o.stop(t0 + dur);
+  } catch (e) { /* ignore audio errors */ }
+}
+const sfxLock   = () => tone(110, 0.07, 0, 'square', 0.3);
+const sfxDrop   = () => tone(80, 0.06, 0, 'sine', 0.5);
+const sfxClear  = () => { tone(440, 0.09); tone(660, 0.12, 0.06); };
+const sfxQuad = () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.1, i * 0.05, 'square', 0.3)); };
+const sfxTspin  = () => { tone(700, 0.1); tone(1050, 0.12, 0.05); };
+const sfxLevel  = () => { tone(523, 0.09); tone(784, 0.09, 0.08); tone(1046, 0.14, 0.16); };
+const sfxOver   = () => { [300, 220, 140].forEach((f, i) => tone(f, 0.16, i * 0.14, 'sawtooth', 0.3)); };
+const sfxMenu   = () => tone(880, 0.05, 0, 'sine', 0.2);
+function toggleMute() {
+  muted = !muted;
+  if (master) master.gain.value = muted ? 0 : 0.5;
+  if (!muted) sfxMenu();
+}
+
+/* ---------- input (rules.md §7, §19) ---------- */
+window.addEventListener('keydown', (e) => {
+  ensureAudio();
+  const c = e.code;
+  if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'ArrowUp', 'Space'].includes(c)) {
+    e.preventDefault();
+  }
+  if (e.repeat) return; // own DAS/ARR engine handles repeats
+  switch (c) {
+    case 'ArrowLeft':
+      keys.left = true; dasDir = -1; dasT = 0; arrT = 0;
+      tryMove(-1); break;
+    case 'ArrowRight':
+      keys.right = true; dasDir = 1; dasT = 0; arrT = 0;
+      tryMove(1); break;
+    case 'ArrowDown':
+      keys.down = true; break;
+    case 'ArrowUp':
+    case 'KeyX':
+      tryRotate(1); break;
+    case 'KeyZ':
+      tryRotate(-1); break;
+    case 'Space':
+      hardDrop(); break;
+    case 'KeyC':
+      doHold(); break;
+    case 'Escape':
+      togglePause(); break;
+    case 'KeyM':
+      toggleMute(); break;
+    case 'KeyR':
+    case 'Enter':
+      if (state === 'over') restart(); break;
+  }
+});
+window.addEventListener('keyup', (e) => {
+  switch (e.code) {
+    case 'ArrowLeft':
+      keys.left = false;
+      if (keys.right) { dasDir = 1; dasT = 0; arrT = 0; } else dasDir = 0;
+      break;
+    case 'ArrowRight':
+      keys.right = false;
+      if (keys.left) { dasDir = -1; dasT = 0; arrT = 0; } else dasDir = 0;
+      break;
+    case 'ArrowDown':
+      keys.down = false; break;
+  }
+});
+canvas.addEventListener('pointerdown', (e) => {
+  ensureAudio();
+  if (state === 'over') {
+    const r = canvas.getBoundingClientRect();
+    const x = (e.clientX - r.left) * (LW / r.width);
+    const y = (e.clientY - r.top) * (LH / r.height);
+    if (x >= overBtn.x && x <= overBtn.x + overBtn.w &&
+        y >= overBtn.y && y <= overBtn.y + overBtn.h) restart();
+  }
+});
+
+/* ---------- rendering (rules.md §13, §17, §18) ---------- */
+function drawBlock(x, y, s, color, alpha) {
+  ctx.globalAlpha = alpha == null ? 1 : alpha;
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(x, y, s, 2);
+  ctx.fillRect(x, y, 2, s);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(x, y + s - 2, s, 2);
+  ctx.fillRect(x + s - 2, y, 2, s);
+  ctx.globalAlpha = 1;
+}
+function drawMini(cx, cy, type, cell) {
+  const s = SHAPES[type];
+  const ox = cx - (s.size * cell) / 2, oy = cy - (s.size * cell) / 2;
+  for (const [px, py] of s.cells[0]) {
+    drawBlock(ox + px * cell, oy + py * cell, cell - 1, COLORS[type]);
+  }
+}
+function text(str, x, y, size, color, align) {
+  ctx.fillStyle = color;
+  ctx.font = size + 'px monospace';
+  ctx.textAlign = align || 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(str, x, y);
+}
+
+function drawBoardBase() {
+  ctx.fillStyle = '#10141c';
+  ctx.fillRect(BX - 4, BY - 4, BW + 8, BH + 8);
+  ctx.strokeStyle = '#3a4356';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(BX - 4, BY - 4, BW + 8, BH + 8);
+  ctx.strokeStyle = 'rgba(90,100,130,0.25)';
+  ctx.lineWidth = 1;
+  for (let x = 1; x < COLS; x++) {
+    ctx.beginPath();
+    ctx.moveTo(BX + x * CELL + 0.5, BY);
+    ctx.lineTo(BX + x * CELL + 0.5, BY + BH);
+    ctx.stroke();
+  }
+  for (let y = 1; y < VISIBLE; y++) {
+    ctx.beginPath();
+    ctx.moveTo(BX, BY + y * CELL + 0.5);
+    ctx.lineTo(BX + BW, BY + y * CELL + 0.5);
+    ctx.stroke();
+  }
+}
+function drawSettled() {
+  for (let y = HIDDEN; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (matrix[y][x]) drawBlock(BX + x * CELL, (y - HIDDEN) * CELL, CELL, COLORS[matrix[y][x]]);
+    }
+  }
+}
+function drawGhost() {
+  if (!active) return;
+  let gy = active.y;
+  while (fits(cellsOf(active), active.x, gy + 1)) gy++;
+  if (gy === active.y) return;
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+  ctx.lineWidth = 2;
+  for (const [cx, cy] of cellsOf(active)) {
+    const y = gy + cy;
+    if (y < HIDDEN) continue;
+    ctx.strokeRect(BX + cx * CELL + 2, (y - HIDDEN) * CELL + 2, CELL - 4, CELL - 4);
+  }
+}
+function drawActive() {
+  if (!active) return;
+  for (const [cx, cy] of cellsOf(active)) {
+    const y = active.y + cy;
+    if (y < HIDDEN) continue;
+    drawBlock(BX + (active.x + cx) * CELL, (y - HIDDEN) * CELL, CELL, COLORS[active.type]);
+  }
+}
+function drawPanels() {
+  /* left: hold, high score, sound, controls */
+  text('HOLD', 20, 20, 15, '#8b93a7');
+  ctx.strokeStyle = '#3a4356';
+  ctx.strokeRect(20, 44, 116, 76);
+  if (hold) drawMini(78, 82, hold, 20);
+  text('HIGH SCORE', 20, 140, 13, '#8b93a7');
+  text(String(highScore), 20, 158, 17, '#e8ecf5');
+  text('SOUND: ' + (muted ? 'OFF' : 'ON') + ' (M)', 20, 190, 12, '#8b93a7');
+  text('CONTROLS', 20, 230, 13, '#8b93a7');
+  const help = [
+    '\u2190/\u2192 move', '\u2193 soft drop', 'SPACE hard drop',
+    '\u2191/X rotate', 'Z rotate ccw', 'C hold',
+    'ESC pause', 'M mute', 'R restart'
+  ];
+  help.forEach((s, i) => text(s, 20, 250 + i * 17, 11, '#6b7488'));
+
+  /* right: next queue, stats */
+  text('NEXT', 566, 20, 15, '#8b93a7');
+  for (let i = 0; i < 3; i++) {
+    ctx.strokeStyle = '#3a4356';
+    ctx.strokeRect(566, 44 + i * 84, 156, 74);
+    const t = queue[i];
+    if (t) drawMini(644, 81 + i * 84, t, 20);
+  }
+  text('SCORE', 566, 302, 13, '#8b93a7');
+  text(String(score), 566, 320, 19, '#e8ecf5');
+  text('LEVEL', 566, 356, 13, '#8b93a7');
+  text(String(level), 566, 374, 19, '#e8ecf5');
+  text('LINES', 566, 410, 13, '#8b93a7');
+  text(String(lines), 566, 428, 19, '#e8ecf5');
+  if (b2b) text('BACK-TO-BACK', 566, 462, 12, '#ffb020');
+  if (combo >= 2) text('COMBO x' + combo, 566, b2b ? 482 : 462, 12, '#30c8ff');
+}
+function drawEffects() {
+  for (const e of effects) {
+    const k = 1 - e.t / e.dur;
+    if (e.kind === 'clear') {
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.85 * k).toFixed(3) + ')';
+      for (const r of e.rows) {
+        if (r < HIDDEN) continue;
+        ctx.fillRect(BX, (r - HIDDEN) * CELL, BW, CELL);
+      }
+    } else if (e.kind === 'popup') {
+      text(e.text, BX + BW / 2, BY + BH * 0.32 - e.t * 0.01, 22, 'rgba(255,220,80,' + k.toFixed(3) + ')', 'center');
+    } else if (e.kind === 'level') {
+      text('LEVEL ' + level, BX + BW / 2, BY + BH * 0.42, 26, 'rgba(80,255,160,' + k.toFixed(3) + ')', 'center');
+    }
+  }
+}
+function drawPauseOverlay() {
+  ctx.fillStyle = 'rgba(0,0,0,0.72)';
+  ctx.fillRect(BX - 4, BY - 4, BW + 8, BH + 8);
+  text('PAUSED', BX + BW / 2, BY + BH * 0.42, 34, '#e8ecf5', 'center');
+  text('Press ESC to resume', BX + BW / 2, BY + BH * 0.52, 15, '#8b93a7', 'center');
+}
+function drawOverOverlay() {
+  ctx.fillStyle = 'rgba(0,0,0,0.82)';
+  ctx.fillRect(0, 0, LW, LH);
+  text('GAME OVER', LW / 2, BY + BH * 0.22, 40, '#ff5050', 'center');
+  text('FINAL SCORE', LW / 2, BY + BH * 0.38, 15, '#8b93a7', 'center');
+  text(String(score), LW / 2, BY + BH * 0.42, 32, '#e8ecf5', 'center');
+  text('Lines: ' + lines + '   Level: ' + level, LW / 2, BY + BH * 0.52, 15, '#8b93a7', 'center');
+  text('High score: ' + highScore, LW / 2, BY + BH * 0.57, 14, '#ffb020', 'center');
+  ctx.fillStyle = '#1c2333';
+  ctx.fillRect(overBtn.x, overBtn.y, overBtn.w, overBtn.h);
+  ctx.strokeStyle = '#30c8ff';
+  ctx.strokeRect(overBtn.x, overBtn.y, overBtn.w, overBtn.h);
+  text('RESTART (R)', LW / 2, overBtn.y + 14, 17, '#30c8ff', 'center');
+}
+function render() {
+  ctx.clearRect(0, 0, LW, LH);
+  ctx.fillStyle = '#0b0e14';
+  ctx.fillRect(0, 0, LW, LH);
+  drawBoardBase();
+  drawSettled();
+  if (state !== 'over') {
+    drawGhost();
+    drawActive();
+  }
+  drawPanels();
+  drawEffects();
+  if (state === 'pause') drawPauseOverlay();
+  if (state === 'over') drawOverOverlay();
+}
+
+/* ---------- main loop (delta-time, frame-rate independent) ---------- */
+let last = performance.now();
+function frame(t) {
+  const dt = Math.min(100, t - last);
+  last = t;
+  if (state === 'play') updatePlay(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- boot ---------- */
+highScore = loadHigh();
+matrix = newMatrix();
+queue = [];
+state = 'play';
+nextPiece();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

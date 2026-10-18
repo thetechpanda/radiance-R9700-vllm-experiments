@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="454" viewBox="0 0 1200 454" role="img" fill="#e2e8f0" font-family="system-ui, sans-serif">
+<title>ROCm 10.1 · single R9700, GPU A · 18 October 2026</title>
+<desc>TP1 · MTP4 · CPU KV10 GiB · 131070-token context limit · four completed synthetic growth cases.</desc>
+<rect width="1200" height="100%" fill="#0b1220" /><style>text{font-family:system-ui, sans-serif}</style>
+<text x="30" y="35" font-size="23" fill="#e2e8f0" text-anchor="start">ROCm 10.1 · single R9700, GPU A · 18 October 2026</text>
+<text x="30" y="62" font-size="13" fill="#e2e8f0" text-anchor="start">TP1 · MTP4 · CPU KV10 GiB · 131070-token context limit · four completed synthetic growth cases.</text>
+<text x="30" y="91" font-size="13" fill="#e2e8f0" text-anchor="start">Mean TTFT (blue bar) and maximum observed TTFT (grey marker), seconds</text>
+<line x1="315.00" x2="315.00" y1="109" y2="376" stroke="#263449" />
+<text x="315.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">0</text>
+<line x1="468.00" x2="468.00" y1="109" y2="376" stroke="#263449" />
+<text x="468.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">147</text>
+<line x1="621.00" x2="621.00" y1="109" y2="376" stroke="#263449" />
+<text x="621.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">293</text>
+<line x1="774.00" x2="774.00" y1="109" y2="376" stroke="#263449" />
+<text x="774.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">440</text>
+<line x1="927.00" x2="927.00" y1="109" y2="376" stroke="#263449" />
+<text x="927.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">587</text>
+<line x1="1080.00" x2="1080.00" y1="109" y2="376" stroke="#263449" />
+<text x="1080.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">733</text>
+<text x="30" y="138" font-size="14" fill="#e2e8f0" text-anchor="start">1 agent(s)</text>
+<rect x="315" y="121" width="7.78" height="24" fill="#38bdf8" />
+<line x1="334.59" x2="334.59" y1="118" y2="149" stroke="#94a3b8" stroke-width="3" />
+<text x="30" y="158" font-size="11" fill="#94a3b8" text-anchor="start">27 turns; max observed context 123.5k; 0 errors</text>
+<text x="1110" y="138" font-size="12" fill="#e2e8f0" text-anchor="middle">7.46 / 18.78</text>
+<text x="30" y="204" font-size="14" fill="#e2e8f0" text-anchor="start">2 agent(s)</text>
+<rect x="315" y="187" width="12.43" height="24" fill="#38bdf8" />
+<line x1="357.39" x2="357.39" y1="184" y2="215" stroke="#94a3b8" stroke-width="3" />
+<text x="30" y="224" font-size="11" fill="#94a3b8" text-anchor="start">63 turns; max observed context 127.3k; 0 errors</text>
+<text x="1110" y="204" font-size="12" fill="#e2e8f0" text-anchor="middle">11.92 / 40.64</text>
+<text x="30" y="270" font-size="14" fill="#e2e8f0" text-anchor="start">3 agent(s)</text>
+<rect x="315" y="253" width="74.53" height="24" fill="#38bdf8" />
+<line x1="790.78" x2="790.78" y1="250" y2="281" stroke="#94a3b8" stroke-width="3" />
+<text x="30" y="290" font-size="11" fill="#94a3b8" text-anchor="start">94 turns; max observed context 127.7k; 0 errors</text>
+<text x="1110" y="270" font-size="12" fill="#e2e8f0" text-anchor="middle">71.46 / 456.19</text>
+<text x="30" y="336" font-size="14" fill="#e2e8f0" text-anchor="start">4 agent(s)</text>
+<rect x="315" y="319" width="105.73" height="24" fill="#38bdf8" />
+<line x1="998.04" x2="998.04" y1="316" y2="347" stroke="#94a3b8" stroke-width="3" />
+<text x="30" y="356" font-size="11" fill="#94a3b8" text-anchor="start">114 turns; max observed context 126.7k; 0 errors</text>
+<text x="1110" y="336" font-size="12" fill="#e2e8f0" text-anchor="middle">101.38 / 654.91</text>
+<text x="690" y="421" font-size="13" fill="#e2e8f0" text-anchor="middle">TTFT (seconds); shared zero-based scale</text>
+<text x="30" y="438" font-size="12" fill="#e2e8f0" text-anchor="start">Mean/max TTFT from completed summaries. Short outputs; no sustained full131k or real-agent qualification.</text>
+</svg>

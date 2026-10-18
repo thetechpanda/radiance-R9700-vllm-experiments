@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 251" fill="#e2e8f0" font-family="system-ui, sans-serif">
+<rect width="1200" height="251" fill="#0b1220" />
+<text x="30" y="36" fill="#f8fafc" font-size="22" font-family="system-ui, sans-serif">ROCm 10.1 historical agent workloads</text>
+<text x="30" y="59" fill="#cbd5e1" font-size="12" font-family="system-ui, sans-serif">What: per-agent decode rate across historical agent workloads. Why: compare behavior as concurrent fleet size changes.</text>
+<text x="30" y="78" fill="#94a3b8" font-size="11" font-family="system-ui, sans-serif">Grouped by agent count · one shared tokens/s scale · cases vary in depth and workload; see the run index before comparing.</text>
+<line x1="510.0" y1="96" x2="510.0" y2="154" stroke="#263449" />
+<text x="510.0" y="173" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="system-ui, sans-serif">0</text>
+<line x1="652.5" y1="96" x2="652.5" y2="154" stroke="#263449" />
+<text x="652.5" y="173" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="system-ui, sans-serif">0.25</text>
+<line x1="795.0" y1="96" x2="795.0" y2="154" stroke="#263449" />
+<text x="795.0" y="173" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="system-ui, sans-serif">0.5</text>
+<line x1="937.5" y1="96" x2="937.5" y2="154" stroke="#263449" />
+<text x="937.5" y="173" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="system-ui, sans-serif">0.75</text>
+<line x1="1080.0" y1="96" x2="1080.0" y2="154" stroke="#263449" />
+<text x="1080.0" y="173" text-anchor="middle" fill="#94a3b8" font-size="11" font-family="system-ui, sans-serif">1</text>
+<text x="30" y="119" fill="#fb7185" font-size="13" font-weight="700" font-family="system-ui, sans-serif">4 agents · 1 benchmark case</text>
+<text x="500" y="141" text-anchor="end" fill="#cbd5e1" font-size="10" font-family="system-ui, sans-serif">ROCm 10.1 four-agent stress reference</text>
+<text x="516" y="139" fill="#fbbf24" font-size="10" font-family="system-ui, sans-serif">no throughput result</text>
+<text x="795.0" y="198" text-anchor="middle" fill="#cbd5e1" font-size="12" font-family="system-ui, sans-serif">Per-agent decode throughput (tokens/s)</text>
+</svg>

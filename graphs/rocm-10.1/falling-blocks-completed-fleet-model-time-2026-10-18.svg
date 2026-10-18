@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="572" viewBox="0 0 1200 572" role="img" fill="#e2e8f0" font-family="system-ui, sans-serif">
+<title>ROCm 10.1 · Falling Blocks · completed fleets</title>
+<desc>Four clean deliveries per fleet. Fleet wall: dual 30:10; single-card retry 75:23.</desc>
+<rect width="1200" height="100%" fill="#0b1220" /><style>text{font-family:system-ui, sans-serif}</style>
+<text x="30" y="35" font-size="23" fill="#e2e8f0" text-anchor="start">ROCm 10.1 · Falling Blocks · completed fleets</text>
+<text x="30" y="62" font-size="13" fill="#e2e8f0" text-anchor="start">Four clean deliveries per fleet. Fleet wall: dual 30:10; single-card retry 75:23.</text>
+<rect x="30" y="84" width="17" height="12" fill="#38bdf8" />
+<text x="55" y="95" font-size="13" fill="#e2e8f0" text-anchor="start">Dual · 32,768-token budget / 60-min cap</text>
+<rect x="550" y="84" width="17" height="12" fill="#fbbf24" />
+<text x="575" y="95" font-size="13" fill="#e2e8f0" text-anchor="start">Single retry · 65,536-token budget / 90-min cap</text>
+<line x1="210.00" x2="210.00" y1="116" y2="486" stroke="#263449" />
+<text x="210.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">0.0</text>
+<line x1="375.00" x2="375.00" y1="116" y2="486" stroke="#263449" />
+<text x="375.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">17.4</text>
+<line x1="540.00" x2="540.00" y1="116" y2="486" stroke="#263449" />
+<text x="540.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">34.8</text>
+<line x1="705.00" x2="705.00" y1="116" y2="486" stroke="#263449" />
+<text x="705.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">52.2</text>
+<line x1="870.00" x2="870.00" y1="116" y2="486" stroke="#263449" />
+<text x="870.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">69.6</text>
+<line x1="1035.00" x2="1035.00" y1="116" y2="486" stroke="#263449" />
+<text x="1035.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">87.0</text>
+<text x="30" y="153" font-size="15" fill="#e2e8f0" text-anchor="start">Agent 0</text>
+<rect x="210" y="130" width="285.75" height="21" fill="#38bdf8" />
+<text x="503.75" y="146" font-size="12" fill="#e2e8f0" text-anchor="start">30.13</text>
+<rect x="210" y="159" width="681.48" height="21" fill="#fbbf24" />
+<text x="899.48" y="175" font-size="12" fill="#e2e8f0" text-anchor="start">71.86</text>
+<text x="30" y="244" font-size="15" fill="#e2e8f0" text-anchor="start">Agent 1</text>
+<rect x="210" y="221" width="211.71" height="21" fill="#38bdf8" />
+<text x="429.71" y="237" font-size="12" fill="#e2e8f0" text-anchor="start">22.32</text>
+<rect x="210" y="250" width="636.50" height="21" fill="#fbbf24" />
+<text x="854.5" y="266" font-size="12" fill="#e2e8f0" text-anchor="start">67.12</text>
+<text x="30" y="335" font-size="15" fill="#e2e8f0" text-anchor="start">Agent 2</text>
+<rect x="210" y="312" width="210.50" height="21" fill="#38bdf8" />
+<text x="428.5" y="328" font-size="12" fill="#e2e8f0" text-anchor="start">22.20</text>
+<rect x="210" y="341" width="651.75" height="21" fill="#fbbf24" />
+<text x="869.75" y="357" font-size="12" fill="#e2e8f0" text-anchor="start">68.73</text>
+<text x="30" y="426" font-size="15" fill="#e2e8f0" text-anchor="start">Agent 3</text>
+<rect x="210" y="403" width="167.30" height="21" fill="#38bdf8" />
+<text x="385.3" y="419" font-size="12" fill="#e2e8f0" text-anchor="start">17.64</text>
+<rect x="210" y="432" width="717.39" height="21" fill="#fbbf24" />
+<text x="935.39" y="448" font-size="12" fill="#e2e8f0" text-anchor="start">75.65</text>
+<text x="620" y="533" font-size="13" fill="#e2e8f0" text-anchor="middle">Cumulative reported model time per agent (minutes)</text>
+<text x="30" y="540" font-size="12" fill="#e2e8f0" text-anchor="start">Client context and compaction reserve also changed. Not an isolated GPU-count speedup.</text>
+<text x="30" y="559" font-size="12" fill="#e2e8f0" text-anchor="start">One observation per cell. No confidence intervals or percentile claims.</text>
+</svg>

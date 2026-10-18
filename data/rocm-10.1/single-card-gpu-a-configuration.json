@@ -1,0 +1,35 @@
+{
+  "model": "ukisai/Swift-1.5-Qwen3.8-27b-INT4",
+  "model_revision": "81a28ee75eb1cd469f209813a368a79a7e3db3bc",
+  "image_id": "6fbb1ab181f1ba0f81efddf4c77ee6c3c9f986559d0d4d2c7ded11b000af38bd",
+  "rocm": "10.1",
+  "gpu_profile": "GPU A, PCIe4x8, one R9700",
+  "tensor_parallel_size": 1,
+  "max_model_len": 131070,
+  "max_num_seqs": 4,
+  "kv_dtype": "fp8",
+  "gpu_memory_utilization": 0.98,
+  "max_num_batched_tokens": 16384,
+  "long_prefill_token_threshold": 2048,
+  "speculation": {
+    "method": "mtp",
+    "num_speculative_tokens": 4,
+    "attention_backend": "R4D",
+    "disable_padded_drafter_batch": true
+  },
+  "kv_offload": {
+    "kv_connector": "OffloadingConnector",
+    "kv_role": "kv_both",
+    "kv_connector_extra_config": {
+      "spec_name": "TieringOffloadingSpec",
+      "cpu_bytes_to_use": 10737418240,
+      "blocks_per_chunk": 1,
+      "eviction_policy": "arc"
+    }
+  },
+  "notes": [
+    "One run per cell, synthetic context growth with short outputs; not sustained simultaneous full131k qualification.",
+    "Rates in tg_avg are per-request decode estimates; not real-world fleet throughput.",
+    "Runtime/configuration changes prevent a causal ROCm-only comparison."
+  ]
+}

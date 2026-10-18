@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Falling Blocks</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #0b0e14;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    font-family: monospace;
+  }
+  #wrap {
+    position: relative;
+  }
+  canvas {
+    display: block;
+    background: #0b0e14;
+  }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="game"></canvas></div>
+<script>
+'use strict';
+/* ============================================================
+   FALLING BLOCKS — single-file implementation
+   Implements rules.md (guideline + variant seed 102).
+   ============================================================ */
+
+// ---------------- Constants ----------------
+const COLS = 10;
+const ROWS_VISIBLE = 20;
+const HIDDEN = 2;
+const ROWS = ROWS_VISIBLE + HIDDEN;          // 22 total
+const CELL = 28;
+const W = 1080, H = 600;
+const BOARD_X = 400, BOARD_Y = 20;
+
+const DAS_MS = 160, ARR_MS = 33;
+const SOFT_MS = 50;                          // 20 cells/sec cap
+const LOCK_MS = 500;
+const MAX_RESETS = 15;
+const MAX_LEVEL = 5;
+const PREVIEW_N = 3;
+
+const COLORS = {
+  I: '#00c8d7', O: '#f5d915', T: '#a13bd1',
+  S: '#2ecc40', Z: '#e03030', J: '#2b5fd9', L: '#f5871f'
+};
+
+// Piece cell sets, all four states, inside bounding boxes (reference diagrams).
+const SHAPES = {
+  I: { box: 4, cells: [
+    [[0,1],[1,1],[2,1],[3,1]],
+    [[2,0],[2,1],[2,2],[2,3]],
+    [[0,2],[1,2],[2,2],[3,2]],
+    [[1,0],[1,1],[1,2],[1,3]] ]},
+  O: { box: 2, cells: [
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]],
+    [[0,0],[1,0],[0,1],[1,1]] ]},
+  T: { box: 3, cells: [
+    [[1,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[2,1],[1,2]],
+    [[0,1],[1,1],[2,1],[1,2]],
+    [[1,0],[0,1],[1,1],[1,2]] ]},
+  S: { box: 3, cells: [
+    [[1,0],[2,0],[0,1],[1,1]],
+    [[1,0],[1,1],[2,1],[2,2]],
+    [[1,1],[2,1],[0,2],[1,2]],
+    [[0,0],[0,1],[1,1],[1,2]] ]},
+  Z: { box: 3, cells: [
+    [[0,0],[1,0],[1,1],[2,1]],
+    [[2,0],[1,1],[1,2],[0,2]],
+    [[0,1],[1,1],[1,2],[2,2]],
+    [[1,0],[1,1],[0,2],[1,2]] ]},
+  J: { box: 3, cells: [
+    [[0,0],[0,1],[1,1],[2,1]],
+    [[1,0],[2,0],[1,1],[1,2]],
+    [[0,2],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[0,2],[1,2]] ]},
+  L: { box: 3, cells: [
+    [[2,0],[0,1],[1,1],[2,1]],
+    [[1,0],[1,1],[1,2],[2,2]],
+    [[0,1],[1,1],[2,1],[2,2]],
+    [[0,0],[1,0],[1,1],[1,2]] ]}
+};
+
+// SRS wall kick tables. dy > 0 = up.
+const KICKS_JLSTZ = {
+  '0>1': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+  '1>0': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+  '1>2': [[0,0],[1,0],[1,-1],[0,2],[1,2]],
+  '2>1': [[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+  '2>3': [[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+  '3>2': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+  '3>0': [[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+  '0>3': [[0,0],[1,0],[1,1],[0,-2],[1,-2]]
+};
+const KICKS_I = {
+  '0>1': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+  '1>0': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+  '1>2': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+  '2>1': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+  '2>3': [[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+  '3>2': [[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+  '3>0': [[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+  '0>3': [[0,0],[-1,0],[2,0],[-1,2],[2,-1]]
+};
+
+const ALL_TYPES = ['I','O','T','S','Z','J','L'];
+
+// ---------------- Game state ----------------
+let G;
+function resetGame() {
+  G = {
+    state: 'playing',          // playing | paused | gameover
+    matrix: Array.from({length: ROWS}, () => Array(COLS).fill(0)),
+    piece: null,
+    queue: [],
+    held: null,
+    holdUsed: false,
+    gravTimer: 0,
+    lockTimer: 0,
+    lockResets: 0,
+    grounded: false,
+    lastAction: null,          // 'move' | 'rotate' | 'drop'
+    lastKick: null,
+    score: 0, lines: 0, level: 1,
+    combo: 0, b2b: false,
+    mute: false,
+    clearFlash: null,          // {rows:[...], t:0}
+    popups: [],                // {text, t, life}
+    // input
+    leftHeld: false, rightHeld: false,
+    dasDir: 0, dasTimer: 0, arrTimer: 0,
+    softHeld: false, softTimer: 0
+  };
+  refillBag();
+  spawnPiece();
+}
+
+function refillBag() {
+  const bag = ALL_TYPES.slice();
+  for (let i = bag.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [bag[i], bag[j]] = [bag[j], bag[i]];
+  }
+  G.queue.push(...bag);
+}
+function nextPiece() {
+  if (G.queue.length < PREVIEW_N + 2) refillBag();
+  return G.queue.shift();
+}
+
+// ---------------- Matrix / piece helpers ----------------
+function cellsOf(p) {
+  const out = [];
+  for (const [x, y] of SHAPES[p.type].cells[p.state]) out.push([p.col + x, p.row + y]);
+  return out;
+}
+function fits(cells, col, row) {
+  for (const [dx, dy] of cells) {
+    const x = col + dx, y = row + dy;
+    if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+    if (G.matrix[y][x]) return false;
+  }
+  return true;
+}
+function canMoveDown() {
+  const p = G.piece;
+  return fits(SHAPES[p.type].cells[p.state], p.col, p.row + 1);
+}
+
+function gravityInterval() {
+  const l = G.level;
+  const secs = Math.pow(0.8 - (l - 1) * 0.007, l - 1);
+  return Math.max(50, secs * 1000);
+}
+
+function applyMoveReset() {
+  if (G.grounded && G.lockResets < MAX_RESETS) {
+    G.lockTimer = LOCK_MS;
+    G.lockResets++;
+  }
+}
+
+function tryMove(dx) {
+  const p = G.piece;
+  if (fits(SHAPES[p.type].cells[p.state], p.col + dx, p.row)) {
+    p.col += dx;
+    G.lastAction = 'move';
+    G.gravTimer = 0;
+    applyMoveReset();
+    if (canMoveDown()) G.grounded = false;
+    return true;
+  }
+  return false;
+}
+
+function tryRotate(dir) {
+  const p = G.piece;
+  if (p.type === 'O') return;                       // no-op, never kicks
+  const ns = (p.state + dir + 4) % 4;
+  const key = p.state + '>' + ns;
+  const table = (p.type === 'I' ? KICKS_I : KICKS_JLSTZ)[key];
+  const cells = SHAPES[p.type].cells[ns];
+  for (const [dx, dy] of table) {
+    const nc = p.col + dx, nr = p.row - dy;         // dy + = up
+    if (fits(cells, nc, nr)) {
+      p.state = ns; p.col = nc; p.row = nr;
+      G.lastAction = 'rotate';
+      G.lastKick = [dx, dy];
+      G.gravTimer = 0;
+      applyMoveReset();
+      if (canMoveDown()) G.grounded = false;
+      return true;
+    }
+  }
+  return false;
+}
+
+function softDropStep() {
+  if (canMoveDown()) {
+    G.piece.row++;
+    G.score += 1;
+    G.lastAction = 'move';
+    G.grounded = false;
+    return true;
+  }
+  return false;
+}
+
+function hardDrop() {
+  const p = G.piece;
+  let dist = 0;
+  while (canMoveDown()) { p.row++; dist++; }
+  if (dist > 0) G.score += dist * 2;
+  G.lastAction = 'drop';
+  lockPiece();
+}
+
+// ---------------- Lifecycle ----------------
+function spawnPiece() {
+  const type = nextPiece();
+  const box = SHAPES[type].box;
+  const col = Math.floor((COLS - box) / 2);
+  const piece = { type, state: 0, col, row: 0 };
+  if (!fits(SHAPES[type].cells[0], col, 0)) {       // block out
+    G.matrix = G.matrix; // keep board frozen
+    G.piece = piece;
+    gameOver('block out');
+    return;
+  }
+  G.piece = piece;
+  G.gravTimer = 0;
+  G.lockTimer = 0;
+  G.lockResets = 0;
+  G.grounded = false;
+  G.lastAction = null;
+  G.lastKick = null;
+}
+
+function lockPiece() {
+  const p = G.piece;
+  let allHidden = true;
+  for (const [x, y] of cellsOf(p)) {
+    G.matrix[y][x] = p.type;
+    if (y >= HIDDEN) allHidden = false;
+  }
+  G.piece = null;
+  if (allHidden) { gameOver('lock out'); return; }   // lock out
+  const tspin = evalTSpin(p);
+  const lines = clearRows();
+  scoreLock(lines, tspin);
+  G.holdUsed = false;
+  spawnPiece();
+}
+
+function evalTSpin(p) {
+  if (p.type !== 'T' || G.lastAction !== 'rotate') return null;
+  const cx = p.col + 1, cy = p.row + 1;
+  const corners = [[-1,-1],[1,-1],[-1,1],[1,1]];
+  let filled = 0;
+  const filledAt = {};
+  for (const [dx, dy] of corners) {
+    const x = cx + dx, y = cy + dy;
+    const f = (x < 0 || x >= COLS || y >= ROWS) || (y >= 0 && G.matrix[y][x]);
+    filledAt[dx + ',' + dy] = f;
+    if (f) filled++;
+  }
+  if (filled < 3) return null;
+  // back corners per rotation state (side of flat edge, opposite the stem)
+  const back = { 0: [[-1,-1],[1,-1]], 1: [[-1,-1],[-1,1]], 2: [[-1,1],[1,1]], 3: [[1,-1],[1,1]] }[p.state];
+  const backFull = back.every(([dx,dy]) => filledAt[dx + ',' + dy]);
+  const kick = G.lastKick;
+  const is2RowKick = kick && kick[0] === 0 && (kick[1] === 2 || kick[1] === -2);
+  return { mini: !(backFull || is2RowKick) };
+}
+
+function clearRows() {
+  const rows = [];
+  for (let y = ROWS - 1; y >= 0; y--) {
+    if (G.matrix[y].every(c => c)) rows.push(y);
+  }
+  if (rows.length === 0) return 0;
+  const keep = [];
+  for (let y = 0; y < ROWS; y++) if (!rows.includes(y)) keep.push(G.matrix[y]);
+  while (keep.length < ROWS) keep.unshift(Array(COLS).fill(0));
+  G.matrix = keep;
+  G.clearFlash = { rows, t: 0 };
+  return rows.length;
+}
+
+// ---------------- Scoring ----------------
+const BASE_SCORE = {
+  0: { plain: 0, mini: 100, full: 100 },
+  1: { plain: 100, mini: 200, full: 800 },
+  2: { plain: 300, mini: 400, full: 1200 },
+  3: { plain: 500, mini: 0,   full: 1600 },
+  4: { plain: 800, mini: 0,   full: 0 }
+};
+
+function scoreLock(lines, tspin) {
+  const lvl = G.level;
+  let base = 0, kind = 'plain';
+  if (tspin) {
+    kind = tspin.mini ? 'mini' : 'full';
+    base = BASE_SCORE[lines][kind];
+  } else {
+    base = BASE_SCORE[lines].plain;
+  }
+  let label = '';
+  const difficult = (lines === 4) || !!tspin;
+
+  if (lines > 0) {
+    if (difficult && G.b2b) {
+      base = Math.round(base * 1.5);
+      label = 'B2B ';
+    }
+    base = kind === 'plain' ? base * lvl : (tspin && lines === 0 ? base : base * lvl);
+    // T-spin no-lines awards are flat (not level multiplied) per rules §11
+    if (tspin && lines === 0) base = BASE_SCORE[0][kind];
+    scoreAward(label + clearName(lines) + (tspin ? '' : ''), base, tspin);
+    G.b2b = difficult;
+    G.score += 50 * G.combo * lvl;   // combo bonus (0 on first)
+    G.combo++;
+    G.lines += lines;
+    const nl = Math.min(MAX_LEVEL, 1 + Math.floor(G.lines / 10));
+    if (nl > G.level) { G.level = nl; addPopup('LEVEL ' + nl, '#7fd4ff'); }
+  } else {
+    G.combo = 0;                      // dry lock resets combo, keeps B2B
+    if (tspin) scoreAward('', BASE_SCORE[0][kind], tspin);
+  }
+  if (tspin) addPopup(tspin.mini ? 'T-SPIN MINI' : 'T-SPIN', '#ffd75e');
+  if (lines > 0) sfxClear(lines === 4);
+}
+function clearName(n) {
+  return ['', 'SINGLE', 'DOUBLE', 'TRIPLE', 'FALLING BLOCKS'][n] || '';
+}
+function scoreAward(label, base, tspin) {
+  G.score += base;
+  if (label) addPopup(label, '#ffffff');
+}
+function addPopup(text, color) {
+  G.popups.push({ text, color: color || '#fff', t: 0, life: 900 });
+}
+
+function gameOver(reason) {
+  G.state = 'gameover';
+  G.piece = null;
+  sfxGameOver();
+}
+
+// ---------------- Input ----------------
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+window.addEventListener('keydown', (e) => {
+  const k = e.code;
+  if (['ArrowLeft','ArrowRight','ArrowDown','ArrowUp','Space'].includes(k)) e.preventDefault();
+  ensureAudio();
+  if (e.repeat) return;
+
+  if (k === 'KeyM') { G.mute = !G.mute; return; }
+  if (k === 'KeyP') {
+    if (G.state === 'playing') G.state = 'paused';
+    else if (G.state === 'paused') G.state = 'playing';
+    return;
+  }
+  if (G.state === 'gameover') {
+    if (k === 'KeyR') resetGame();
+    return;
+  }
+  if (G.state !== 'playing') return;
+
+  switch (k) {
+    case 'ArrowLeft':
+      G.leftHeld = true;
+      if (!G.rightHeld) { tryMove(-1); G.dasDir = -1; G.dasTimer = 0; G.arrTimer = 0; }
+      break;
+    case 'ArrowRight':
+      G.rightHeld = true;
+      if (!G.leftHeld) { tryMove(1); G.dasDir = 1; G.dasTimer = 0; G.arrTimer = 0; }
+      break;
+    case 'ArrowDown':
+      G.softHeld = true;
+      G.softTimer = SOFT_MS;        // immediate first step
+      break;
+    case 'Space':
+      hardDrop();
+      break;
+    case 'ArrowUp':
+    case 'KeyX':
+      tryRotate(1);
+      break;
+    case 'KeyZ':
+      tryRotate(-1);
+      break;
+    case 'KeyC':
+      if (!G.holdUsed && G.piece) {
+        const cur = G.piece.type;
+        if (G.held) {
+          const tmp = G.held; G.held = cur;
+          const type = tmp;
+          const piece = { type, state: 0, col: Math.floor((COLS - SHAPES[type].box) / 2), row: 0 };
+          G.piece = piece;
+          G.gravTimer = 0; G.lockTimer = 0; G.lockResets = 0; G.grounded = false;
+          G.lastAction = null; G.lastKick = null;
+        } else {
+          G.held = cur;
+          spawnPiece();
+        }
+        G.holdUsed = true;
+      }
+      break;
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  switch (e.code) {
+    case 'ArrowLeft':
+      G.leftHeld = false;
+      if (G.dasDir === -1) { G.dasDir = 0; G.dasTimer = 0; G.arrTimer = 0; }
+      break;
+    case 'ArrowRight':
+      G.rightHeld = false;
+      if (G.dasDir === 1) { G.dasDir = 0; G.dasTimer = 0; G.arrTimer = 0; }
+      break;
+    case 'ArrowDown':
+      G.softHeld = false;
+      G.softTimer = 0;
+      break;
+  }
+});
+
+function processDAS(dt) {
+  // if both held, ignore (opposite keydown already handled direction)
+  let dir = 0;
+  if (G.leftHeld && !G.rightHeld) dir = -1;
+  else if (G.rightHeld && !G.leftHeld) dir = 1;
+  if (dir === 0) { G.dasDir = 0; return; }
+  if (G.dasDir !== dir) return;
+  G.dasTimer += dt;
+  if (G.dasTimer >= DAS_MS) {
+    G.arrTimer += dt;
+    while (G.arrTimer >= ARR_MS) {
+      tryMove(dir);
+      G.arrTimer -= ARR_MS;
+    }
+  }
+}
+
+// Restart button (canvas click)
+canvas.addEventListener('click', (e) => {
+  if (G.state !== 'gameover') return;
+  const r = canvas.getBoundingClientRect();
+  const x = (e.clientX - r.left) * (W / r.width);
+  const y = (e.clientY - r.top) * (H / r.height);
+  const bx = W/2 - 110, by = 400, bw = 220, bh = 52;
+  if (x >= bx && x <= bx + bw && y >= by && y <= by + bh) resetGame();
+});
+
+// ---------------- Audio (WebAudio bleeps only) ----------------
+let actx = null, master = null;
+function ensureAudio() {
+  if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
+  try {
+    actx = new (window.AudioContext || window.webkitAudioContext)();
+    master = actx.createGain();
+    master.gain.value = 0.18;
+    master.connect(actx.destination);
+  } catch (e) { actx = null; }
+}
+function bleep(freq, dur, when, type) {
+  if (!actx || G.mute) return;
+  const t = actx.currentTime + (when || 0);
+  const osc = actx.createOscillator();
+  const g = actx.createGain();
+  osc.type = type || 'square';
+  osc.frequency.value = freq;
+  g.gain.setValueAtTime(0.9, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  osc.connect(g); g.connect(master);
+  osc.start(t); osc.stop(t + dur);
+}
+function sfxClear(quad) {
+  if (quad) {
+    bleep(523.25, 0.09, 0); bleep(659.25, 0.09, 0.08);
+    bleep(783.99, 0.09, 0.16); bleep(1046.5, 0.14, 0.24);
+  } else {
+    bleep(440, 0.08, 0); bleep(660, 0.12, 0.07);
+  }
+}
+function sfxGameOver() {
+  bleep(392, 0.12, 0, 'sawtooth');
+  bleep(311, 0.12, 0.12, 'sawtooth');
+  bleep(233, 0.2, 0.24, 'sawtooth');
+}
+
+// ---------------- Update ----------------
+function update(dt) {
+  if (G.state !== 'playing' || !G.piece) return;
+
+  processDAS(dt);
+
+  // gravity (soft drop = 20x gravity, capped at 20 cells/sec => 50 ms/row)
+  const interval = G.softHeld ? SOFT_MS : gravityInterval();
+  G.gravTimer += dt;
+  let steps = 0;
+  while (G.gravTimer >= interval && G.piece && steps < 10) {
+    G.gravTimer -= interval;
+    if (!canMoveDown()) { G.gravTimer = 0; break; }   // landed; lock delay handled below
+    G.piece.row++;
+    G.lastAction = 'move';
+    if (G.softHeld) G.score++;   // soft drop: 1 pt per cell
+    steps++;
+  }
+
+  // landing check, every frame: start lock delay the moment the piece rests
+  if (G.piece && !canMoveDown()) {
+    if (!G.grounded) { G.grounded = true; G.lockTimer = LOCK_MS; }
+  }
+
+  // lock delay
+  if (G.grounded && G.piece) {
+    G.lockTimer -= dt;
+    if (G.lockTimer <= 0) lockPiece();
+  }
+}
+
+// ---------------- Rendering ----------------
+function drawCell(x, y, s, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x + 1, y + 1, s - 2, s - 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.fillRect(x + 1, y + 1, s - 2, 3);
+  ctx.fillRect(x + 1, y + 1, 3, s - 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.fillRect(x + 1, y + s - 4, s - 2, 3);
+  ctx.fillRect(x + s - 4, y + 1, 3, s - 2);
+}
+
+function drawPieceInto(type, cx, cy, s) {
+  const cells = SHAPES[type].cells[0];
+  const box = SHAPES[type].box;
+  const ox = cx + (box * s - (box === 4 ? 4 * s : box * s)) / 2;
+  for (const [x, y] of cells) drawCell(cx + x * s, cy + y * s, s, COLORS[type]);
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0b0e14';
+  ctx.fillRect(0, 0, W, H);
+
+  // ----- board -----
+  const bx = BOARD_X, by = BOARD_Y;
+  ctx.fillStyle = '#10141d';
+  ctx.fillRect(bx, by, COLS * CELL, ROWS_VISIBLE * CELL);
+  // grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x <= COLS; x++) { ctx.moveTo(bx + x * CELL + 0.5, by); ctx.lineTo(bx + x * CELL + 0.5, by + ROWS_VISIBLE * CELL); }
+  for (let y = 0; y <= ROWS_VISIBLE; y++) { ctx.moveTo(bx, by + y * CELL + 0.5); ctx.lineTo(bx + COLS * CELL, by + y * CELL + 0.5); }
+  ctx.stroke();
+
+  // settled blocks (visible rows only)
+  for (let y = HIDDEN; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const t = G.matrix[y][x];
+      if (t) drawCell(bx + x * CELL, by + (y - HIDDEN) * CELL, CELL, COLORS[t]);
+    }
+  }
+
+  // clear flash
+  if (G.clearFlash) {
+    const a = 0.85 * (1 - G.clearFlash.t / 300);
+    if (a > 0) {
+      ctx.fillStyle = 'rgba(255,255,255,' + a + ')';
+      for (const r of G.clearFlash.rows) {
+        if (r >= HIDDEN) ctx.fillRect(bx, by + (r - HIDDEN) * CELL, COLS * CELL, CELL);
+      }
+    }
+  }
+
+  // active piece (hidden while paused: board covered by overlay)
+  if (G.piece && G.state !== 'gameover') {
+    for (const [x, y] of cellsOf(G.piece)) {
+      if (y >= HIDDEN) drawCell(bx + x * CELL, by + (y - HIDDEN) * CELL, CELL, COLORS[G.piece.type]);
+    }
+  }
+
+  // walls + floor
+  ctx.strokeStyle = '#3a4a6a';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(bx - 1, by - 1, COLS * CELL + 2, ROWS_VISIBLE * CELL + 2);
+
+  // ----- HOLD panel -----
+  panel(bx - 330, 40, 120, 150, 'HOLD');
+  if (G.held) {
+    drawPieceInto(G.held, bx - 300, 76, 20);
+    if (G.holdUsed) { ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(bx - 290, 66, 100, 100); }
+  }
+
+  // ----- NEXT panel -----
+  panel(bx + COLS * CELL + 40, 40, 120, 320, 'NEXT');
+  for (let i = 0; i < PREVIEW_N; i++) {
+    const t = G.queue[i];
+    if (t) drawPieceInto(t, bx + COLS * CELL + 70, 82 + i * 88, 18);
+  }
+
+  // ----- STATS -----
+  const sx = bx - 330, sy = 240;
+  ctx.fillStyle = '#8fa3c8'; ctx.font = '14px monospace'; ctx.textAlign = 'left';
+  ctx.fillText('SCORE', sx, sy);
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px monospace';
+  ctx.fillText(String(G.score), sx, sy + 26);
+  ctx.fillStyle = '#8fa3c8'; ctx.font = '14px monospace';
+  ctx.fillText('LEVEL', sx, sy + 62);
+  ctx.fillStyle = '#7fd4ff'; ctx.font = 'bold 22px monospace';
+  ctx.fillText(G.level + ' / ' + MAX_LEVEL, sx, sy + 88);
+  ctx.fillStyle = '#8fa3c8'; ctx.font = '14px monospace';
+  ctx.fillText('LINES', sx, sy + 124);
+  ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px monospace';
+  ctx.fillText(String(G.lines), sx, sy + 150);
+  ctx.fillStyle = '#8fa3c8'; ctx.font = '14px monospace';
+  ctx.fillText('COMBO', sx, sy + 186);
+  ctx.fillStyle = G.combo > 0 ? '#ffd75e' : '#556';
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText(G.combo > 0 ? 'x' + G.combo : '-', sx, sy + 212);
+  ctx.fillStyle = '#8fa3c8'; ctx.font = '14px monospace';
+  ctx.fillText('B2B', sx, sy + 248);
+  ctx.fillStyle = G.b2b ? '#ffd75e' : '#556';
+  ctx.font = 'bold 22px monospace';
+  ctx.fillText(G.b2b ? 'ON' : '-', sx, sy + 274);
+  ctx.fillStyle = G.mute ? '#556' : '#7fd4ff'; ctx.font = '13px monospace';
+  ctx.fillText(G.mute ? 'MUTED (M)' : 'SOUND (M)', sx, sy + 310);
+
+  // controls hint
+  ctx.fillStyle = '#4a5a7a'; ctx.font = '12px monospace';
+  ctx.fillText('←/→ move   ↓ soft   SPACE drop', bx + COLS * CELL + 40, 400);
+  ctx.fillText('↑/X rot CW   Z rot CCW   C hold', bx + COLS * CELL + 40, 418);
+  ctx.fillText('P pause   M mute', bx + COLS * CELL + 40, 436);
+
+  // ----- popups -----
+  ctx.textAlign = 'center';
+  for (const p of G.popups) {
+    const a = 1 - p.t / p.life;
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.max(0, a);
+    ctx.font = 'bold 24px monospace';
+    ctx.fillText(p.text, bx + COLS * CELL / 2, by + 120 - (p.t / p.life) * 30);
+    ctx.globalAlpha = 1;
+  }
+
+  // ----- overlays -----
+  if (G.state === 'paused') {
+    ctx.fillStyle = 'rgba(5,8,14,0.85)';
+    ctx.fillRect(bx - 4, by - 4, COLS * CELL + 8, ROWS_VISIBLE * CELL + 8);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 34px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('PAUSED', bx + COLS * CELL / 2, by + 9 * CELL);
+    ctx.font = '15px monospace'; ctx.fillStyle = '#8fa3c8';
+    ctx.fillText('press P to resume', bx + COLS * CELL / 2, by + 9 * CELL + 30);
+  }
+  if (G.state === 'gameover') {
+    ctx.fillStyle = 'rgba(5,8,14,0.9)';
+    ctx.fillRect(bx - 4, by - 4, COLS * CELL + 8, ROWS_VISIBLE * CELL + 8);
+    const cxm = bx + COLS * CELL / 2;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ff5d5d'; ctx.font = 'bold 40px monospace';
+    ctx.fillText('GAME OVER', cxm, by + 5 * CELL);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 24px monospace';
+    ctx.fillText('SCORE  ' + G.score, cxm, by + 8 * CELL);
+    ctx.fillStyle = '#8fa3c8'; ctx.font = '18px monospace';
+    ctx.fillText('LINES  ' + G.lines + '    LEVEL  ' + G.level, cxm, by + 9.5 * CELL);
+    // restart button
+    const rx = W/2 - 110, ry = 400, rw = 220, rh = 52;
+    ctx.fillStyle = '#2b5fd9';
+    ctx.fillRect(rx, ry, rw, rh);
+    ctx.strokeStyle = '#7fa8ff'; ctx.lineWidth = 2;
+    ctx.strokeRect(rx, ry, rw, rh);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 20px monospace';
+    ctx.fillText('RESTART (R)', cxm, ry + 33);
+  }
+  ctx.textAlign = 'left';
+}
+
+function panel(x, y, w, h, title) {
+  ctx.fillStyle = '#10141d';
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = '#2a3550';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x, y, w, h);
+  ctx.fillStyle = '#8fa3c8';
+  ctx.font = '14px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(title, x + w / 2, y + 22);
+  ctx.textAlign = 'left';
+}
+
+// ---------------- Main loop & resize ----------------
+let lastTs = 0;
+function mainLoop(ts) {
+  if (!lastTs) lastTs = ts;
+  let dt = ts - lastTs;
+  lastTs = ts;
+  if (dt > 100) dt = 100;
+  if (G.state === 'playing') update(dt);
+  // timers for effects (run even paused? no — pause freezes everything;
+  // popups/clear flash only advance while playing)
+  if (G.state === 'playing') {
+    if (G.clearFlash) {
+      G.clearFlash.t += dt;
+      if (G.clearFlash.t >= 300) G.clearFlash = null;
+    }
+    for (const p of G.popups) p.t += dt;
+    G.popups = G.popups.filter(p => p.t < p.life);
+  }
+  render();
+  requestAnimationFrame(mainLoop);
+}
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  const availW = window.innerWidth - 16;
+  const availH = window.innerHeight - 16;
+  const scale = Math.min(availW / W, availH / H);
+  canvas.style.width = (W * scale) + 'px';
+  canvas.style.height = (H * scale) + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+window.addEventListener('resize', resize);
+
+// ---------------- Start ----------------
+resetGame();
+resize();
+requestAnimationFrame(mainLoop);
+</script>
+</body>
+</html>

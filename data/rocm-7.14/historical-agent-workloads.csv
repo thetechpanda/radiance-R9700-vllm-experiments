@@ -1,0 +1,6 @@
+case_id,case_family,agent_count,image_mode,depth_cap_k_tokens,successful_turns,errors,duration_minutes,max_context_k_tokens,mean_ttft_s,max_ttft_s,fleet_decode_tokens_s,per_agent_decode_tokens_s,itl_p99_ms,ttft_0_30k_s,ttft_30_60k_s,ttft_60_90k_s,ttft_90_120k_s,ttft_120k_plus_s,version,experiment,version_evidence
+CASE-27,ram-tier,4,text-only,126.0,155,0,21.547,126.516,16.88,53.85,11.19,51.2,332.0,,,,,,rocm-7.14,"Single-card RAM16, four agents",Recorded profile/date; no per-case image ID
+CASE-28,ram-tier,3,text-only,126.0,124,0,17.42,126.23,13.34,58.28,10.99,57.2,608.0,,,,,,rocm-7.14,"Single-card RAM16, three agents",Recorded profile/date; no per-case image ID
+CASE-43,comparison,1,text-only,126.0,10,0,2.793,118.602,12.36,21.67,10.97,136.2,54.0,,,,,,rocm-7.14,Single-card one-agent context-growth reference,Recorded profile/date; no per-case image ID
+CASE-44,comparison,2,text-only,126.0,20,0,5.132,121.537,17.54,44.11,11.64,70.1,442.0,,,,,,rocm-7.14,Single-card two-agent context-growth reference,Recorded profile/date; no per-case image ID
+CASE-48,capacity,4,text-only,100.0,36,0,9.517,109.498,26.74,84.64,12.32,30.4,5950.0,,,,,,rocm-7.14,Older-stack four-agent 100k reference; unmatched comparison,Recorded profile/date; no per-case image ID

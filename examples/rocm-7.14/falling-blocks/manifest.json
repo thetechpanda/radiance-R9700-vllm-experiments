@@ -1,0 +1,38 @@
+[
+  {
+    "agent": 0,
+    "file": "agent-0/index.html",
+    "bytes": 24163,
+    "sha256": "8061cfb2e261ac04adf3d5a45a31833d4c03c2c8116d5b2275a60d3f12c5d247",
+    "original_bytes": 24117,
+    "original_sha256": "b6022990ea48f312c15d92080030ed3c30899f89b712ec65190fef1b83a5bf9b",
+    "provenance": "Recovered four-agent Qwen3.8 task artefact; archive dated 17 October 2026; renamed to Falling Blocks for this release. Display text, identifiers and browser-storage keys changed; game rules unchanged."
+  },
+  {
+    "agent": 1,
+    "file": "agent-1/index.html",
+    "bytes": 24028,
+    "sha256": "37e9ac08a9bc4c89ad9f10c8e823d960d8b902ad5dfbe8fd36d450355a796411",
+    "original_bytes": 23988,
+    "original_sha256": "9cb2ce4e9a02895866f5eb7ff54e58c0976eaf095d519279b1f5184a00caf4b1",
+    "provenance": "Recovered four-agent Qwen3.8 task artefact; archive dated 17 October 2026; renamed to Falling Blocks for this release. Display text, identifiers and browser-storage keys changed; game rules unchanged."
+  },
+  {
+    "agent": 2,
+    "file": "agent-2/index.html",
+    "bytes": 24745,
+    "sha256": "e2fbbc62ce1319b525ac9cdb8e6e4a13e7bf9d7963a83fd95f1f1068bb0f7342",
+    "original_bytes": 24737,
+    "original_sha256": "3b09eb5317683ae4a8beeb4ec93ca6f0faad7c4260587aa3b6b2d54814270712",
+    "provenance": "Recovered four-agent Qwen3.8 task artefact; archive dated 17 October 2026; renamed to Falling Blocks for this release. Display text, identifiers and browser-storage keys changed; game rules unchanged."
+  },
+  {
+    "agent": 3,
+    "file": "agent-3/index.html",
+    "bytes": 21260,
+    "sha256": "6b26b8494abe10fbb2d643ee39a79414abc505a859b9667f1190af3b55ba7dc4",
+    "original_bytes": 21236,
+    "original_sha256": "215d405c297b52286e211351602c9048da56592659951013a333aa1123c15658",
+    "provenance": "Recovered four-agent Qwen3.8 task artefact; archive dated 17 October 2026; renamed to Falling Blocks for this release. Display text, identifiers and browser-storage keys changed; game rules unchanged."
+  }
+]

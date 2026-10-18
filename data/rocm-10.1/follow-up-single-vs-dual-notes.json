@@ -1,0 +1,14 @@
+{
+  "scope": "Eight completed follow-up synthetic cases, GPU A and dual, agents1-4, target126000",
+  "source": "Completed result.json exit statuses and sanitised summary.csv fields inspected before the request to leave the server untouched",
+  "verification_level": "Summary-level completion confirmed; no fresh raw-turn or telemetry audit performed for the dual cases",
+  "limits": [
+    "One observation per cell; short outputs are not a real-agent throughput benchmark.",
+    "Single-card configuration is recorded separately. Dual runtime/configuration manifest was not re-read while Falling Blocks was active. Do not infer a controlled one-variable comparison.",
+    "At the original export, game completion had not been reviewed. The later local campaign report records both first fleets; the single-card retry completed with four clean deliveries in 75:23.",
+    "No GPU B-only cases were found in the inspected campaign snapshot.",
+    "The earlier seven-cell dual8GiB series is separate and must not be merged with this follow-up."
+  ],
+  "subsequent_report": "../../docs/FINAL-REPORT-20261018.md",
+  "accounting": "CSV counts timed turns. The later report also counts one empty response each in GPU A n4 and dual n2, giving 115/64 completed versus 114/63 timed. Original export verification scope is retained above."
+}

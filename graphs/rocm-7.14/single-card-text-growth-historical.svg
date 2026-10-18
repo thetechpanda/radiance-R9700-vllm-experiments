@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="454" viewBox="0 0 1200 454" role="img" fill="#e2e8f0" font-family="system-ui, sans-serif">
+<title>ROCm 7.14 · single R9700 · historical context-growth references</title>
+<desc>131k context-limit research; 1–2-agent short references and 3–4-agent RAM16 milestones differ in history/settings.</desc>
+<rect width="1200" height="100%" fill="#0b1220" /><style>text{font-family:system-ui, sans-serif}</style>
+<text x="30" y="35" font-size="23" fill="#e2e8f0" text-anchor="start">ROCm 7.14 · single R9700 · historical context-growth references</text>
+<text x="30" y="62" font-size="13" fill="#e2e8f0" text-anchor="start">131k context-limit research; 1–2-agent short references and 3–4-agent RAM16 milestones differ in history/settings.</text>
+<text x="30" y="91" font-size="13" fill="#e2e8f0" text-anchor="start">Mean TTFT (blue bar) and maximum observed TTFT (grey marker), seconds</text>
+<line x1="315.00" x2="315.00" y1="109" y2="376" stroke="#263449" />
+<text x="315.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">0</text>
+<line x1="468.00" x2="468.00" y1="109" y2="376" stroke="#263449" />
+<text x="468.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">13</text>
+<line x1="621.00" x2="621.00" y1="109" y2="376" stroke="#263449" />
+<text x="621.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">26</text>
+<line x1="774.00" x2="774.00" y1="109" y2="376" stroke="#263449" />
+<text x="774.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">39</text>
+<line x1="927.00" x2="927.00" y1="109" y2="376" stroke="#263449" />
+<text x="927.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">52</text>
+<line x1="1080.00" x2="1080.00" y1="109" y2="376" stroke="#263449" />
+<text x="1080.0" y="398" font-size="12" fill="#e2e8f0" text-anchor="middle">65</text>
+<text x="30" y="138" font-size="14" fill="#e2e8f0" text-anchor="start">1 agent(s) · short reference</text>
+<rect x="315" y="121" width="144.86" height="24" fill="#38bdf8" />
+<line x1="568.97" x2="568.97" y1="118" y2="149" stroke="#94a3b8" stroke-width="3" />
+<text x="30" y="158" font-size="11" fill="#94a3b8" text-anchor="start">10 turns; max observed context 118.6k; 0 errors</text>
+<text x="1110" y="138" font-size="12" fill="#e2e8f0" text-anchor="middle">12.36 / 21.67</text>
+<text x="30" y="204" font-size="14" fill="#e2e8f0" text-anchor="start">2 agent(s) · short reference</text>
+<rect x="315" y="187" width="205.57" height="24" fill="#38bdf8" />
+<line x1="831.96" x2="831.96" y1="184" y2="215" stroke="#94a3b8" stroke-width="3" />
+<text x="30" y="224" font-size="11" fill="#94a3b8" text-anchor="start">20 turns; max observed context 121.5k; 0 errors</text>
+<text x="1110" y="204" font-size="12" fill="#e2e8f0" text-anchor="middle">17.54 / 44.11</text>
+<text x="30" y="270" font-size="14" fill="#e2e8f0" text-anchor="start">3 agent(s) · RAM16</text>
+<rect x="315" y="253" width="156.34" height="24" fill="#38bdf8" />
+<line x1="998.04" x2="998.04" y1="250" y2="281" stroke="#94a3b8" stroke-width="3" />
+<text x="30" y="290" font-size="11" fill="#94a3b8" text-anchor="start">124 turns; max observed context 126.2k; 0 errors</text>
+<text x="1110" y="270" font-size="12" fill="#e2e8f0" text-anchor="middle">13.34 / 58.28</text>
+<text x="30" y="336" font-size="14" fill="#e2e8f0" text-anchor="start">4 agent(s) · RAM16</text>
+<rect x="315" y="319" width="197.83" height="24" fill="#38bdf8" />
+<line x1="946.12" x2="946.12" y1="316" y2="347" stroke="#94a3b8" stroke-width="3" />
+<text x="30" y="356" font-size="11" fill="#94a3b8" text-anchor="start">155 turns; max observed context 126.5k; 0 errors</text>
+<text x="1110" y="336" font-size="12" fill="#e2e8f0" text-anchor="middle">16.88 / 53.85</text>
+<text x="690" y="421" font-size="13" fill="#e2e8f0" text-anchor="middle">TTFT (seconds); shared zero-based scale</text>
+<text x="30" y="438" font-size="12" fill="#e2e8f0" text-anchor="start">Targets were approximately 126k; these runs do not prove simultaneous sustained 131k per agent.</text>
+</svg>

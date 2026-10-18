@@ -1,0 +1,20 @@
+From 16 October 2026 P2P kernel work
+Subject: PCI/P2PDMA: whitelist Intel host bridge 8086:4621
+
+This is a minimal reconstruction of the whitelist change from the recorded
+kernel work. It is based on the exact added entry and target file supplied in
+the research notes; surrounding patch metadata from the original working tree
+was not preserved.
+
+The REQ_SAME_HOST_BRIDGE flag keeps the existing same-host-bridge constraint.
+It does not disable the kernel's other PCI P2P topology and ACS checks.
+
+diff --git a/drivers/pci/p2pdma.c b/drivers/pci/p2pdma.c
+--- a/drivers/pci/p2pdma.c
++++ b/drivers/pci/p2pdma.c
+@@ -510,4 +510,5 @@ static const struct pci_p2pdma_whitelist_entry {
+ 	{PCI_VENDOR_ID_INTEL,	0x2f00, REQ_SAME_HOST_BRIDGE},
+ 	{PCI_VENDOR_ID_INTEL,	0x2f01, REQ_SAME_HOST_BRIDGE},
++	{ PCI_VENDOR_ID_INTEL, 0x4621, REQ_SAME_HOST_BRIDGE },
+ 	/* Intel Skylake-E */
+ 	{PCI_VENDOR_ID_INTEL,	0x2030, 0},

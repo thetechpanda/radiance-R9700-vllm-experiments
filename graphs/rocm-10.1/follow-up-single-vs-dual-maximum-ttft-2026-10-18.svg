@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="572" viewBox="0 0 1200 572" role="img" fill="#e2e8f0" font-family="system-ui, sans-serif">
+<title>ROCm 10.1 · single vs dual R9700 · Maximum observed TTFT</title>
+<desc>Eight completed follow-up cells; ~126k context growth target. TP, MTP, slots and context limits differ.</desc>
+<rect width="1200" height="100%" fill="#0b1220" /><style>text{font-family:system-ui, sans-serif}</style>
+<text x="30" y="35" font-size="23" fill="#e2e8f0" text-anchor="start">ROCm 10.1 · single vs dual R9700 · Maximum observed TTFT</text>
+<text x="30" y="62" font-size="13" fill="#e2e8f0" text-anchor="start">Eight completed follow-up cells; ~126k context growth target. TP, MTP, slots and context limits differ.</text>
+<rect x="30" y="84" width="17" height="12" fill="#38bdf8" />
+<text x="55" y="95" font-size="13" fill="#e2e8f0" text-anchor="start">Single R9700 · GPU A</text>
+<rect x="550" y="84" width="17" height="12" fill="#fbbf24" />
+<text x="575" y="95" font-size="13" fill="#e2e8f0" text-anchor="start">Dual R9700</text>
+<line x1="210.00" x2="210.00" y1="116" y2="486" stroke="#263449" />
+<text x="210.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">0.0</text>
+<line x1="375.00" x2="375.00" y1="116" y2="486" stroke="#263449" />
+<text x="375.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">150.6</text>
+<line x1="540.00" x2="540.00" y1="116" y2="486" stroke="#263449" />
+<text x="540.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">301.3</text>
+<line x1="705.00" x2="705.00" y1="116" y2="486" stroke="#263449" />
+<text x="705.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">451.9</text>
+<line x1="870.00" x2="870.00" y1="116" y2="486" stroke="#263449" />
+<text x="870.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">602.5</text>
+<line x1="1035.00" x2="1035.00" y1="116" y2="486" stroke="#263449" />
+<text x="1035.0" y="508" font-size="12" fill="#e2e8f0" text-anchor="middle">753.1</text>
+<text x="30" y="153" font-size="15" fill="#e2e8f0" text-anchor="start">1 agent(s)</text>
+<rect x="210" y="130" width="20.57" height="21" fill="#38bdf8" />
+<text x="238.57" y="146" font-size="12" fill="#e2e8f0" text-anchor="start">18.78</text>
+<rect x="210" y="159" width="13.87" height="21" fill="#fbbf24" />
+<text x="231.87" y="175" font-size="12" fill="#e2e8f0" text-anchor="start">12.66</text>
+<text x="30" y="244" font-size="15" fill="#e2e8f0" text-anchor="start">2 agent(s)</text>
+<rect x="210" y="221" width="44.52" height="21" fill="#38bdf8" />
+<text x="262.52" y="237" font-size="12" fill="#e2e8f0" text-anchor="start">40.64</text>
+<rect x="210" y="250" width="24.47" height="21" fill="#fbbf24" />
+<text x="242.47" y="266" font-size="12" fill="#e2e8f0" text-anchor="start">22.34</text>
+<text x="30" y="335" font-size="15" fill="#e2e8f0" text-anchor="start">3 agent(s)</text>
+<rect x="210" y="312" width="499.71" height="21" fill="#38bdf8" />
+<text x="717.71" y="328" font-size="12" fill="#e2e8f0" text-anchor="start">456.19</text>
+<rect x="210" y="341" width="28.00" height="21" fill="#fbbf24" />
+<text x="246.0" y="357" font-size="12" fill="#e2e8f0" text-anchor="start">25.56</text>
+<text x="30" y="426" font-size="15" fill="#e2e8f0" text-anchor="start">4 agent(s)</text>
+<rect x="210" y="403" width="717.39" height="21" fill="#38bdf8" />
+<text x="935.39" y="419" font-size="12" fill="#e2e8f0" text-anchor="start">654.91</text>
+<rect x="210" y="432" width="29.83" height="21" fill="#fbbf24" />
+<text x="247.83" y="448" font-size="12" fill="#e2e8f0" text-anchor="start">27.23</text>
+<text x="620" y="533" font-size="13" fill="#e2e8f0" text-anchor="middle">Maximum observed TTFT (seconds)</text>
+<text x="30" y="540" font-size="12" fill="#e2e8f0" text-anchor="start">Maximum from each finite run; not p95/p99. Zero client errors does not establish interactive usability.</text>
+<text x="30" y="559" font-size="12" fill="#e2e8f0" text-anchor="start">One observation per cell. No confidence intervals or percentile claims.</text>
+</svg>

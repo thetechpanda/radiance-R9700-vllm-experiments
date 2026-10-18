@@ -1,0 +1,5 @@
+# Preserve recorder CSV bytes and source hashes, including CRLF endings.
+*.csv -text whitespace=cr-at-eol
+
+# Patch context includes significant leading spaces before source tabs.
+*.patch -whitespace

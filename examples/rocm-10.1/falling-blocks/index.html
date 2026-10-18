@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ROCm 10.1 — Qwen3.8 Falling Blocks gallery</title>
+<style>body{max-width:1100px;margin:auto;padding:2rem;background:#0b1220;color:#e2e8f0;font:17px/1.6 system-ui}a{color:#38bdf8}h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.15}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}article{background:#152238;padding:1.25rem;border:1px solid #334155;border-radius:10px}h2{margin-top:2.5rem}h3{margin-top:0}.play{display:inline-block;padding:.45rem .9rem;background:#38bdf8;color:#0b1220;font-weight:700;border-radius:6px;text-decoration:none}.muted{color:#94a3b8}footer{margin-top:2.5rem}</style></head><body>
+<nav><a href="../../../index.html">Research home</a> · <a href="../../../docs/FINAL-REPORT-20261018.html">Results</a> · <a href="README.html">Provenance</a> · <a href="../../rocm-7.14/falling-blocks/index.html">Historical games</a></nav>
+<header><p>QWEN3.8 27B · ROCm 10.1 · R9700</p><h1>Eleven games.<br>Three recorded fleet attempts.</h1>
+<p>Start with the completed single-card retry or dual-card fleet. Each agent built its own seeded Falling Blocks variant. Use a keyboard; controls are shown inside each game.</p>
+<p>All eleven original outputs passed reported target-side syntax and mocked-DOM checks. That is not full browser qualification. Fleet completion and file production are distinct: the first single-card attempt failed overall.</p></header><main>
+<section><h2>Single card — completed retry</h2><p>All four agents delivered and exited cleanly. Fleet wall 75:23; 65,536-token request budget, 90-minute per-agent cap; client context corrected to 131,070.</p><div class="cards">
+<article><h3>Agent 0</h3><p class="muted">Seed 100 · 26,083 bytes</p><p>Exit 0; delivered</p><a class="play" href="single-card-retry/agent-0/index.html">Play Agent 0</a></article>
+<article><h3>Agent 1</h3><p class="muted">Seed 101 · 27,055 bytes</p><p>Exit 0; delivered</p><a class="play" href="single-card-retry/agent-1/index.html">Play Agent 1</a></article>
+<article><h3>Agent 2</h3><p class="muted">Seed 102 · 23,562 bytes</p><p>Exit 0; delivered</p><a class="play" href="single-card-retry/agent-2/index.html">Play Agent 2</a></article>
+<article><h3>Agent 3</h3><p class="muted">Seed 103 · 25,991 bytes</p><p>Exit 0; delivered</p><a class="play" href="single-card-retry/agent-3/index.html">Play Agent 3</a></article>
+</div></section>
+<section><h2>Dual card — completed fleet</h2><p>All four agents delivered and exited cleanly. Fleet wall 30:10; 32,768-token request budget, 60-minute per-agent cap.</p><div class="cards">
+<article><h3>Agent 0</h3><p class="muted">Seed 100 · 24,939 bytes</p><p>Exit 0; delivered</p><a class="play" href="dual-card/agent-0/index.html">Play Agent 0</a></article>
+<article><h3>Agent 1</h3><p class="muted">Seed 101 · 24,074 bytes</p><p>Exit 0; delivered</p><a class="play" href="dual-card/agent-1/index.html">Play Agent 1</a></article>
+<article><h3>Agent 2</h3><p class="muted">Seed 102 · 25,022 bytes</p><p>Exit 0; delivered</p><a class="play" href="dual-card/agent-2/index.html">Play Agent 2</a></article>
+<article><h3>Agent 3</h3><p class="muted">Seed 103 · 22,429 bytes</p><p>Exit 0; delivered</p><a class="play" href="dual-card/agent-3/index.html">Play Agent 3</a></article>
+</div></section>
+<section><h2>Single card — first attempt</h2><p>Three games produced; one clean delivery, two timeouts after producing files. Agent 0 produced no game. Fleet wall 60:00. Retained as failure evidence.</p><div class="cards">
+<article><h3>Agent 1</h3><p class="muted">Seed 101 · 22,877 bytes</p><p>Exit 0; delivered</p><a class="play" href="single-card/agent-1/index.html">Play Agent 1</a></article>
+<article><h3>Agent 2</h3><p class="muted">Seed 102 · 20,394 bytes</p><p>Exit 124; files delivered before timeout</p><a class="play" href="single-card/agent-2/index.html">Play Agent 2</a></article>
+<article><h3>Agent 3</h3><p class="muted">Seed 103 · 22,387 bytes</p><p>Exit 124; files delivered before timeout</p><a class="play" href="single-card/agent-3/index.html">Play Agent 3</a></article>
+</div></section>
+</main><footer><p>Profile and budget changes prevent a controlled speed or model-quality comparison. See the report for serving configuration, limits and the retained failed attempt.</p></footer></body></html>

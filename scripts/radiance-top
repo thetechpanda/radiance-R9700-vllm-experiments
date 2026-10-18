@@ -1,0 +1,810 @@
+#!/usr/bin/env python3
+"""radiance-top - top/htop-style ncurses top for a radiance vLLM server.
+SOURCES: vLLM server (/metrics + /v1/models) and local AMD GPU sysfs sensors.
+vLLM metrics carry no per-request identity, so the session view is a
+per-REQUEST windowed stats table (queue/prefill/decode/TTFT/TPOT/tokens/
+preemptions) + running/waiting gauges.
+Layout: title bar, SERVER PERFORMANCE, TOKEN FLOW (graphs flush right),
+REQUEST FLOW, LATENCY, CONFIG (gray), PRESSURE, footer.
+usage: radiance-top [metrics-url] [--plain]
+keys: q quit | p pause | w cycle window 30/60/120/300/600s/since-start | 1 toggle per-GPU stats
+Stream colors: n/a (metrics have no stream identity).
+PRESS flags: G GPU KV>=95%, C RAM KV>=85%, Q capacity wait,
+F allocation failures, E preemptions. Activity rates are informational.
+"""
+import curses, sys, time, json, collections, urllib.request
+import atexit, re, subprocess, threading
+from pathlib import Path
+from urllib.parse import urlsplit
+
+import argparse
+_parser = argparse.ArgumentParser(description=__doc__)
+_parser.add_argument('metrics_url', nargs='?')
+_parser.add_argument('--url')
+_parser.add_argument('--plain', action='store_true')
+_parser.add_argument('--interval', type=float, default=1.0)
+_parser.add_argument('--window', choices=('30','60','120','300','600','since-start'), default='60')
+_args = _parser.parse_args()
+if _args.interval <= 0: _parser.error('--interval must be positive')
+URL = _args.url or _args.metrics_url or 'http://localhost:8000/metrics'
+PLAIN = _args.plain
+INTERVAL = _args.interval
+WINSZ = [30, 60, 120, 300, 600, None]
+WK = WINSZ.index(None if _args.window == 'since-start' else int(_args.window))
+SUMMARY_WINDOWS = (60, 120, 300, 600, None)
+HISTORY_SECONDS = 605
+
+def window_label(span):
+    return "since-start" if span is None else f"{span}s"
+
+def window_baseline(history, span, start):
+    """Use wall timestamps, retaining the sample immediately before the cut."""
+    if span is None: return start
+    cut = history[-1][0] - span
+    i = 0
+    while i + 1 < len(history) and history[i + 1][0] <= cut: i += 1
+    return history[i]
+
+def table_columns(width):
+    columns = [("now", "now", 10), (60, "60s", 10), (120, "120s", 10),
+               (300, "300s", 10), (600, "600s", 10), (None, "since-start", 12),
+               ("min", "min", 10), ("max", "max", 10), ("mean", "mean", 10)]
+    for optional in ("min", "max", "mean", 120, 60, "now"):
+        if 12 + sum(c[2] for c in columns) <= width - 2: break
+        columns = [c for c in columns if c[0] != optional]
+    return columns
+SPK = "▁▂▃▄▅▆▇█"
+
+def grab(url):
+    with urllib.request.urlopen(url, timeout=0.9) as r:
+        return r.read().decode("utf-8", "replace")
+
+def parse(txt):
+    S = collections.defaultdict(float); X = {}
+    for ln in txt.splitlines():
+        if ln.startswith("#") or " " not in ln: continue
+        head, _, val = ln.rpartition(" ")
+        try: v = float(val)
+        except ValueError: continue
+        name = head.split("{", 1)[0]
+        S[name] += v
+        if name == "vllm:cache_config_info" and not X.get("cfg"):
+            import re as _re
+            X["cfg"] = dict(_re.findall(r'(\w+)="([^"]*)"', head))
+        if name == "vllm:num_requests_waiting_by_reason":
+            if 'reason="capacity"' in head: X["w_cap"] = v
+            elif 'reason="deferred"' in head: X["w_def"] = v
+        elif name == "vllm:prompt_tokens_by_source_total":
+            if 'source="local_compute"' in head: X["p_comp"] = v
+            elif 'source="local_cache_hit"' in head: X["p_hit"] = v
+            elif 'source="external_kv_transfer"' in head: X["p_xfer"] = v
+        elif name == "vllm:kv_offload_tiering_chunk_hits_total" and 'tier="0:primary"' in head: X["h_hits"] = v
+        elif name == "vllm:kv_offload_tiering_chunk_queries_total" and 'tier="0:primary"' in head: X["h_q"] = v
+    return S, X
+
+P = "vllm:"
+KEYS = dict(gpu=P+"kv_cache_usage_perc", pins=P+"kv_offload_cpu_cache_usage_perc",
+            run=P+"num_requests_running", wait=P+"num_requests_waiting",
+            gen=P+"generation_tokens_total", d=P+"spec_decode_num_draft_tokens_total",
+            acc=P+"spec_decode_num_accepted_tokens_total", af=P+"kv_offload_allocation_failure_total",
+            pre=P+"num_preemptions_total", ts=P+"time_to_first_token_seconds_sum",
+            tc=P+"time_to_first_token_seconds_count", its=P+"inter_token_latency_seconds_sum",
+            itc=P+"inter_token_latency_seconds_count", sb=P+"kv_offload_store_bytes_total",
+            lb=P+"kv_offload_load_bytes_total",
+            rq_s=P+"request_queue_time_seconds_sum", rq_c=P+"request_queue_time_seconds_count",
+            pf_s=P+"request_prefill_time_seconds_sum", pf_c=P+"request_prefill_time_seconds_count",
+            dc_s=P+"request_decode_time_seconds_sum", dc_c=P+"request_decode_time_seconds_count",
+            in_s=P+"request_inference_time_seconds_sum", in_c=P+"request_inference_time_seconds_count",
+            pt_s=P+"request_prompt_tokens_sum", pt_c=P+"request_prompt_tokens_count",
+            gt_s=P+"request_generation_tokens_sum", gt_c=P+"request_generation_tokens_count",
+            po_s=P+"request_time_per_output_token_seconds_sum", po_c=P+"request_time_per_output_token_seconds_count",
+            np_s=P+"request_num_preemptions_sum", np_c=P+"request_num_preemptions_count",
+            kc_s=P+"request_prefill_kv_computed_tokens_sum", kc_c=P+"request_prefill_kv_computed_tokens_count",
+            itn=P+"iteration_tokens_total_sum", itc2=P+"iteration_tokens_total_count",
+            pstart=P+"process_start_time_seconds",
+            su=P+"request_success_total")
+
+# ring -> (sum key, count key, scale): per-request ratio metrics
+REQMAP = dict(queue=("rq_s", "rq_c", 1), ttft=("ts", "tc", 1),
+              prefill=("pf_s", "pf_c", 1), decode=("dc_s", "dc_c", 1),
+              tpot=("po_s", "po_c", 1000), prompt=("pt_s", "pt_c", 1),
+              gen=("gt_s", "gt_c", 1), preempt=("np_s", "np_c", 1),
+              hit=("kc_s", "pt_c", 100))
+
+def spark(vals, w):
+    if w < 2: return ""
+    if len(vals) < 2: return " " * w
+    v = [x for x in list(vals)[-w:] if x is not None]
+    if not v: return " " * w
+    lo, hi = min(v), max(v); sp = hi - lo or 1
+    return "".join(SPK[min(7, int((x - lo) / sp * 7.99))] for x in v)
+
+def fmt(v):
+    if v is None: return "?"
+    return f"{v/1e6:.2f}M" if v >= 1e6 else (f"{v/1e3:.1f}K" if v >= 1e3 else f"{v:.0f}")
+
+def token_text(value):
+    if abs(value) >= 999950: return f"{value/1e6:.2f}M"
+    if abs(value) >= 1000: return f"{value/1e3:.1f}K"
+    return f"{value:.1f}"
+
+def bigbar(frac, w):
+    f = max(0.0, min(1.0, frac)); n = int(f * w)
+    return "|" * n + "." * (w - n)
+
+def latency_color(value, good, limit):
+    if value is None: return 0
+    return 1 if value <= good else (2 if value <= limit else 3)
+
+PRESSURE_FLAGS = (("G", "GPU KV>=95%", 2), ("C", "RAM KV>=85%", 2),
+                  ("Q", "capacity wait", 2), ("F", "alloc fail", 3),
+                  ("E", "preemptions", 2))
+
+def pressure_flags(v):
+    conditions = (v["gpu"] >= .95, v["pins"] >= .85, v["wcap"] > 0,
+                  v["af"] > 0, v["pre"] > 0)
+    return "".join(flag if on else "-" for (flag, _, _), on in zip(PRESSURE_FLAGS, conditions))
+
+def read_gpus(root="/sys/class/drm"):
+    """Read each AMD DRM card; missing/inaccessible sensors stay unknown."""
+    def number(path, scale=1):
+        try: return float(path.read_text().strip()) / scale
+        except (OSError, ValueError): return None
+    cards = [p for p in Path(root).glob("card*") if p.name[4:].isdigit()]
+    gpus = []
+    for card in sorted(cards, key=lambda p: int(p.name[4:])):
+        dev = card / "device"
+        try:
+            if dev.joinpath("vendor").read_text().strip() != "0x1002": continue
+        except OSError: continue
+        hwmons = sorted(dev.glob("hwmon/hwmon*"))
+        def sensor(names, scale):
+            for hwmon in hwmons:
+                for name in names:
+                    value = number(hwmon / name, scale)
+                    if value is not None: return value
+            return None
+        gpus.append(dict(id=card.name, busy=number(dev / "gpu_busy_percent"),
+                         used=number(dev / "mem_info_vram_used", 2**30),
+                         total=number(dev / "mem_info_vram_total", 2**30),
+                         power=sensor(("power1_average", "power1_input"), 1e6),
+                         temp=sensor(("temp1_input",), 1000)))
+    return gpus
+
+def aggregate_gpus(gpus):
+    result = dict(id=f"ALL {len(gpus)}")
+    for key in ("busy", "used", "total", "power", "temp"):
+        vals = [gpu[key] for gpu in gpus]
+        # Do not present a partial total as a complete hardware reading.
+        result[key] = (None if not vals or any(v is None for v in vals) else
+                       sum(vals) / len(vals) if key == "busy" else
+                       max(vals) if key == "temp" else sum(vals))
+    return result
+
+def gpu_line(gpu):
+    def f(key, spec):
+        value = gpu[key]
+        return format(value, spec) if value is not None else "?"
+    return (f"GPU {gpu['id']:<6} busy {f('busy', '5.1f')}%"
+            f"  VRAM {f('used', '.1f')}/{f('total', '.1f')} GiB"
+            f"  power {f('power', '.0f')} W  temp {f('temp', '.1f')} C")
+
+def sensor_spark(values, width, ceiling=None):
+    """Keep missing samples as gaps; percentage graphs share a fixed scale."""
+    if width < 1: return ""
+    values = list(values)[-width:]
+    known = [v for v in values if v is not None]
+    if not known: return " " * width
+    lo = 0 if ceiling is not None else min(known)
+    hi = ceiling if ceiling is not None else max(known)
+    span = max(hi - lo, 1e-9)
+    return "".join(" " if v is None else SPK[max(0, min(7, int((v - lo) / span * 7.99)))]
+                   for v in values).rjust(width)
+
+def get_cfg():
+    """metrics-first config facts; fields /metrics hides fall back to the
+    container launch cmd (server-side config, not test data)."""
+    import re as _re
+    L = {}
+    try:
+        for ln in grab(URL).splitlines():
+            if ln.startswith("vllm:cache_config_info{"):
+                L = dict(_re.findall(r'(\w+)="([^"]*)"', ln)); break
+    except Exception: pass
+    model = ctx = None
+    try:
+        m = json.loads(grab(URL.rsplit("/metrics", 1)[0] + "/v1/models"))["data"][0]
+        model, ctx = m["id"], m.get("max_model_len")
+    except Exception: pass
+    cmd = []
+    try:
+        import subprocess
+        if urlsplit(URL).hostname not in ("localhost", "127.0.0.1", "::1"): raise ValueError("Remote configuration")
+        out = subprocess.run(["podman", "inspect", "vllm-radiance.1", "--format", "{{json .Config.Cmd}}"],
+                             capture_output=True, text=True, timeout=4).stdout
+        cmd = json.loads(out); cmd = cmd if isinstance(cmd, list) else str(cmd).split()
+    except Exception: pass
+    def flag(n): return cmd[cmd.index(n) + 1] if n in cmd and cmd.index(n) + 1 < len(cmd) else None
+    def jflag(n):
+        try: return json.loads(flag(n))
+        except Exception: return {}
+    spec = jflag("--speculative-config"); kv = jflag("--kv-transfer-config")
+    ext = kv.get("kv_connector_extra_config") or {}
+    cb = ext.get("cpu_bytes_to_use")
+    guards = [f"{n.replace('--','')} {flag(n)}" for n in
+              ("--scheduling-policy", "--watermark", "--prefill-schedule-interval",
+               "--max-num-scheduled-tokens") if flag(n)]
+    toks = L.get("kv_cache_size_tokens")
+    gpu_cap = int(toks) if toks and toks.isdigit() else None
+    if gpu_cap is None and cmd:
+        try:
+            logs = subprocess.run(['podman','logs','--tail','2000','vllm-radiance.1'], capture_output=True, text=True, timeout=4)
+            sizes = _re.findall(r'GPU KV cache size:\s*([\d,]+) tokens', logs.stdout + logs.stderr)
+            if sizes: gpu_cap = int(sizes[-1].replace(',', ''))
+        except Exception: pass
+    conc = L.get("kv_cache_max_concurrency")
+    lines = [("model", (model or "?").split("/")[-1]),
+             ("ctx", str(ctx) if ctx else "?"),
+             ("gpu-util", L.get("gpu_memory_utilization") or "?"),
+             ("cache", L.get("cache_dtype") or "?"),
+             ("prefix", "on" if L.get("enable_prefix_caching") == "True" else "off"),
+             ("GPU KV", f"{fmt(gpu_cap)} tok" + (f" x{float(conc):.2f}" if conc else "")),
+             ("KV tier", f"RAM {cb/2**30:.0f} GiB ({L.get('kv_offloading_backend','?')})" if cb else "none"),
+             ("evict", ext.get("eviction_policy") or "?"),
+             ("fs tier", "yes" if ext.get("secondary_tiers") else "none"),
+             ("spec", f"{spec.get('method','?')} x{spec.get('num_speculative_tokens','?')}"),
+             ("guards", ", ".join(guards) if guards else "none"),
+             ("PCIe", "host-dependent")]
+    return lines, dict(gpu_cap=gpu_cap, ctx=ctx, cpu_bytes=cb)
+
+class PrefillProgress:
+    """Pure-prefill step throughput from bounded, local engine iteration logs.
+
+    Mixed prefill/decode steps cannot isolate prefill time and are excluded.
+    Counter-credit rates are deliberately not used as a progress substitute.
+    """
+    pattern = re.compile(r'Iteration\((\d+)\):.*?(\d+) context tokens,\s*(\d+) generation requests,.*?iteration elapsed time:\s*([\d.]+) ms')
+
+    def __init__(self, start=False):
+        self.lock = threading.Lock()
+        self.events = collections.deque()
+        self.started = time.time()
+        self.total_tokens = self.total_seconds = 0.0
+        self.process = None
+        self.stopping = threading.Event()
+        if start:
+            self.thread = threading.Thread(target=self._follow, daemon=True)
+            self.thread.start()
+            atexit.register(self.close)
+
+    def feed(self, line, stamp=None):
+        match = self.pattern.search(line)
+        if not match: return False
+        _, tokens, generation_requests, milliseconds = match.groups()
+        seconds = float(milliseconds) / 1000.0
+        if seconds <= 0: return False
+        event = (time.time() if stamp is None else stamp, int(tokens), int(generation_requests), seconds)
+        with self.lock:
+            self.events.append(event)
+            while self.events and event[0] - self.events[0][0] > HISTORY_SECONDS:
+                self.events.popleft()
+            if event[1] > 0 and event[2] == 0:
+                self.total_tokens += event[1]
+                self.total_seconds += seconds
+        return True
+
+    def _follow(self):
+        while not self.stopping.is_set():
+            try:
+                self.process = subprocess.Popen(['podman','logs','--follow','--tail','0','vllm-radiance.1'],
+                                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                for line in self.process.stdout:
+                    if self.stopping.is_set(): break
+                    self.feed(line)
+            except OSError:
+                pass
+            finally:
+                self._stop_process()
+            self.stopping.wait(1.0)
+
+    def _stop_process(self):
+        process = self.process
+        if process is not None and process.poll() is None:
+            process.terminate()
+            try: process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                process.kill(); process.wait()
+
+    def close(self):
+        self.stopping.set()
+        self._stop_process()
+
+    def snapshot(self, now=None):
+        now = time.time() if now is None else now
+        with self.lock:
+            events = list(self.events)
+            tokens, seconds = self.total_tokens, self.total_seconds
+            started = self.started
+        pure = [e for e in events if e[1] > 0 and e[2] == 0]
+        out = {'now': None, 'min': min((e[1]/e[3] for e in pure), default=None),
+               'max': max((e[1]/e[3] for e in pure), default=None),
+               'mean': tokens/seconds if seconds else None, None: tokens/seconds if seconds else None}
+        state = 'waiting for local step logs'
+        if events:
+            last = events[-1]
+            if now-last[0] <= max(5.0, 2*last[3]+2):
+                if last[2] and last[1]: state = 'mixed step; PP time unavailable'
+                elif last[1]: out['now'] = last[1]/last[3]; state = 'pure-prefill step tokens / elapsed'
+                else: out['now'] = 0.0; state = 'decode step; no prefill'
+            else: state = 'no fresh step log'
+        for span in (60,120,300,600):
+            covered = [e for e in pure if now-span <= e[0] <= now]
+            duration = sum(e[3] for e in covered)
+            out[span] = sum(e[1] for e in covered)/duration if duration and now-started >= span else None
+        return out, state
+
+    def reset(self):
+        with self.lock:
+            self.events.clear()
+            self.total_tokens = self.total_seconds = 0.0
+            self.started = time.time()
+
+
+class Top:
+    RINGS = ("pp_live", "pp", "ppitn", "tg", "tg_s", "gpu", "pins", "ramhit", "ttft", "itl",
+             "spec", "re", "queue", "prefill",
+             "decode", "e2e", "tpot", "prompt", "gen", "preempt", "hit")
+    def __init__(self, live_prefill=False):
+        self.ring = collections.defaultdict(list); self.hist = []; self.since_start = None
+        self.model = "?"; self.dead = True; self.note = ""
+        self.gpu_details = True; self.gpus = []
+        self.gpu_history = collections.defaultdict(lambda: collections.deque(maxlen=605))
+        self.local_metrics = urlsplit(URL).hostname in ("localhost", "127.0.0.1", "::1")
+        self.prefill = PrefillProgress(start=True) if live_prefill and self.local_metrics else None
+        self.pp_stats = {}; self.pp_state = "local iteration logs unavailable"
+        self.t0 = time.time()
+        self.pstart = self._server_start()
+        self.act = collections.defaultdict(float)   # per-metric active seconds
+        self.life = {}                               # metric -> lifetime mean
+        self.wavg = {}                               # (ring, span) -> wall avg
+        self.cfg, self.facts = get_cfg()
+    def _server_start(self):
+        # vLLM build has no start-time metric; ask podman for the container's
+        # start (this tool runs on the host). Fallback: viewer start.
+        import subprocess
+        from datetime import datetime
+        try:
+            out = subprocess.run(["podman", "inspect", "-f", "{{.State.StartedAt}}",
+                                  "vllm-radiance.1"], capture_output=True, text=True, timeout=5)
+            s = out.stdout.strip()
+            if s:
+                # podman prints "YYYY-MM-DD HH:MM:SS.nnnnnnnnn +ZZZZ TZNAME"
+                p = s.split()
+                if len(p) >= 3:
+                    return datetime.fromisoformat(
+                        p[0] + "T" + p[1].split(".")[0] + p[2]).timestamp()
+        except Exception:
+            pass
+        return self.t0
+    def poll(self):
+        self.gpus = read_gpus() if self.local_metrics else []
+        readings = {gpu["id"]: gpu for gpu in self.gpus}
+        if self.gpus: readings["all"] = aggregate_gpus(self.gpus)
+        for key in set(self.gpu_history) | set(readings):
+            self.gpu_history[key].append(readings.get(key))
+        try: txt = grab(URL)
+        except Exception: self.dead = True; return
+        self.dead = False
+        S, X = parse(txt)
+        if self.model == "?":
+            i = txt.find('model_name="')
+            self.model = txt[i+12:txt.find('"', i+12)].split("/")[-1] if i > 0 else "?"
+        t = time.time()
+        if self.hist:
+            for k in ("gen", "ts", "sb", "su"):
+                if S[KEYS[k]] < self.hist[-1][1][KEYS[k]] - 1:
+                    # counter reset (server restart): rebase EVERYTHING that
+                    # references old counter values - base/baseX/act/life -
+                    # so means can never reference the pre-reset population
+                    self.hist = []; self.ring.clear(); self.since_start = None; self.wavg = {}
+                    for a in ("base", "baseX"):
+                        if hasattr(self, a): delattr(self, a)
+                    self.act = collections.defaultdict(float); self.life = {}
+                    if self.prefill: self.prefill.reset()
+                    self.note = "counter reset - rebased"; break
+        self.hist.append((t, S, X))
+        if self.since_start is None: self.since_start = self.hist[-1]
+        while len(self.hist) > 1 and t - self.hist[1][0] >= HISTORY_SECONDS: self.hist.pop(0)
+        self.compute()
+        if self.prefill:
+            self.pp_stats, self.pp_state = self.prefill.snapshot()
+            self.v["pp_live"] = self.pp_stats.get("now")
+            self.ring["pp_live"].append(self.pp_stats.get("now"))
+            self.ring["pp_live"] = self.ring["pp_live"][-600:]
+    def compute(self):
+        h = self.hist; t, S, X = h[-1]
+        t0, S0, X0 = window_baseline(h, WINSZ[WK], self.since_start)
+        dt = max(1e-9, t - t0)
+        d = lambda a, b: max(0.0, (b - a) / dt)
+        avg = lambda sk, ck, scale=1.0: (
+            (S[KEYS[sk]] - S0[KEYS[sk]]) / (S[KEYS[ck]] - S0[KEYS[ck]]) * scale
+            if S[KEYS[ck]] - S0[KEYS[ck]] > 0 else None)
+        # no completions in window: NO live reading. Show "-" (the
+        # lifetime avg lives in the header + mean column, not disguised
+        # as "now" - user caught 62.7s queue for 3 idle-cap agents)
+        p_all = (X.get("p_comp", 0) + X.get("p_hit", 0) + X.get("p_xfer", 0)) - \
+                (X0.get("p_comp", 0) + X0.get("p_hit", 0) + X0.get("p_xfer", 0))
+        # PP = total context INTAKE rate (compute + cache hit + kv transfer),
+        # per user spec: (t1-t0)/interval where t = total prompt tokens received.
+        pp = d(X0.get("p_comp", 0) + X0.get("p_hit", 0) + X0.get("p_xfer", 0),
+               X.get("p_comp", 0) + X.get("p_hit", 0) + X.get("p_xfer", 0))
+        ppc = d(X0.get("p_comp", 0), X.get("p_comp", 0))  # compute-only (P flag)
+        # PP-S = step-based prefill rate: iteration_tokens minus gen, credited
+        # every scheduler step -> continuous, no completion-quantization spikes.
+        ppitn = d(S0[KEYS["itn"]] - S0[KEYS["gen"]], S[KEYS["itn"]] - S[KEYS["gen"]])
+        # TG-S = decode yield: generated tokens per scheduler step. Dips when
+        # prefill steps crowd the clock (the PP-squeezes-TG duty-cycle number).
+        dic = S[KEYS["itc2"]] - S0[KEYS["itc2"]]
+        tg_s = (S[KEYS["gen"]] - S0[KEYS["gen"]]) / dic if dic > 0 else None
+        # 100% = server-LIFETIME averages (whole server, not the window):
+        # PP-100% = all prefill tokens / uptime; TG-100% = gen / all steps.
+        up = max(1.0, t - (S.get(KEYS["pstart"]) or self.pstart or t))
+        pp_life = (S[KEYS["itn"]] - S[KEYS["gen"]]) / up
+        tgs_life = S[KEYS["gen"]] / S[KEYS["itc2"]] if S[KEYS["itc2"]] > 0 else None
+        tg = d(S0[KEYS["gen"]], S[KEYS["gen"]])
+        re = 100 * (X.get("p_comp", 0) - X0.get("p_comp", 0)) / p_all if p_all >= 100 else None
+        sd = d(S0[KEYS["d"]], S[KEYS["d"]]); sa = d(S0[KEYS["acc"]], S[KEYS["acc"]])
+        spec = min(100.0, 100 * sa / sd) if sd > 0.5 else None
+        dhq = X.get("h_q", 0) - X0.get("h_q", 0)
+        ramhit = 100 * (X.get("h_hits", 0) - X0.get("h_hits", 0)) / dhq if dhq >= 10 else None
+        nreq = S[KEYS["su"]] - S0[KEYS["su"]]
+        nl = S[KEYS["su"]]
+        self.v = dict(gpu=S[KEYS["gpu"]], pins=S[KEYS["pins"]], run=S[KEYS["run"]],
+                      wait=S[KEYS["wait"]], wcap=X.get("w_cap", 0), wdef=X.get("w_def", 0),
+                      pp=pp, ppc=ppc, ppitn=ppitn, pp_life=pp_life, tg=tg, tg_s=tg_s,
+                      tgs_life=tgs_life, re=re, spec=spec, ramhit=ramhit, nreq=nreq, nl=nl,
+                      ttft=avg("ts", "tc"), itl=avg("its", "itc", 1000),
+                      queue=avg("rq_s", "rq_c"), prefill=avg("pf_s", "pf_c"),
+                      decode=avg("dc_s", "dc_c"), e2e=avg("in_s", "in_c"),
+                      tpot=avg("po_s", "po_c", 1000),
+                      prompt=avg("pt_s", "pt_c"), gen=avg("gt_s", "gt_c"),
+                      preempt=avg("np_s", "np_c"),
+                      hit=(100 * (S[KEYS["kc_s"]] - S0[KEYS["kc_s"]]) /
+                           max(1.0, S[KEYS["pt_s"]] - S0[KEYS["pt_s"]])
+                           if S[KEYS["pt_s"]] - S0[KEYS["pt_s"]] > 0
+                           else (100 * S[KEYS["kc_s"]] / S[KEYS["pt_s"]] if S[KEYS["pt_s"]] > 0 else None)),
+                      stb=d(S0[KEYS["sb"]], S[KEYS["sb"]]) / 1e9, ltb=d(S0[KEYS["lb"]], S[KEYS["lb"]]) / 1e9,
+                      af=int(S[KEYS["af"]] - S0[KEYS["af"]]), pre=int(S[KEYS["pre"]] - S0[KEYS["pre"]]),
+                      gpu_tok=S[KEYS["gpu"]] * self.facts["gpu_cap"] if self.facts["gpu_cap"] is not None else None)
+        self.v["press"] = pressure_flags(self.v)
+        # 1-SECOND INSTANT samples for rate rings: each sample = tokens/second
+        # over the last poll only. A prefill second reads gen=0 (excluded from
+        # active averages), a decode second reads the true decode rate - no
+        # sliding-window smearing. (v dict keeps window values for pressure
+        # flags / plain mode.)
+        t1, S1, X1 = (h[-2] if len(h) >= 2 else h[-1])
+        dt1 = t - t1
+        inst = {}
+        if dt1 > 0.2:
+            pa1 = X1.get("p_comp", 0) + X1.get("p_hit", 0) + X1.get("p_xfer", 0)
+            pa0 = X.get("p_comp", 0) + X.get("p_hit", 0) + X.get("p_xfer", 0)
+            dpa = pa0 - pa1
+            # PP: prompt-source counters credit in QUANTIZED chunk bursts -
+            # a 1s instant reads 32870 then 0 for 30s. PP ring therefore uses
+            # WINDOW samples (v["pp"], like poll.sh): min/max over window
+            # readings, 60s/120s from fixed-span wall deltas below.
+            inst["ppitn"] = ((S[KEYS["itn"]] - S[KEYS["gen"]]) -
+                             (S1[KEYS["itn"]] - S1[KEYS["gen"]])) / dt1
+            # PP (the row) = REAL PREFILL d(p_comp)/30s - local_compute only
+            # (cache hits & KV transfers are NOT prefill - poll.sh's own
+            # banner: "PP = RECOMPUTE only"). Window = poll.sh WINDOW(30)+2
+            # trim: the counter credits in one burst at prefill completion,
+            # and 30s is the span poll smooths it over (offline replay:
+            # p95 deviation 0.9 t/s vs poll's column; 10s missed the burst
+            # in 60.7% of poll-active rows - the complaint).
+            cut = t - 32.0
+            i0 = len(h) - 1
+            while i0 > 0 and h[i0 - 1][0] >= cut: i0 -= 1
+            t10, _, X10 = h[i0]; dt10 = t - t10
+            if dt10 > 1:
+                inst["pp"] = (X.get("p_comp", 0) - X10.get("p_comp", 0)) / dt10
+            inst["tg"] = (S[KEYS["gen"]] - S1[KEYS["gen"]]) / dt1
+            dstep = S[KEYS["itc2"]] - S1[KEYS["itc2"]]
+            inst["tg_s"] = (S[KEYS["gen"]] - S1[KEYS["gen"]]) / dstep if dstep > 0 else None
+            dd = S[KEYS["d"]] - S1[KEYS["d"]]
+            inst["spec"] = 100 * (S[KEYS["acc"]] - S1[KEYS["acc"]]) / dd if dd > 0 else None
+            inst["re"] = 100 * (X.get("p_comp", 0) - X1.get("p_comp", 0)) / dpa if dpa >= 20 else None
+        for k in self.RINGS:
+            val = inst.get(k, self.v.get(k))
+            if val is None and k == "ramhit": val = 0.0   # graph continuity
+            if val is not None: self.ring[k].append(val)
+            if len(self.ring[k]) > 600: self.ring[k].pop(0)
+        # 60s/120s columns: PLAIN wall averages over fixed spans (tokens in
+        # span / span seconds) - the poll.sh reading, no active-time logic.
+        self.wavg = {}
+        for span in SUMMARY_WINDOWS:
+            t0w, S0w, X0w = window_baseline(h, span, self.since_start); dtw = t - t0w
+            if dtw <= 0 or (span is not None and dtw < span): continue
+            paw = lambda XX: XX.get("p_comp", 0) + XX.get("p_hit", 0) + XX.get("p_xfer", 0)
+            self.wavg[("pp", span)] = (X.get("p_comp", 0) - X0w.get("p_comp", 0)) / dtw
+            self.wavg[("ppitn", span)] = ((S[KEYS["itn"]] - S[KEYS["gen"]]) -
+                                          (S0w[KEYS["itn"]] - S0w[KEYS["gen"]])) / dtw
+            self.wavg[("tg", span)] = (S[KEYS["gen"]] - S0w[KEYS["gen"]]) / dtw
+            ddw = S[KEYS["d"]] - S0w[KEYS["d"]]
+            self.wavg[("spec", span)] = (100 * (S[KEYS["acc"]] - S0w[KEYS["acc"]]) / ddw
+                                         if ddw > 0 else None)
+            dpaw = paw(X) - paw(X0w)
+            self.wavg[("re", span)] = (100 * (X.get("p_comp", 0) - X0w.get("p_comp", 0)) / dpaw
+                                       if dpaw >= 100 else None)
+            for rk, (sk, ck, sc) in REQMAP.items():
+                cw = S[KEYS[ck]] - S0w[KEYS[ck]]
+                self.wavg[(rk, span)] = (sc * (S[KEYS[sk]] - S0w[KEYS[sk]]) / cw
+                                         if cw > 0 else None)
+            for gk in ("gpu", "pins", "ramhit"):
+                if span is not None:
+                    vv = self.ring[gk][-span:]
+                    self.wavg[(gk, span)] = sum(vv) / len(vv) if vv else None
+        # active seconds: rates are averaged over time they were ACTIVE,
+        # never diluted by idle seconds (0.1 t/s artifact killer)
+        # active seconds: pp = prefill COMPUTE active seconds (poll's PP-avg
+        # denominator SAT), ppitn = step-progress active, tg = decode active
+        for k, val in (("pp", self.v.get("ppc")), ("ppitn", self.v.get("ppitn")),
+                       ("tg", self.v.get("tg"))):
+            if val and val > 0: self.act[k] += dt
+        # lifetime means are measured over the SAME span as their active
+        # seconds: counters baselined at first sample (viewer attach)
+        if not hasattr(self, "base"): self.base = dict(S); self.baseX = dict(X)
+        B = collections.defaultdict(float, {k: S[k] - self.base.get(k, 0) for k in S})
+        bx = {k: X.get(k, 0) - self.baseX.get(k, 0) for k in ("p_comp", "p_hit", "p_xfer")}
+        p_all_tot = bx["p_comp"] + bx["p_hit"] + bx["p_xfer"]
+        lf = {}
+        for k, num, den in (
+                ("pp", bx["p_comp"], self.act["pp"]),  # poll's "PP avg":
+                # recompute tokens / prefill-ACTIVE seconds (SAT), 6000 clamp
+                ("ppitn", B[KEYS["itn"]] - B[KEYS["gen"]], self.act["ppitn"]),
+                ("tg", B[KEYS["gt_s"]], B[KEYS["dc_s"]]),  # decode-PHASE rate:
+                # per-request gen tokens / per-request decode seconds - both
+                # credit at completion, same request population, NOT wall-diluted
+                ("tg_s", B[KEYS["gen"]], B[KEYS["itc2"]]),
+                ("spec", 100 * B[KEYS["acc"]], B[KEYS["d"]]),  # % accepted/draft
+                ("re", 100 * bx["p_comp"], p_all_tot),
+                ("queue", B[KEYS["rq_s"]], B[KEYS["rq_c"]]),
+                ("ttft", B[KEYS["ts"]], B[KEYS["tc"]]),
+                ("prefill", B[KEYS["pf_s"]], B[KEYS["pf_c"]]),
+                ("decode", B[KEYS["dc_s"]], B[KEYS["dc_c"]]),
+                ("tpot", 1000 * B[KEYS["po_s"]], B[KEYS["po_c"]]),
+                ("prompt", B[KEYS["pt_s"]], B[KEYS["pt_c"]]),
+                ("gen", B[KEYS["gt_s"]], B[KEYS["gt_c"]]),
+                ("preempt", B[KEYS["np_s"]], B[KEYS["np_c"]]),
+                ("hit", 100 * B[KEYS["kc_s"]], B[KEYS["pt_s"]])):
+            self.life[k] = num / den if den > 0 else None
+        # completion-credited denominators are SPARSE (agent workload: ~1
+        # completion per 6-min round-trip) -> fallback to the per-step
+        # counter over active seconds so the mean populates whenever the
+        # ACTIVITY exists (TG mean "-" bug: decode live at 84 t/s, mean
+        # dash for minutes because request_decode_time_sum credits only at
+        # completion). Same fallback for pp via its active seconds.
+        if self.life.get("tg") is None and self.act["tg"] > 5:
+            self.life["tg"] = B[KEYS["gen"]] / self.act["tg"]
+        if self.life.get("pp") is not None:
+            self.life["pp"] = min(6000.0, self.life["pp"])  # poll DPI clamp
+
+def draw(s, top, H, W, paused):
+    def put(y, x, txt, cp=0, attr=0):
+        if 0 <= y < H and x < W:
+            try: s.addnstr(y, x, txt[:max(0, W - x)], max(0, W - x), (curses.color_pair(cp) if cp else 0) | attr)
+            except curses.error: pass
+    up = int(time.time() - top.t0)
+    ttl = (f" R9700 radiance TOP   {top.model}   ctx {fmt(top.facts['ctx'])}   {time.strftime('%H:%M:%S')}   "
+           f"view {up//60}m{up%60:02d}s   win {window_label(WINSZ[WK])}"
+           + ("   PAUSED" if paused else ""))
+    put(0, 0, (" " + ttl)[:W].ljust(W), 0, curses.A_REVERSE)
+    gpu_rows = top.gpus if top.gpu_details else ([aggregate_gpus(top.gpus)] if top.gpus else [])
+    mode = "per GPU" if top.gpu_details else "aggregate: avg busy, total VRAM/power, max temp"
+    put(1, 2, f"GPU HARDWARE ({mode})", 0, curses.A_BOLD)
+    columns = 2 if W >= 110 else 1
+    hardware_row_step = 2  # one blank line between hardware graph rows
+    group_height = ((4 + columns - 1) // columns) * hardware_row_step
+    if gpu_rows:
+        cell_width = max(1, (W - 2) // columns)
+        for i, gpu in enumerate(gpu_rows):
+            key = gpu["id"] if top.gpu_details else "all"
+            history = top.gpu_history[key]
+            for j, (metric, label, unit, ceiling) in enumerate((
+                    ("busy", "BUSY", "%", 100), ("used", "VRAM", "GiB", gpu["total"]),
+                    ("power", "POWER", "W", None), ("temp", "TEMP", "C", None))):
+                value = gpu[metric]
+                reading = f"{value:.1f}" if value is not None else "?"
+                if metric == "used":
+                    reading += "/" + (f"{gpu['total']:.1f}" if gpu["total"] is not None else "?")
+                text = f"{gpu['id']:<6} {label:<5} {reading:>9} {unit:<3} "
+                chart_width = max(0, cell_width - len(text) - 1)
+                y = 2 + i * group_height + (j // columns) * hardware_row_step
+                x = 2 + (j % columns) * cell_width
+                put(y, x, text)
+                values = [sample[metric] if sample else None for sample in history]
+                put(y, x + len(text), sensor_spark(values, chart_width, ceiling), 4)
+    else:
+        put(2, 2, "GPU sensors unavailable" if top.local_metrics else
+            "GPU sensors unavailable for remote metrics; run radiance-top on the GPU host", 7)
+    hardware_height = max(1, len(gpu_rows) * group_height) + 2
+    foot = " q quit   p pause   w window 30/60/120/300/600/since-start   1 aggregate/per-GPU   vLLM request stats + local GPU sensors"
+    put(H - 1, 0, foot[:W].ljust(W), 0, curses.A_REVERSE)
+    if top.dead:
+        put(hardware_height + 2, 2, "SERVER DOWN / LOADING - polling...", 3); return
+    if top.note: put(H - 2, 2, top.note, 2); top.note = ""
+    v = top.v
+    # Line spacing: one blank line between EVERY row (terminal granularity -
+    # the finest "half a character" a text terminal can do). Fully spaced
+    # needs ~44 rows; CONFIG/PRESSURE drop out below that, compact layout
+    # below 35.
+    SP = 1 if H - hardware_height >= 36 else 0
+    FULL = H - hardware_height >= 46
+    R = {}
+    y = 2 + hardware_height
+    for k in ("gpu", "pins", "hits", "flags"):
+        R[k] = y; y += 1 + SP
+    R["col1"] = y + SP; R["tf"] = y + SP + 2
+    y = R["tf"] + 4 * (1 + SP) + 1 + SP
+    R["col2"] = y; R["rf"] = y + 1 + (1 - SP)
+    y = R["rf"] + 6 * (1 + SP) + 1 + SP
+    R["cfg"] = y
+    rows = []
+    def graph(y, label, unit, ring, rate=True, f="%.1f", tail="", cp=0):
+        rows.append((y, label, unit, ring, rate, f, tail, cp))
+    columns = table_columns(W)
+    def stats(ring, rate, f):
+        def cell(value):
+            if value is None: return "-"
+            return token_text(value) if ring in ("prompt", "gen") else f % value
+        if ring == "pp_live":
+            return tuple(cell(top.pp_stats.get(key)) for key, _, _ in columns)
+        vals = [x for x in top.ring[ring] if x is not None]
+        pool = [x for x in vals if x > 0]
+        cur = top.ring[ring][-1] if top.ring[ring] else None
+        values = {"now": cur, "min": min(pool) if pool else None,
+                  "max": max(pool) if pool else None, "mean": top.life.get(ring)}
+        values.update({span: top.wavg.get((ring, span)) for span in SUMMARY_WINDOWS})
+        return tuple(cell(values.get(key)) for key, _, _ in columns)
+    fs = lambda x, f: (f % x) if x is not None else "-"
+    put(1 + hardware_height, 2, "SERVER PERFORMANCE", 0, curses.A_BOLD)
+    # ---- TOKEN FLOW ----
+    colhdr = f"{'':7} {'unit':<4}" + "".join(f"{label:>{width}}" for _, label, width in columns)
+    put(R["col1"], 2, colhdr, 7, curses.A_DIM)
+    put(R["col1"] + 1, 2, "TOKEN FLOW   PP = pure-prefill step rate; P-CRED = credited counter", 0, curses.A_BOLD)
+    graph(R["tf"], "PP", "t/s", "pp_live", tail=top.pp_state)
+    graph(R["tf"] + 1 * (1 + SP), "P-CRED", "t/s", "pp")
+    graph(R["tf"] + 2 * (1 + SP), "TG", "t/s", "tg")
+    graph(R["tf"] + 3 * (1 + SP), "SPEC", "%", "spec", rate=False)
+    graph(R["tf"] + 4 * (1 + SP), "SHRD", "%", "re", rate=False,
+          tail=f"st {v['stb']:.2f} ld {v['ltb']:.2f} GB/s")
+    # ---- REQUEST FLOW (per-request windowed averages, completed requests) ----
+    hdr = (f"REQUEST FLOW   (window avg of {v['nreq']:.0f} completed requests)" if v["nreq"] > 0
+           else f"REQUEST FLOW   (no completions in window - server-lifetime avg of {v['nl']:.0f})")
+    if SP:  # spaced: skip duplicate colhdr, the first table's header governs
+        put(R["col2"], 2, hdr, 0, curses.A_BOLD)
+    else:
+        put(R["col2"], 2, colhdr, 7, curses.A_DIM)
+        put(R["col2"] + 1, 2, hdr, 0, curses.A_BOLD)
+    graph(R["rf"], "QUEUE", "s", "queue", rate=False)
+    graph(R["rf"] + 1 * (1 + SP), "TTFT", "s", "ttft", rate=False,
+          cp=latency_color(v["ttft"], 25, 45))
+    graph(R["rf"] + 2 * (1 + SP), "PREFIL", "s", "prefill", rate=False)
+    graph(R["rf"] + 3 * (1 + SP), "DECODE", "s", "decode", rate=False)
+    graph(R["rf"] + 4 * (1 + SP), "TPOT", "ms", "tpot", rate=False,
+          cp=latency_color(v["tpot"], 100, 150))
+    graph(R["rf"] + 5 * (1 + SP), "CTX IN", "tok", "prompt", rate=False, tail=f"hit {fs(v['hit'], '%.1f')}")
+    graph(R["rf"] + 6 * (1 + SP), "TOK OUT", "tok", "gen", rate=False, tail=f"pre {fs(v['preempt'], '%.2f')}")
+    # ---- TABLE PASS: declared column widths, one grid for every row ----
+    WID = (7, 5) + tuple(width for _, _, width in columns)
+    TW = max([len(r[6]) for r in rows] + [10])   # tail column, measured once
+    PX = sum(WID) + TW + 1
+    GW = max(0, W - 2 - PX)                      # sparkline runs to screen edge
+    for (y, label, unit, ring, rate, f, tail, cp) in rows:
+        life = top.life.get(ring)
+        cells = (label, f" {unit}") + stats(ring, rate, f)
+        txt = lambda c: str(c) if c is not None else ""
+        line = "".join(f"{txt(c):<{w}}" if i in (0, 1) else f"{txt(c):>{w}}"
+                       for i, (c, w) in enumerate(zip(cells, WID)))
+        put(y, 2, (line + " " + tail).ljust(PX))
+        if cp and any(key == "now" for key, _, _ in columns):
+            # Thresholds apply to the current window, not historical columns.
+            ni = next(i for i, col in enumerate(columns) if col[0] == "now") + 2
+            put(y, 2 + sum(WID[:ni]), f"{cells[ni]:>{WID[ni]}}", cp)
+        sp = spark(top.ring[ring], GW).rstrip()
+        put(y, 2 + PX, " " * (GW - len(sp)) + sp, 4)
+    # GPU KV / RAM pins / RAM hits bars: one grid, pct + spark aligned
+    BARW = max(14, min(PX - 9, W - 71)); SPW = max(6, W - 2 - 9 - BARW - 26)
+    SX = 2 + 9 + BARW + 26
+    b = bigbar(v["gpu"], BARW); cg = 2 if v["gpu"] >= .95 else 0
+    put(R["gpu"], 2, f"GPU KV   {b}  {v['gpu']*100:5.1f}%  {fmt(v['gpu_tok'])} / {fmt(top.facts['gpu_cap'])} tok", cg)
+    _gs = spark(top.ring["gpu"], SPW).rstrip()
+    put(R["gpu"], SX, " " * (SPW - len(_gs)) + _gs, 4)
+    b2 = bigbar(v["pins"], BARW); c2 = 2 if v["pins"] >= .85 else 0
+    # RAM KV capacity: 16 GiB tier / 71.1 MB CPU block (1664 tok x 42725 B)
+    # = 229 blocks = 381K tok; pins is the fraction of THAT pool in use.
+    put(R["pins"], 2, f"RAM pins {b2}  {v['pins']*100:5.1f}%  budget {fmt(top.facts.get('cpu_bytes') / 2**30) if top.facts.get('cpu_bytes') else '?'} GiB", c2)
+    _ps = spark(top.ring["pins"], SPW).rstrip()
+    put(R["pins"], SX, " " * (SPW - len(_ps)) + _ps, 4)
+    rh = v["ramhit"]
+    b3 = bigbar((rh or 0.0) / 100.0, BARW)
+    put(R["hits"], 2, f"RAM hits {b3}  {fs(rh, '%5.1f') + '%' if rh is not None else 'n/a'}")
+    _hs = spark(top.ring["ramhit"], SPW).rstrip()
+    put(R["hits"], SX, " " * (SPW - len(_hs)) + _hs, 4)
+    put(R["flags"], 2, f"flags: run {v['run']:.0f}  wait {v['wait']:.0f} (cap {v['wcap']:.0f})"
+               f"  pre +{v['pre']}  fail +{v['af']}", 7, curses.A_DIM)
+    # ---- CONFIG grid + PRESSURE: only when the spaced layout leaves room ----
+    cy = R["cfg"]
+    if FULL:
+        put(cy, 2, "CONFIG", 7, curses.A_BOLD | curses.A_DIM)
+        kv = {k: str(val) for k, val in top.cfg}
+        kv.pop("model", None)
+        items = [k for k in ("ctx", "gpu-util", "cache", "prefix", "spec", "guards",
+                             "GPU KV", "KV tier", "evict", "fs tier", "PCIe") if k in kv]
+        NC = 4; KW = 10; CWID = max(22, (W - 8) // NC)
+        for n2, k in enumerate(items):
+            r, c = divmod(n2, NC)
+            put(cy + 1 + r, 4 + c * (CWID + 1), f"{k:<{KW}}{kv[k]:<{CWID - KW}}", 7, curses.A_DIM)
+        # ---- PRESSURE ----
+        py = cy + 1 + (len(items) + NC - 1) // NC + 1
+        put(py, 2, "PRESSURE", 0, curses.A_BOLD)
+        seg = max(14, (W - 12) // len(PRESSURE_FLAGS))
+        for i, (fl, desc, severity) in enumerate(PRESSURE_FLAGS):
+            on = fl in v["press"]
+            put(py, 12 + seg * i, f"[{fl}] {desc} {'ON' if on else 'off'}", severity if on else 7, curses.A_BOLD if on else curses.A_DIM)
+        put(py + 1, 2, "gates: TTFT 25/45s  TPOT 100/150ms"
+                       "   yellow=pressure  red=alloc failure/latency breach  cyan=history", 7, curses.A_DIM)
+    put(H - 1, 0, foot[:W].ljust(W), 0, curses.A_REVERSE)
+
+def main(stdscr):
+    global WK
+    curses.curs_set(0); stdscr.keypad(True); curses.start_color()
+    if curses.has_colors():
+        curses.use_default_colors()
+        for i, c in enumerate((curses.COLOR_GREEN, curses.COLOR_YELLOW, curses.COLOR_RED, curses.COLOR_CYAN)):
+            curses.init_pair(i + 1, c, -1)
+        curses.init_pair(5, curses.COLOR_MAGENTA, -1)
+        if curses.COLORS >= 256:
+            try:
+                curses.init_color(8, 1000, 450, 0); curses.init_pair(6, 8, -1)
+            except curses.error: curses.init_pair(6, curses.COLOR_YELLOW, -1)
+        else: curses.init_pair(6, curses.COLOR_YELLOW, -1)
+        curses.init_pair(7, curses.COLOR_WHITE, -1)
+    top = Top(live_prefill=True); paused = False; last = 0
+    stdscr.nodelay(True)
+    while True:
+        now = time.time(); ch = stdscr.getch()
+        if ch in (ord("q"), 27): return
+        if ch == ord("p"): paused = not paused
+        if ch == ord("1"): top.gpu_details = not top.gpu_details
+        if ch == ord("w"): WK = (WK + 1) % len(WINSZ)
+        if not paused and now - last >= INTERVAL: last = now; top.poll()
+        stdscr.erase()
+        try: draw(stdscr, top, *stdscr.getmaxyx(), paused)
+        except curses.error: pass
+        stdscr.refresh(); time.sleep(0.15)
+
+def plain():
+    top = Top(live_prefill=True)
+    while True:
+        top.poll()
+        if top.dead: print(f"{time.strftime('%H:%M:%S')} SERVER DOWN/LOADING", flush=True)
+        else:
+            v = top.v
+            f = lambda x, s: (s % x) if x is not None else "-"
+            print(f"{time.strftime('%H:%M:%S')} gpu {v['gpu']*100:5.1f}% run {v['run']:.0f} pp-live {f(top.pp_stats.get('now'),'%.1f')} p-cred {v['pp']:7.1f} pp60 {v['ppitn']:7.1f} pp100 {v['pp_life']:6.1f} tg60 {v['tg_s'] if v['tg_s'] is not None else -1:6.2f} "
+                  f"tg {v['tg']:6.1f} nreq {v['nreq']:3.0f} queue {f(v['queue'],'%6.2f')} ttft {f(v['ttft'],'%6.2f')} "
+                  f"prefill {f(v['prefill'],'%6.2f')} decode {f(v['decode'],'%6.2f')} tpot {f(v['tpot'],'%5.0f')} "
+                  f"tg300 {f(top.wavg.get(('tg',300)), '%.2f')} tg600 {f(top.wavg.get(('tg',600)), '%.2f')} "
+                  f"tg-since-start {f(top.wavg.get(('tg',None)), '%.2f')} "
+                  f"ttft300 {f(top.wavg.get(('ttft',300)), '%.2f')} ttft600 {f(top.wavg.get(('ttft',600)), '%.2f')} "
+                  f"ttft-since-start {f(top.wavg.get(('ttft',None)), '%.2f')} press {v['press']}", flush=True)
+        if top.gpus: print(gpu_line(aggregate_gpus(top.gpus)), flush=True)
+        time.sleep(INTERVAL)
+
+if __name__ == "__main__":
+    if PLAIN:
+        try: plain()
+        except KeyboardInterrupt: pass
+    else:
+        curses.wrapper(main)

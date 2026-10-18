@@ -1,0 +1,13 @@
+fleet,agent,seed,turns,exit_status,deliverables_complete,clean_delivery,output_tokens,model_seconds,fleet_wall_seconds,max_output_tokens_per_request,agent_timeout_seconds,reported_syntax,reported_mocked_dom,game_file
+single-card,0,100,1,0,false,false,32768,,3600,32768,3600,no artefact,no artefact,
+single-card,1,101,28,0,true,true,,,3600,32768,3600,PASS,PASS,../../examples/rocm-10.1/falling-blocks/single-card/agent-1/index.html
+single-card,2,102,36,124,true,false,,,3600,32768,3600,PASS,PASS,../../examples/rocm-10.1/falling-blocks/single-card/agent-2/index.html
+single-card,3,103,32,124,true,false,,,3600,32768,3600,PASS,PASS,../../examples/rocm-10.1/falling-blocks/single-card/agent-3/index.html
+dual-card,0,100,27,0,true,true,69172,1807.9,1810,32768,3600,PASS,PASS,../../examples/rocm-10.1/falling-blocks/dual-card/agent-0/index.html
+dual-card,1,101,25,0,true,true,43086,1339.5,1810,32768,3600,PASS,PASS,../../examples/rocm-10.1/falling-blocks/dual-card/agent-1/index.html
+dual-card,2,102,18,0,true,true,47410,1331.8,1810,32768,3600,PASS,PASS,../../examples/rocm-10.1/falling-blocks/dual-card/agent-2/index.html
+dual-card,3,103,11,0,true,true,37315,1058.5,1810,32768,3600,PASS,PASS,../../examples/rocm-10.1/falling-blocks/dual-card/agent-3/index.html
+single-card-retry,0,100,26,0,true,true,93564,4311.7,4523,65536,5400,PASS,PASS,../../examples/rocm-10.1/falling-blocks/single-card-retry/agent-0/index.html
+single-card-retry,1,101,28,0,true,true,42520,4027.1,4523,65536,5400,PASS,PASS,../../examples/rocm-10.1/falling-blocks/single-card-retry/agent-1/index.html
+single-card-retry,2,102,31,0,true,true,57904,4123.6,4523,65536,5400,PASS,PASS,../../examples/rocm-10.1/falling-blocks/single-card-retry/agent-2/index.html
+single-card-retry,3,103,58,0,true,true,78672,4538.9,4523,65536,5400,PASS,PASS,../../examples/rocm-10.1/falling-blocks/single-card-retry/agent-3/index.html

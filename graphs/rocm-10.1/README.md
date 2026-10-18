@@ -1,0 +1,34 @@
+---
+layout: default
+title: "ROCm 10.1 graphs"
+---
+
+# ROCm 10.1 graphs
+
+This folder contains the selected results only. Version assignment follows the reviewed [catalogue](../../data/telemetry-catalog.json); older traces use profile/date evidence, not per-run immutable image IDs.
+
+- [ROCm base-image four-agent stress run](rocm-base-image-four-agent-stress-run.svg)
+- [Retained historical agent workloads](historical-agent-workloads.svg)
+- [Seven completed dual-card text-growth cells, 18 October 2026](dual-card-text-growth-2026-10-18.svg)
+
+[What was excluded and why](../../docs/EXCLUDED-TESTS.md). Different workload/configuration histories are not a controlled ROCm A/B.
+
+## Completed coding fleets
+
+[Per-agent model time: dual and successful single-card retry](falling-blocks-completed-fleet-model-time-2026-10-18.svg) · [Play the eleven games](../../examples/rocm-10.1/falling-blocks/index.html). Budget, client context and reserve changed; this is not an isolated hardware speed comparison.
+
+## Context-growth reports
+
+- [Single-card GPU A context-growth summary](single-card-gpu-a-text-growth-2026-10-18.svg)
+- [Single versus dual: mean TTFT](follow-up-single-vs-dual-mean-ttft-2026-10-18.svg)
+- [Single versus dual: maximum TTFT](follow-up-single-vs-dual-maximum-ttft-2026-10-18.svg)
+- [Single versus dual: request decode estimate](follow-up-single-vs-dual-request-decode-rate-2026-10-18.svg)
+- [Historical ROCm 7.14/RAM16 versus ROCm 10.1/RAM10](single-card-rocm-7.14-ram16-vs-rocm-10.1-ram10.svg)
+
+## Campaigns and counting
+
+The seven-cell dual chart uses an 8 GiB CPU tier. The later GPU A/dual comparison uses 10 GiB; its shared GPU A rows are also shown in the single-card chart. These are not independent repeat samples. Charts use timed-turn exports; the [campaign report](../../docs/FINAL-REPORT-20261018.md) explains empty completions, pressure, fleet outcomes and comparison limits.
+
+<!-- NAVIGATION START -->
+
+[Home](../../index.md) · [Overview](../../README.md) · [ROCm 10.1 results](../../docs/FINAL-REPORT-20261018.md) · [Charts](../../docs/CHARTS.md)

@@ -1,0 +1,8 @@
+workload,agents,turns,mean_ttft_seconds,max_ttft_seconds,max_observed_context,client_errors,rocm,tp,speculative_tokens,cpu_kv_gib,status
+text126k,1,28,5.0042,13.035,129630,0,10.1,2,8,8,complete
+text126k,2,64,6.7205,21.081,129539,0,10.1,2,8,8,complete
+text126k,3,95,9.0387,26.422,129984,0,10.1,2,8,8,complete
+text126k,4,117,10.9879,35.952,130404,0,10.1,2,8,8,complete
+text150k,1,31,5.7679,19.207,159409,0,10.1,2,8,8,complete
+text150k,2,69,7.4702,28.783,159352,0,10.1,2,8,8,complete
+text150k,3,105,9.2198,37.327,159282,0,10.1,2,8,8,complete

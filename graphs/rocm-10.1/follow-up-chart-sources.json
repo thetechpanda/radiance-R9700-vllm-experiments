@@ -1,0 +1,10 @@
+{
+  "sources": {
+    "data/rocm-7.14/historical-agent-workloads.csv": "ea12c9610f4922264b977697da64505e00921a5b2f34ba2f0c7a6dd8c58a6382",
+    "data/rocm-10.1/single-card-gpu-a-text-growth-2026-10-18.csv": "fa35a857bac01688a603f13de4d12366ae2c8aee4f17c54a63d71b5bda40b05f",
+    "data/rocm-10.1/follow-up-single-vs-dual-text-growth-2026-10-18.csv": "78c5c0b390781ea759f7350d798e8f0eed80a716b38bac703514fbedac2e1d27",
+    "data/rocm-10.1/falling-blocks-fleet-outcomes-2026-10-18.csv": "fa786ee1829f9afccac780698cdd696ace5f4d1f63625247819f21c5c2b7d517"
+  },
+  "generator": "tools/render_follow_up.py",
+  "notes": "Generated solely from existing local CSV summaries. No server access or fresh telemetry audit."
+}

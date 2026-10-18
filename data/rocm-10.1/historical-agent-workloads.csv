@@ -1,0 +1,2 @@
+case_id,case_family,agent_count,image_mode,depth_cap_k_tokens,successful_turns,errors,duration_minutes,max_context_k_tokens,mean_ttft_s,max_ttft_s,fleet_decode_tokens_s,per_agent_decode_tokens_s,itl_p99_ms,ttft_0_30k_s,ttft_30_60k_s,ttft_60_90k_s,ttft_90_120k_s,ttft_120k_plus_s,version,experiment,version_evidence
+CASE-37,stress,4,with-images,126.0,116,0,12.717,126.066,11.36,47.9,13.6,,,,,,,,rocm-10.1,ROCm 10.1 four-agent stress reference,Explicit journal attribution
