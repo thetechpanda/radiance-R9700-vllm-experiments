@@ -1,5 +1,5 @@
-title: ROCm 7.14 vs ROCm 10.1 with vllm-radiance
-description: ROCm runtime comparison on R9700 hardware using vllm-radiance and Qwen3.8 coding-agent workloads.
+title: R9700 field notes — vllm-radiance vs radiance
+description: Coding-agent experiments on Radeon AI PRO R9700 — latency, generation, memory and delivered work across vllm-radiance and radiance.
 theme: jekyll-theme-primer
 markdown: kramdown
 kramdown:

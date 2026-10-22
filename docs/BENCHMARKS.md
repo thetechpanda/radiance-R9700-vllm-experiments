@@ -5,13 +5,13 @@ title: "Benchmarks and how to run them"
 
 # Benchmarks and how to run them
 
-**Research scope: ROCm 7.14 versus ROCm 10.1 using `vllm-radiance`, with Qwen3.8 27B coding-agent workloads.** The primary historical campaign summarised here tested the hybrid `ukisai/Swift-1.5-Qwen3.8-27b-INT4` checkpoint on Radiance/vLLM. Historical performance comparisons are specific to this model/checkpoint and the matching software and cache configuration. The rewritten synthetic client can target other models, but those runs are new experiments and must not be presented as results for this campaign. See the [Hugging Face model inventory](MODELS.md) for additional target and draft checkpoints explored in related Radiance work.
+**Research scope: recorded vllm-radiance and radiance deployments with Qwen3.8 27B coding-agent workloads.** Read the [engine comparison](RADIANCE-VS-VLLM.md) for differing revisions, KV formats and measurement scopes. The historical ROCm 7.14/10.1 branch below belongs to vllm-radiance. The primary historical campaign summarised here tested the hybrid `ukisai/Swift-1.5-Qwen3.8-27b-INT4` checkpoint on Radiance/vLLM. Historical performance comparisons are specific to this model/checkpoint and the matching software and cache configuration. The rewritten synthetic client can target other models, but those runs are new experiments and must not be presented as results for this campaign. See the [Hugging Face model inventory](MODELS.md) for additional target and draft checkpoints explored in related Radiance work.
 
 The [18 October repeat campaign](REPEAT-CAMPAIGN.md) records the new sequential 1–4-agent matrix and its measurement limits.
 
 ## Workload design
 
-For the current single-card profile, the four-agent deep-context cell is the final boundary stress point. It establishes the behaviour beyond the apparent usable envelope; completing without client errors is distinct from acceptable latency. Keep the 10 GiB CPU tier fixed. A previous 16 GiB tier caused severe host slowdown and is not the planned remedy. The completed case recorded mean/maximum TTFT of 101.38/654.91 seconds; see the [accepted matrix](FINAL-REPORT-20261018.md).
+For the recorded 18 October vllm-radiance single-card profile, the four-agent deep-context cell is the final boundary stress point. It establishes the behaviour beyond the apparent usable envelope; completing without client errors is distinct from acceptable latency. Keep the 10 GiB CPU tier fixed. A previous 16 GiB tier caused severe host slowdown and is not the planned remedy. The completed case recorded mean/maximum TTFT of 101.38/654.91 seconds; see the [accepted matrix](FINAL-REPORT-20261018.md).
 
 The comparison is between recorded runtime deployments. Use matching checkpoint, workload, TP, speculation, context limits, cache budgets and hardware where available. Where the historical profile differs, report that difference and avoid attributing the full performance change to ROCm alone.
 
@@ -19,7 +19,7 @@ One central workload asks how many concurrent coding agents can each sustain rou
 
 The campaign used repeated OpenAI-compatible chat turns shaped like coding-agent work. Each agent received a shared system context, a task, then appended simulated tool output before the next turn. Streaming responses made it possible to measure time to first token and inter-token behaviour. Experiments varied agent count, depth cap, tool-result size distribution, compaction, image input, speculative decoding, and KV tier.
 
-The original fixture conversations are not included. The release benchmark client creates deterministic synthetic tool-result text and does not read or transmit source conversation material.
+Private calibration histories and earlier source conversations are not included. The [recovered v4 benchmark](../scripts/recovered/bench_agents4.py) generates its own synthetic text and PNGs and is now available byte-identically; it is separate from the replacement client below. The release benchmark client creates deterministic synthetic tool-result text and does not read or transmit source conversation material.
 
 ## Experiment families
 
@@ -72,4 +72,5 @@ The [chart gallery](CHARTS.md) embeds the selected telemetry graphs, with links 
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

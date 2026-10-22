@@ -7,42 +7,88 @@ title: "One card, four agents: the radiance single-card campaign (22 October 202
 
 ## What ran
 
-One card, not two. The same four-agent deep-context workload as the 21 October campaign, `stilldeadcode/radiance` 1.9.0 digest-pinned, the M2 checkpoint (`ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ`, rev `81a28ee7`, `.rad` bundle). Fixed knobs: TP=1, 131,072-token context, fp8 KV, 4 sequence slots, MTP-4 speculative lane, 13 GiB host tier. Boot print: weights 14.41 GiB on the card, KV cache 14.27 GiB, pool 404,608 tokens — "3.1 sessions at 131072", 77% backing of the 4×131072 worst case. The depth caps are arithmetic: pool ÷ agents, minus a 12,239-token lockstep overshoot — 126,000 / 126,000 / 122,630 / 88,913 at n=1/2/3/4. Grid: 4/4 cells, 92 turns, zero errors. Numbers: [data/rocm-10.1/radiance-single-card-2026-10-22.csv](../data/rocm-10.1/radiance-single-card-2026-10-22.csv).
+One R9700 card, four agents, deep-context workload. `stilldeadcode/radiance` 1.9.0, digest-pinned. Model: `ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ`, revision `81a28ee7` (the W4A16-AWQ conversion record names the source INT4 `.rad` bundle; the historical Y/Z reference uses revision `9dba8a05`). Knobs: TP=1, 131,072-token context, fp8 KV, 4 sequence slots, MTP-4 speculative lane, 13 GiB host tier. Boot: weights 14.41 GiB, KV cache 14.27 GiB, pool 404,608 tokens (boot allocation, not simultaneous full-depth performance).
 
-## The per-turn price
+Growth stopping targets are min(126,000, pool ÷ agents − 12,239), with integer rounding: 126,000 / 126,000 / 122,630 / 88,913 at n=1/2/3/4. The cap is a pre-turn stopping target; `max_depth_tokens` can exceed it after a final growth step. Grid: 4/4 cells, 92 total timed turns, zero errors.
 
-Seconds per turn by agent count, three engines:
+Source: [radiance-single-card-2026-10-22.csv](../data/rocm-10.1/radiance-single-card-2026-10-22.csv); the [historical config JSON](../data/rocm-10.1/single-card-gpu-a-configuration.json) describes vllm-radiance, not this radiance boot.
 
-| n | radiance TP1 (10-turn) | vllm-radiance single-card (27-turn) | radiance TP2 (10-turn) |
+## Read the differences first
+
+The historical GPU A reference used Swift-1.5 **INT4**, FP8 KV, MTP-4 and a **10 GiB** host tier. Radiance uses a converted `.rad` representation at the recorded revision, MTP-4 and **13 GiB**. Its n4 stopping target is **29.4% smaller**, and the older family has longer histories and more turns. Radiance TP2 uses a 10 GiB tier and retains the 126k target at four agents. The numbers below describe these operating points; they do not isolate an engine improvement at equal depth.
+
+| Agents | Radiance TP1 stopping target | Radiance observed max | Historical GPU A observed max |
 |---|---:|---:|---:|
-| 1 | 9.68 | 12.59 | 10.23 |
-| 2 | 9.67 | 9.74 | 10.23 |
-| 3 | 9.60 | 30.09 | 10.02 |
-| 4 | 9.06 | 34.65 | 10.07 |
+| 1 | 126,000 | 120,325 | 123,462 |
+| 2 | 126,000 | 123,515 | 127,278 |
+| 3 | 122,630 | 123,710 | 127,658 |
+| 4 | 88,913 | 99,075 | 126,691 |
 
-Source: [data/rocm-10.1/radiance-single-card-comparison-2026-10-22.csv](../data/rocm-10.1/radiance-single-card-comparison-2026-10-22.csv).
+Sources: [TP1 grid](../data/rocm-10.1/radiance-single-card-2026-10-22.csv), R1x n1–4; [original GPU A follow-up](../data/rocm-10.1/follow-up-single-vs-dual-text-growth-2026-10-18.csv), gpu-a n1–4. The historical stopping target is 126,000; neither target is a hard per-turn prompt limit.
 
-The headline. Radiance TP1 goes 9.68 → 9.06 from n=1 to n=4 — flat. The old engine goes 12.59 → 34.65 — a 2.7× explosion. On the new engine, a turn costs the same with four agents as with one. On the old engine, four agents is nearly four times the price of one. That is not an optimization; that is the queue behaving differently.
+## Per-turn price and total turns
 
-## The TTFT bill
+Whole-cell wall divided by timed turns, by agent count. Under concurrency this is not the mean time an individual request spends waiting and generating. Turn counts in parentheses are **total timed turns** across all agents in the cell, not per-agent.
 
-Old-engine mean TTFT: 7.46 / 11.92 / 71.46 / 101.38 s, max 654.91 s at n=4. Radiance TP1: 7.07 / 8.87 / 11.34 / 14.34 s mean, 22.02 s max — same comparison CSV. Stated plainly: the old engine's 126k depth at n=4 was achieved VIA PREEMPTION, and the TTFT is the bill. A 101.38 s mean to start a turn at four agents is preemption showing up on the clock. Radiance TP1 ran an honest 88.9k cap at n=4 — pool ÷ 4, no tricks — and its worst turn-start across the whole grid was 22.02 s, against 654.91 s. The cap is smaller; the start is honest.
+| n | radiance TP1 (turns) | vllm-radiance single-card, MTP-4 (turns) | radiance TP2 (turns) |
+|---|---:|---:|---:|
+| 1 | 9.68 (10) | 12.59 (27) | 10.23 (10) |
+| 2 | 9.67 (20) | 9.74 (63) | 10.24 (20) |
+| 3 | 9.60 (30) | 30.09 (94) | 10.02 (30) |
+| 4 | 9.06 (32) | 34.65 (114) | 10.07 (40) |
 
-## Per-agent decode
+Radiance TP1 n4 has 32 total turns (8 per agent). The old engine's per-turn cost rises from 12.59 to 34.65 s — a factor of 2.75 (34.65 / 12.59), not four.
 
-n=1: 84.4 t/s per agent on the MTP lane, 2.1× the old engine's 40.0 non-spec (comparison CSV, both columns). At n=2–3 the old non-spec lane keeps its edge, stated honestly: 32.4 / 26.0 t/s against radiance's 26.6 / 23.3 — a 10–20% decode advantage, steady non-spec decode against the speculative lane. If you measure only tokens per second at n=2–3, the old engine wins that column. What it pays for it is the TTFT and the per-turn price above, and that is where this campaign lives.
+Source: [radiance-single-card-comparison-2026-10-22.csv](../data/rocm-10.1/radiance-single-card-comparison-2026-10-22.csv)
+
+## TTFT
+
+| n | Old engine mean (s) | Old engine max (s) | Radiance TP1 mean (s) | Radiance TP1 max (s) |
+|---|---:|---:|---:|---:|
+| 1 | 7.46 | 18.78 | 7.07 | 9.54 |
+| 2 | 11.92 | 40.64 | 8.87 | 12.53 |
+| 3 | 71.46 | 456.19 | 11.34 | 16.38 |
+| 4 | 101.38 | 654.91 | 14.34 | 22.02 |
+
+At n4 the historical run records 12 preemptions alongside long waits; that observation alone does not isolate their contribution. Radiance has **85.9% lower mean TTFT** with **21.8% lower maximum observed depth**. Its 88,913-token target and 99,075-token observed maximum are different quantities.
+
+![Single-card latency, depth and generation tradeoffs](../graphs/rocm-10.1/single-card-tradeoffs.svg)
+
+[Open full-size chart](../graphs/rocm-10.1/single-card-tradeoffs.svg).
+
+## Decode estimates
+
+Two differently scoped metrics, presented as reported:
+
+- **`decode_tokens_s`** — aggregate end-to-end output rate: total successful output tokens ÷ whole-cell wall seconds. Includes prefill, queueing, and idle gaps. Not per-request steady-state.
+- **`tg_avg_tokens_s`** — arithmetic mean of per-turn rates (completion tokens ÷ (request wall − TTFT)) over valid turns with decode duration > 0.5 s. Excludes short and zero-token turns.
+
+| n | Historical mean request decode | Radiance TP1 turn TG | Radiance TP2 turn TG |
+|---|---:|---:|---:|
+| 1 | 40.0 | 84.4 | 137.9 |
+| 2 | 32.4 | 26.6 | 41.0 |
+| 3 | 26.0 | 23.3 | 25.9 |
+| 4 | 25.5 | 17.4 | 16.8 |
+
+These are not kernel benchmarks. The historical column is `mean_request_decode_tokens_s` from the follow-up export, not the later sweep's aggregate `decode_tokens_s`. Radiance uses `tg_avg_tokens_s`. They are reported request/turn estimates; the release does not establish identical sampling filters across these two workload families. Historical estimates are higher at n2–4, and the radiance estimate is higher at n1.
 
 ## TP1 vs TP2
 
-Radiance against itself. TP1 is faster at n=1–3: walls 96.8 / 193.4 / 287.9 s against TP2's 102.3 / 204.7 / 300.5 s — no all-reduce tax on a single card, lower TTFT (comparison CSV, single-card CSV). TP1's per-agent decode is the weaker column (84.4 vs 137.9 t/s at n=1), and TP2's value is pool plus depth: 524,304 tokens against 404,608, which is what holds the n=4 cap at 126k instead of 88,913. One card is the faster engine; two cards are the bigger pool. Neither is a mistake.
+TP1 walls: 96.8 / 193.4 / 287.9 / 289.8 s. TP2 walls: 102.3 / 204.7 / 300.5 / 402.7 s. The 4–6% gaps at n=1–3 do not isolate all-reduce as the cause. TP2's pool is 524,304 tokens versus TP1's 404,608, which holds the n=4 cap at 126k instead of 88,913. The n4 wall gap also reflects fewer turns and a smaller history target on TP1; it cannot establish single-card superiority.
 
 ## Caveats
 
-- The old-engine baseline is the 27-turn text-growth family (27/63/94/114 turns at n=1–4); the radiance rows are the 10-turn family. s/turn normalizes turn count, not lane.
-- The TP1 pool (404,608) is boot-measured, not formula-exported.
-- Seed noise is ~15%; deltas under that are not claims.
-- Single host: 2× R9700 32 GiB, 30 GiB RAM, custom kernel. No silent generalization.
+- The old-engine baseline is the 27/63/94/114 total-turn text-growth family, MTP-4 as its configuration JSON records. The radiance rows are 10/20/30/32 total turns. s/turn normalises turn count, not lane.
+- The TP1 pool is boot-measured; the grid establishes the depths and counts above, not sustained simultaneous full-context performance.
+- The earlier ~15% repeat spread came from a different model and is descriptive; it is not a significance threshold.
+- Single host: 2× R9700 32 GiB, 30 GiB RAM, custom kernel. No universal winner.
+- Fleet `cache_hit_pct` is a separate metric from the sweep's `prefix_cache_hit_frac`; they share no common definition. Sweep blank or 0 TTFT bands mean no sample, not zero latency.
+- Private probes referenced in earlier prose are not CSV-exported and are not included here.
+
+
+[All three configurations, per-turn wall and TTFT](../graphs/rocm-10.1/radiance-single-card-comparison-2026-10-22.svg) · [Full engine comparison](RADIANCE-VS-VLLM.md).
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

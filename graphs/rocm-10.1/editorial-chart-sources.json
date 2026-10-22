@@ -1,0 +1,18 @@
+{
+  "sources": {
+    "data/rocm-10.1/radiance-campaign-2026-10-21.csv": "3bbc81a956c0126368b20487757c4863354d5ed08799186848ee208493267e1c",
+    "data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv": "277f4c729ebb002ab654a3c0682f591be9591555a4f8899ee9607c32097235db",
+    "data/rocm-10.1/radiance-single-card-2026-10-22.csv": "5513e27556cd771ece651edb7666d3bfe3d955150a88001ea28e18e889d2974f",
+    "data/rocm-10.1/follow-up-single-vs-dual-text-growth-2026-10-18.csv": "78c5c0b390781ea759f7350d798e8f0eed80a716b38bac703514fbedac2e1d27",
+    "data/rocm-10.1/radiance-pool-ceiling-2026-10-22.csv": "e44f4d6a8803bcbd98128c608cbd75b78a09a76bc29980f6d895ee1b93badda9",
+    "data/rocm-10.1/radiance-single-card-comparison-2026-10-22.csv": "4c6eefa10f03fefa1326e442706b1ae1ceb44a29e6dd9fa386258cf0b3e4a534"
+  },
+  "formula": "percent change = (radiance / specified baseline - 1) * 100",
+  "limitations": [
+    "Historical deployments; no isolated engine A/B.",
+    "Different target revisions and KV formats in the dual-engine comparison.",
+    "Unequal depth, run length, target representation and host tier in single-card comparison.",
+    "No confidence intervals. Approximately 15% earlier repeat spread is not a significance threshold.",
+    "Boot allocation is not sustained concurrency qualification."
+  ]
+}

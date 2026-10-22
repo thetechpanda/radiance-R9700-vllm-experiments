@@ -36,10 +36,11 @@ See [the research journal](RESEARCH-JOURNAL.md), [hardware table](HARDWARE.md), 
 
 ## ROCm 10.1 follow-up: 10 GiB tier
 
-The later eight-cell matrix used a different TP=2 profile: 10 GiB ARC CPU tier, FP8 KV, MTP=8, eight slots and 168,000-token context limit. Four agents completed with mean/maximum TTFT 10.85/27.23 seconds and zero KV preemptions; the four-agent coding fleet delivered all games with clean exits in 30:10. Swap usage increased from 0.37 to 1.07 GiB across the dual phase.
+The later eight-cell matrix used a different TP=2 profile: 10 GiB ARC CPU tier, FP8 KV, MTP=8, eight slots and 168,000-token context limit. Four agents completed with mean/maximum TTFT 10.85/27.23 seconds and zero KV preemptions; the 18 October vllm-radiance four-agent coding fleet delivered all games with clean exits in 30:10. Swap usage increased from 0.37 to 1.07 GiB across the dual phase.
 
 These newer results supersede any suggestion that dual-card operation remains entirely unmeasured. They do not create a controlled TP=1/TP=2 scaling comparison: speculation, slots and context limits differ. See the [matrix and fleet report](FINAL-REPORT-20261018.md) and [campaign ledger](REPEAT-CAMPAIGN.md). Historical capacities above refer to their own startup profiles, not a universal KV limit.
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

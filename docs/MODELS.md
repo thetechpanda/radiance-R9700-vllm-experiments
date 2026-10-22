@@ -7,6 +7,23 @@ title: "Hugging Face model inventory"
 
 The central R9700 agent serving campaign studied **Qwen3.8 27B**. Its primary checkpoint was [`ukisai/Swift-1.5-Qwen3.8-27b-INT4`](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27b-INT4), an AWQ+GPTQ INT4 hybrid GDN variant. This is the model behind the single-card RAM16 milestone and the follow-on TP=2 investigation summarised in the [research journal](RESEARCH-JOURNAL.md).
 
+## Model identity across the engine comparison
+
+**Qwen3.8 27B** is the model family, not a single interchangeable checkpoint. Weight quantization, attention-KV precision, conversion format and the API alias are different pieces of identity. The later engine comparison must retain all of them.
+
+| Campaign / role | Target repository or source | Recorded revision | Weight representation / KV |
+|---|---|---|---|
+| vllm-radiance 18 Oct single/dual matrix | `ukisai/Swift-1.5-Qwen3.8-27b-INT4` | `81a28ee75eb1cd469f209813a368a79a7e3db3bc` | Hybrid AWQ+GPTQ INT4 / FP8 KV |
+| vllm-radiance 19 Oct Y/Z lanes | `ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ` | `9dba8a05` (sweep export) | AWQ INT4 W4A16 / BF16 KV |
+| vllm-radiance 19 Oct S/T/U lanes | `ethanwtodd/Swift-1.5-Qwen3.8-27b-Quark-RTN-MXFP4` | `459bc7fe` (sweep export) | Quark RTN MXFP4 W4A8 / BF16 KV |
+| vllm-radiance 19 Oct V/W/X lanes | `amd/Qwen3.8-27B-Quark-AWQ-MXFP4` | `5233554c` (sweep export) | Quark AWQ MXFP4 W4A8 / BF16 KV |
+| radiance 21–22 Oct | Conversion record: `ukisai/Swift-1.5-Qwen3.8-27b-INT4`; export/API alias: `ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ` | `81a28ee75eb1cd469f209813a368a79a7e3db3bc` | Converted `.rad` bundle, export label `awq-int4-rad` / FP8 KV |
+| DFlash2 drafter, 19 Oct U/X lanes | `tcclaviger/Qwen3.8-27B-DFlash2-FP8` | Not pinned in sweep export | FP8 drafter paired with target; not a primary model result |
+
+Sources: [18 Oct configuration](../data/rocm-10.1/single-card-gpu-a-configuration.json), [19 Oct sweep](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv), [21 Oct radiance](../data/rocm-10.1/radiance-campaign-2026-10-21.csv), [22 Oct radiance TP1](../data/rocm-10.1/radiance-single-card-2026-10-22.csv). These are recorded experiment identities, not a current model catalogue.
+
+**The Y/Z and radiance revisions differ.** A shared API name does not prove byte-identical weights or tokenization. The radiance serving alias is retained for reproducing requests; it must not be used to relabel the conversion source. The 18 Oct INT4 matrix is a different comparison from the 19 Oct W4A16-AWQ reference. FP8 **KV** describes attention-cache storage, not an FP8 weight checkpoint. The two engine hubs state PP/TG availability and configurations separately: [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md).
+
 ## Recorded ROCm 10.1 checkpoint
 
 The follow-up single/dual comparison used the Swift-1.5 checkpoint at revision `81a28ee75eb1cd469f209813a368a79a7e3db3bc`, FP8 attention KV and model-matched calibration. MTP depth was four on GPU A and eight on dual. DFlash2 and MXFP4 experiments below are separate research branches, not the configuration behind these matrix results. See the [configuration record](../data/rocm-10.1/single-card-gpu-a-configuration.json).
@@ -27,4 +44,5 @@ The model snapshot, tokenizer files, draft weights, and FP8 KV calibration sidec
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

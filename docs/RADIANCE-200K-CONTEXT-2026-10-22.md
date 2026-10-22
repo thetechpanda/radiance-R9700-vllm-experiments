@@ -1,59 +1,62 @@
 ---
 layout: default
-title: "200k by default: the model was always 256k (22 October 2026)"
+title: "From 131k to 200k: what the bigger memory pool proves"
 ---
 
-# 200k by default: the model was always 256k (22 October 2026)
+# From 131k to 200k: what the bigger memory pool proves
 
-## The model fact
+The original radiance TP2 campaign allocated about 524k GPU KV tokens. A later boot allocated **1,228,816** on the same cards: **134.4% more**. The key change was the allocation target—more slots and a longer configured context—not more hardware.
 
-The checkpoint says 262144. `n_ctx_train` is 262144, `max_position_embeddings` is 262144, `rope_theta` 1e7 with default rope — no scaling needed to reach it. The 131k ceiling this deployment carried was a choice, not the model's wall. Every page of this campaign ran at 131072; the checkpoint never said that. The model was always 256k. I just never asked for it.
+That result answers a capacity question. It does not yet answer how quickly six agents can work at 200k each.
 
-## The promotion
+## Four measured boots
 
-One flag. The quadlet Exec changed `--max-model-len` from 131072 to 204800. Six slots kept, MTP-4 kept, the 13 GiB host tier kept, engine 1.9.0 at the pinned digest. The boot print:
+The [pool-ladder CSV](../data/rocm-10.1/radiance-pool-ceiling-2026-10-22.csv) contains these recorded boot allocations. Context uses exact token counts; “131k” and “200k” are shorthand.
 
-> kv cache 20.79 GiB a card: 1228816 tokens, 6.0 sessions at 204800
+| Configuration | KV GiB per card | GPU pool tokens | Full-depth allocation equivalents | Approx. KiB per token per card |
+|---|---:|---:|---:|---:|
+| TP1, 4 slots, 131,072 context | 14.27 | 404,608 | 3.1 | 36.98 |
+| TP2, 4 slots, 131,072 context | 9.74 | 524,304 | 4.0 | 19.48 |
+| TP2, 6 slots, 131,072 context | 13.61 | 786,448 | 6.0 | 18.15 |
+| TP2, 6 slots, 204,800 context | 20.79 | 1,228,816 | 6.0 | 17.74 |
 
-That is 100% backing of the 6×204800 worst case and 94% of the card's elastic VRAM. Every number on this page traces to [data/rocm-10.1/radiance-pool-ceiling-2026-10-22.csv](../data/rocm-10.1/radiance-pool-ceiling-2026-10-22.csv).
+Per-card density = **GiB on one card × 1,048,576 KiB/GiB ÷ shared pool tokens**. Each shared token requires a KV shard on each TP2 card; dividing the token count by two would double the reported cost incorrectly. Total two-card storage per token is twice the per-card value. Rounded GiB values and fixed per-session overhead mean this is an allocation ratio, not one universal marginal KV cost.
 
-## Acceptance probes
+![Measured GPU pool allocation across slot and context settings](../graphs/rocm-10.1/memory-allocation.svg)
 
-Three checks, all passed.
+[Open full-size chart](../graphs/rocm-10.1/memory-allocation.svg).
 
-**Over-cap arithmetic.** A request at 330,075 tokens gets a clean 400 with exact arithmetic, not a crash: "request 330075 tokens exceeds 204800; shorten by at least 125276 tokens." The raw excess is 125,275; the engine asks for 125,276 — the extra one is the reply slot. The engine does the subtraction for you.
+## Why two cards initially looked like one
 
-**Needle.** 165,075 prompt tokens, needle buried at about 150k depth. Answer: ORCHID. Correct. Repeats: TTFT 0.3–0.4 s. That speed is the 13 GiB host tier doing its job — 165k-token conversations cache in finished form and come back from RAM, not recompute.
+A useful approximation is **pool = min(available KV capacity, slots × configured context)**, with small engine rounding overhead. Four × 131,072 targets 524,288 tokens; the recorded TP2 pool is 524,304. Its slot target binds before the available cards do.
 
-**Service state.** `/server_info` confirms the new contract: `max_model_len 204800`, drafter `mtp`, serial depth 4, tp 2.
+The TP1 pool, by contrast, is **404,608**, about **77.2%** of that four-slot target. It is VRAM-limited in this profile. Those two numbers were sized by different constraints.
 
-## The pool rule
+Increasing TP2 to six slots allocates 786,448 tokens at 131k; increasing context to 204,800 produces 1,228,816. Six × 204,800 is **1,228,800**; the boot allocation is 16 tokens above that target. None of these divisions is a throughput prediction.
 
-The engine's rule: pool = min(what fits, slots × context). "What fits" comes from measured KV density — 18.2 KiB/token/card on this fp8 hybrid model, where only about a quarter of the 64 layers carry growing KV and the linear layers keep a fixed ~150 MiB of per-session state. One slot is 131,104 tokens — exactly 1.0 session — even with idle VRAM. KV beyond slots × context is dead memory.
+## Model context, deployment context, observed depth
 
-The ladder, with the measured-vs-projection column kept visible:
+The recorded conversion/model inspection reports **262,144** for `n_ctx_train` / `max_position_embeddings`. The earlier radiance deployment used **131,072**; the later one used **204,800**. Model metadata describes an intended context range, not a quality guarantee at every depth. The [model inventory](MODELS.md) separates the conversion source and serving alias.
 
-| Config | Pool tokens | Full sessions | Kind |
-|---|---:|---:|---|
-| TP1, 4 slots, 131k | 404,608 | 3.1 | measured |
-| TP2, 4 slots, 131k | 524,304 | 4.0 | measured |
-| TP2, 6 slots, 131k | 786,448 | 6.0 | measured |
-| TP2, 6 slots, 200k — current default | 1,228,816 | 6.0 | measured |
-| TP2 elastic ceiling (slots ignored) | ~1,284,500 | ~9.8 | projection |
+The operator recorded a **165,075-token needle prompt** with the expected answer and repeated TTFT of 0.3–0.4 s, plus a clean rejection of an over-cap request. These are **reported acceptance probes** from the prior campaign record. Their raw timing and response receipts are **not included in the public pool CSV**, so they remain separate from the exported allocation measurements. Fast repeats alone do not isolate whether reuse came from GPU or host caching.
 
-Elastic VRAM is 22.23 GiB per card from the service boot print; the top row divides that by measured density. It is a ceiling, not a measurement.
+There is **no 165–200k depth/concurrency performance grid** in this release, and no six-agent 200k workload qualification. The measured TP1/TP2 campaign depths and counts remain in the [single-card](RADIANCE-SINGLE-CARD-2026-10-22.md) and [dual-card](RADIANCE-CAMPAIGN-2026-10-21.md) reports.
 
-## What changed operationally
+## The projections stay projections
 
-Before: four agents at 131k each. Now: six agents × 204,800 at full depth, backed by construction — the pool was sized for the worst case, not the average. No new hardware, no new tier, no config rewrite; one flag, and the pool arithmetic carried it. And the model's native ceiling is in reach on this same hardware: 256k-class context gives 4 slots full (1,048,576 tokens), 5 at 256,900 each at 98% backing.
+| Quantity | Token estimate | Status / interpretation |
+|---|---:|---|
+| TP2 elastic ceiling | ~1,284,500 | Projection from 22.23 GiB/card and selected allocation density; not a boot result |
+| Host prefix tier, 13 GiB | 400,912 | Recorded tier print; completed-conversation state, not live GPU KV |
+| Driver-cap host tier, 15.29 GiB | ~471,400 | Projection before vision/other pinned reservations; not an available usable prefix budget |
 
-## Caveats
+Source: the same [capacity CSV](../data/rocm-10.1/radiance-pool-ceiling-2026-10-22.csv), with its `kind` column retained. The GPU and host tiers hold different forms of state. Adding their tokens does not establish extra live-agent concurrency.
 
-- The deep-band 165–200k performance grids are not yet run. The needle probe is the only >131k measurement so far; every grid in the campaign ran at ≤126k caps.
-- Single host: 2× R9700 32 GiB, 30 GiB RAM, custom kernel. Numbers do not generalize silently.
-- Engine 1.9.0 at the pinned digest; baseline re-validation on the old engine was not run (user decision, recorded).
-- The projection row in the ladder is elastic GiB over measured density. It is marked because it is not a measurement.
+For scale, four 262,144-token allocations require **1,048,576** tokens, within the later measured GPU pool by arithmetic. That does not demonstrate four 256k requests running successfully. Five equal shares of the elastic projection would be about 256,900 tokens each; both the ceiling and that division remain unvalidated.
+
+The capacity improvement is useful without upgrading it into a performance claim: a larger allocation target fit. The next unanswered question is its latency under simultaneous long-context work.
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

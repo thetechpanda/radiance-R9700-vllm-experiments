@@ -11,7 +11,8 @@ These **29 archived graphs** are available for inspection but are not selected f
 
 Version attribution for older traces follows the recorded profile and collection date, rather than an immutable image ID captured with every run. Companion memory plots are not independent workload results.
 
-<details><summary>Three-agent compaction chain at a 100k target</summary>
+<details markdown="1">
+<summary markdown="0">Three-agent compaction chain at a 100k target</summary>
 
 **Why unchosen:** A 100k three-agent compaction-chain sweep; it investigates compaction rather than the selected 131k concurrency/runtime comparison.
 
@@ -21,7 +22,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Three-agent compaction chain extended to 110k</summary>
+<details markdown="1">
+<summary markdown="0">Three-agent compaction chain extended to 110k</summary>
 
 **Why unchosen:** A 110k extension of the compaction sweep; different depth and history prevent a matched runtime comparison.
 
@@ -31,7 +33,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Three-agent compaction chain at 90k</summary>
+<details markdown="1">
+<summary markdown="0">Three-agent compaction chain at 90k</summary>
 
 **Why unchosen:** A 90k compaction reference; useful tuning context but redundant in the focused comparison.
 
@@ -41,7 +44,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Four-agent compaction at 64k</summary>
+<details markdown="1">
+<summary markdown="0">Four-agent compaction at 64k</summary>
 
 **Why unchosen:** A shallow 64k four-agent compaction case; outside the long-context target.
 
@@ -51,7 +55,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Four-agent compaction at 80k</summary>
+<details markdown="1">
+<summary markdown="0">Four-agent compaction at 80k</summary>
 
 **Why unchosen:** An 80k compaction-depth step; part of an exploratory sweep rather than a selected operating point.
 
@@ -61,7 +66,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Four-agent compaction at 86k</summary>
+<details markdown="1">
+<summary markdown="0">Four-agent compaction at 86k</summary>
 
 **Why unchosen:** An 86k compaction-depth step near a workload cliff; not a matched ROCm comparison.
 
@@ -71,7 +77,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Four-agent compaction at 90k</summary>
+<details markdown="1">
+<summary markdown="0">Four-agent compaction at 90k</summary>
 
 **Why unchosen:** A 90k four-agent compaction-storm reference; intentionally stresses prefix loss rather than the selected context-growth workload.
 
@@ -81,7 +88,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Clean rerun after a prefill-threshold change</summary>
+<details markdown="1">
+<summary markdown="0">Clean rerun after a prefill-threshold change</summary>
 
 **Why unchosen:** A prefill-threshold tuning rerun; changes scheduler configuration and is not a runtime-only comparison.
 
@@ -91,7 +99,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Foreign-traffic-contaminated threshold trial</summary>
+<details markdown="1">
+<summary markdown="0">Foreign-traffic-contaminated threshold trial</summary>
 
 **Why unchosen:** Unrelated traffic contaminated the measurement; its metrics cannot establish a treatment effect.
 
@@ -101,7 +110,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>GPU-link upgrade comparison at the four-agent storm point</summary>
+<details markdown="1">
+<summary markdown="0">GPU-link upgrade comparison at the four-agent storm point</summary>
 
 **Why unchosen:** The GPU-link path changed; link bandwidth and runtime effects cannot be isolated.
 
@@ -111,7 +121,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Clean-storage four-agent storm trial</summary>
+<details markdown="1">
+<summary markdown="0">Clean-storage four-agent storm trial</summary>
 
 **Why unchosen:** A backing-storage experiment; storage-path effects are outside the selected runtime comparison.
 
@@ -121,7 +132,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Loop-backed fast-storage trial</summary>
+<details markdown="1">
+<summary markdown="0">Loop-backed fast-storage trial</summary>
 
 **Why unchosen:** A loop-backed storage experiment; it tests a tier implementation rather than the retained deployment profiles.
 
@@ -131,7 +143,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Eight-agent overflow / RAM-tier boundary</summary>
+<details markdown="1">
+<summary markdown="0">Eight-agent overflow / RAM-tier boundary</summary>
 
 **Why unchosen:** An intentional eight-agent overflow boundary test; it exceeds the intended operating point.
 
@@ -141,7 +154,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Reduced host-tier capacity at four-agent load</summary>
+<details markdown="1">
+<summary markdown="0">Reduced host-tier capacity at four-agent load</summary>
 
 **Why unchosen:** A smaller host-tier experiment; its memory budget differs from the retained profiles.
 
@@ -151,7 +165,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Guardrail / correctness trial at four agents</summary>
+<details markdown="1">
+<summary markdown="0">Guardrail / correctness trial at four agents</summary>
 
 **Why unchosen:** A guardrail/correctness configuration probe; useful qualification history but not a matched performance case.
 
@@ -161,7 +176,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Speculative-depth eight versus the four-agent baseline</summary>
+<details markdown="1">
+<summary markdown="0">Speculative-depth eight versus the four-agent baseline</summary>
 
 **Why unchosen:** An eight-token speculation variant; draft-depth changes KV reservations and prevents an isolated runtime comparison.
 
@@ -171,7 +187,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Six-agent capacity-bound run, incomplete</summary>
+<details markdown="1">
+<summary markdown="0">Six-agent capacity-bound run, incomplete</summary>
 
 **Why unchosen:** The six-agent capacity-bound attempt was incomplete; it is not a valid completed performance result.
 
@@ -181,7 +198,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Real coding-agent fleet, six agents</summary>
+<details markdown="1">
+<summary markdown="0">Real coding-agent fleet, six agents</summary>
 
 **Why unchosen:** An early six-agent real-agent harness trial produced no usable artefacts; it is not a successful task-completion result.
 
@@ -191,7 +209,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Single-agent real coding task</summary>
+<details markdown="1">
+<summary markdown="0">Single-agent real coding task</summary>
 
 **Why unchosen:** A single-agent functional coding task; different workload and fleet size from the selected synthetic runtime comparison.
 
@@ -201,7 +220,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Instrumentation sanity pass</summary>
+<details markdown="1">
+<summary markdown="0">Instrumentation sanity pass</summary>
 
 **Why unchosen:** A short instrumentation sanity check; insufficient workload coverage for performance ranking.
 
@@ -211,7 +231,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Second instrumentation sanity pass</summary>
+<details markdown="1">
+<summary markdown="0">Second instrumentation sanity pass</summary>
 
 **Why unchosen:** A second short instrumentation check; it validates metrics rather than serving capacity.
 
@@ -221,7 +242,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Compaction jitter and prefix-head preservation</summary>
+<details markdown="1">
+<summary markdown="0">Compaction jitter and prefix-head preservation</summary>
 
 **Why unchosen:** Compaction jitter and prefix-preservation settings changed; several workload/cache effects are mixed.
 
@@ -231,7 +253,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Runtime/JIT instrumentation sanity</summary>
+<details markdown="1">
+<summary markdown="0">Runtime/JIT instrumentation sanity</summary>
 
 **Why unchosen:** A runtime/JIT startup sanity check; it is not a sustained performance workload.
 
@@ -241,7 +264,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Second runtime/JIT sanity pass</summary>
+<details markdown="1">
+<summary markdown="0">Second runtime/JIT sanity pass</summary>
 
 **Why unchosen:** A short follow-up runtime/JIT sanity check; it is not a capacity or latency qualification.
 
@@ -251,7 +275,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Host-memory and storage telemetry during the link/storage campaign</summary>
+<details markdown="1">
+<summary markdown="0">Host-memory and storage telemetry during the link/storage campaign</summary>
 
 **Why unchosen:** A resource companion to the omitted link/storage campaign; it is not an independent benchmark.
 
@@ -261,7 +286,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Host-memory trace for overflow stress</summary>
+<details markdown="1">
+<summary markdown="0">Host-memory trace for overflow stress</summary>
 
 **Why unchosen:** A resource companion to the intentional overflow test; it describes a boundary case.
 
@@ -271,7 +297,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Host-memory trace for the reduced-tier comparison</summary>
+<details markdown="1">
+<summary markdown="0">Host-memory trace for the reduced-tier comparison</summary>
 
 **Why unchosen:** A resource companion to the reduced-tier tuning trial; its configuration is outside the selected comparison.
 
@@ -281,7 +308,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Host-memory trace for the guardrail trial</summary>
+<details markdown="1">
+<summary markdown="0">Host-memory trace for the guardrail trial</summary>
 
 **Why unchosen:** A resource companion to the guardrail probe; it is not an independent runtime comparison.
 
@@ -291,7 +319,8 @@ Version attribution for older traces follows the recorded profile and collection
 
 </details>
 
-<details><summary>Host-memory trace for the six-agent real-agent campaign</summary>
+<details markdown="1">
+<summary markdown="0">Host-memory trace for the six-agent real-agent campaign</summary>
 
 **Why unchosen:** A resource companion to the early six-agent harness trial; its telemetry does not establish successful task completion.
 
@@ -305,4 +334,5 @@ No graph is shown for the empty speculative-depth companion recorder: it contain
 
 <!-- NAVIGATION START -->
 
-[Home](../../index.md) · [Overview](../../README.md) · [Latest campaign](../../docs/RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](../../docs/CHARTS.md)
+[Home](../../index.md) · [Compare](../../docs/RADIANCE-VS-VLLM.md) · [vllm-radiance](../../docs/VLLM-RADIANCE.md) · [radiance](../../docs/RADIANCE.md) · [Charts](../../docs/CHARTS.md) · [Stuff for nerds](../../docs/CODE-CORNER.md) · [Disclosure](../../docs/REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

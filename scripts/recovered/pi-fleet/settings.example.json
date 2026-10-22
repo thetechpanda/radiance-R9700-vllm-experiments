@@ -1,0 +1,10 @@
+{
+  "defaultProvider": "radiance",
+  "defaultModel": "ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ",
+  "defaultThinkingLevel": "medium",
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 34816,
+    "keepRecentTokens": 16384
+  }
+}

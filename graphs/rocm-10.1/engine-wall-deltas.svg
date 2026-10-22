@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">Where the wall-time differences land</title>
+<desc id="desc">radiance relative to historical vllm-radiance · (radiance / baseline − 1) × 100</desc>
+<rect width="1200" height="100%" rx="16" fill="#0e1828"/>
+<g font-family="system-ui,sans-serif">
+<text x="36" y="42" font-size="12" fill="#6ae1bc" text-anchor="start" font-weight="bold">R9700 / MEASURED FIELD NOTES</text>
+<text x="36" y="83" font-size="29" fill="#e9edf3" text-anchor="start" font-weight="bold">Where the wall-time differences land</text>
+<text x="36" y="115" font-size="15" fill="#9cacc0" text-anchor="start" font-weight="normal">radiance relative to historical vllm-radiance · (radiance / baseline − 1) × 100</text>
+<line x1="260" x2="260" y1="175" y2="510" stroke="#42546d"/>
+<text x="260" y="544" font-size="14" fill="#9cacc0" text-anchor="middle" font-weight="normal">-20%</text>
+<line x1="430" x2="430" y1="175" y2="510" stroke="#42546d"/>
+<text x="430" y="544" font-size="14" fill="#9cacc0" text-anchor="middle" font-weight="normal">-10%</text>
+<line x1="600" x2="600" y1="175" y2="510" stroke="#42546d"/>
+<text x="600" y="544" font-size="14" fill="#9cacc0" text-anchor="middle" font-weight="normal">0%</text>
+<line x1="770" x2="770" y1="175" y2="510" stroke="#42546d"/>
+<text x="770" y="544" font-size="14" fill="#9cacc0" text-anchor="middle" font-weight="normal">+10%</text>
+<line x1="940" x2="940" y1="175" y2="510" stroke="#42546d"/>
+<text x="940" y="544" font-size="14" fill="#9cacc0" text-anchor="middle" font-weight="normal">+20%</text>
+<text x="36" y="226" font-size="18" fill="#e9edf3" text-anchor="start" font-weight="normal">1 agent</text>
+<rect x="600.00" y="205" width="52.33" height="19" rx="3" fill="#ffbd69"/>
+<text x="660.3283346487765" y="220" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">+3.1%</text>
+<rect x="410.95" y="231" width="189.05" height="19" rx="3" fill="#62c6ff"/>
+<text x="402.9470026064292" y="246" font-size="14" fill="#62c6ff" text-anchor="end" font-weight="normal">-11.1%</text>
+<text x="36" y="303" font-size="18" fill="#e9edf3" text-anchor="start" font-weight="normal">2 agents</text>
+<rect x="600.00" y="282" width="160.30" height="19" rx="3" fill="#ffbd69"/>
+<text x="768.3017444601603" y="297" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">+9.4%</text>
+<rect x="402.55" y="308" width="197.45" height="19" rx="3" fill="#62c6ff"/>
+<text x="394.5474956822107" y="323" font-size="14" fill="#62c6ff" text-anchor="end" font-weight="normal">-11.6%</text>
+<text x="36" y="380" font-size="18" fill="#e9edf3" text-anchor="start" font-weight="normal">3 agents</text>
+<rect x="600.00" y="359" width="114.30" height="19" rx="3" fill="#ffbd69"/>
+<text x="722.2950391644908" y="374" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">+6.7%</text>
+<rect x="481.09" y="385" width="118.91" height="19" rx="3" fill="#62c6ff"/>
+<text x="473.0894459919528" y="400" font-size="14" fill="#62c6ff" text-anchor="end" font-weight="normal">-7.0%</text>
+<text x="36" y="457" font-size="18" fill="#e9edf3" text-anchor="start" font-weight="normal">4 agents</text>
+<rect x="600.00" y="436" width="116.35" height="19" rx="3" fill="#ffbd69"/>
+<text x="724.351418616227" y="451" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">+6.8%</text>
+<rect x="300.84" y="462" width="299.16" height="19" rx="3" fill="#62c6ff"/>
+<text x="292.83896050746887" y="477" font-size="14" fill="#62c6ff" text-anchor="end" font-weight="normal">-17.6%</text>
+<text x="230" y="159" font-size="12" fill="#9cacc0" text-anchor="start" font-weight="normal">SHORTER WALL</text>
+<text x="835" y="159" font-size="12" fill="#9cacc0" text-anchor="start" font-weight="normal">LONGER WALL</text>
+<text x="36" y="579" font-size="15" fill="#ffbd69" text-anchor="start" font-weight="normal">● Speculation off</text>
+<text x="260" y="579" font-size="15" fill="#62c6ff" text-anchor="start" font-weight="normal">● MTP-4</text>
+<text x="36" y="611" font-size="14" fill="#9cacc0" text-anchor="start" font-weight="normal">Observed deltas, not isolated engine effects. The earlier ≈15% repeat spread is context, not a significance test.</text>
+</g></svg>

@@ -38,6 +38,14 @@ def title(path):
 
 def build_chart_gallery():
     output = ['# Chart gallery', '',
+        '## The two-engine story', '',
+        'Start with the [comparison](RADIANCE-VS-VLLM.md), [vllm-radiance](VLLM-RADIANCE.md) or [radiance](RADIANCE.md). Different target revisions, cache formats, context depths and run lengths are stated beside each figure. Percentage changes are descriptive; no confidence intervals are available.', '',
+        '![Whole-cell wall time, by speculation lane](../graphs/rocm-10.1/engine-wall-comparison.svg)', '',
+        '![Wall-time relative differences](../graphs/rocm-10.1/engine-wall-deltas.svg)', '',
+        '![Single-card latency and depth tradeoffs](../graphs/rocm-10.1/single-card-tradeoffs.svg)', '',
+        '![Measured GPU KV allocations](../graphs/rocm-10.1/memory-allocation.svg)', '',
+        '[Source hashes and limits](../graphs/rocm-10.1/editorial-chart-sources.json) · [Data definitions](DATA-DICTIONARY.md)', '',
+        '## Browse the archive', '',
         'This gallery includes selected results only; exploratory graphs are available separately in the [unchosen archive](../graphs/rocm-7.14/unchosen.md); their per-turn CSVs remain omitted. See [what was excluded and why](EXCLUDED-TESTS.md). Charts use descriptive experiment names and separate ROCm folders. Version assignment follows recorded build/runtime evidence; unknown versions stay separate. Different workloads and settings are not a controlled ROCm comparison. Prompt-credit traces are diagnostic, not validated prefill throughput.', '']
     entries = json.loads((ROOT/'data/telemetry-catalog.json').read_text())
     for version, label in [('rocm-10.1','ROCm 10.1'), ('rocm-7.14','ROCm 7.14'), ('version-unverified','Version unverified or mixed')]:
@@ -56,7 +64,7 @@ def build_chart_gallery():
                 continue
             name = entry['slug']
             chart = ROOT/'graphs'/version/(name+'.svg')
-            output += [f'<details><summary>{entry["title"]}</summary>', '', entry['provenance'], '', entry['interpretation'], '']
+            output += ['<details markdown="1">', f'<summary markdown="0">{entry["title"]}</summary>', '', entry['provenance'], '', entry['interpretation'], '']
             if chart.exists():
                 output += [f'![{entry["title"]}](../graphs/{version}/{name}.svg)', '', f'[Derived CSV](../data/{version}/{name}.csv)', '']
             else:
@@ -80,7 +88,7 @@ def build_chart_gallery():
                        '![Historical ROCm 7.14 RAM16 versus ROCm 10.1 RAM10](../graphs/rocm-10.1/single-card-rocm-7.14-ram16-vs-rocm-10.1-ram10.svg)', '',
                        'Different tier budgets, utilisation and image patches prevent an isolated ROCm-version conclusion.', '']
             output += ['### Dual-card text growth — 18 October 2026', '', '![ROCm 10.1 dual-card text growth TTFT](../graphs/rocm-10.1/dual-card-text-growth-2026-10-18.svg)', '', '[Completed case measurements](../data/rocm-10.1/dual-card-text-growth-2026-10-18.csv)', '']
-            output += ['See the [seven completed dual-card text cases](REPEAT-CAMPAIGN.md). Eight GPU A/dual follow-up cells have completed; see the [latest results](../README.md#latest-rocm-101-results) and [README requirements and results](../README.md#best-recorded-single-card-setup-for-34-deep-context-agents) and [recorded configuration](../data/rocm-10.1/single-card-gpu-a-configuration.json). The [campaign report](FINAL-REPORT-20261018.md) records pressure telemetry and both first fleets; the single-card retry completed with all four agents delivering and exiting cleanly in 75:23.', '']
+            output += ['See the [seven completed dual-card text cases](REPEAT-CAMPAIGN.md). Eight GPU A/dual follow-up cells have completed; see the [historical results](../HISTORICAL-OVERVIEW.md#latest-rocm-101-results) and [historical requirements and results](../HISTORICAL-OVERVIEW.md#best-recorded-single-card-setup-for-34-deep-context-agents) and [recorded configuration](../data/rocm-10.1/single-card-gpu-a-configuration.json). The [campaign report](FINAL-REPORT-20261018.md) records pressure telemetry and both first fleets; the single-card retry completed with all four agents delivering and exiting cleanly in 75:23.', '']
     (DOCS / 'CHARTS.md').write_text('\n'.join(output), encoding='utf-8')
 
 
@@ -91,26 +99,33 @@ def add_navigation():
         if page in (ROOT / 'README.md', ROOT / 'index.md'):
             page.write_text(content + '\n', encoding='utf-8')
             continue
-        destinations = [ROOT / 'index.md', ROOT / 'README.md',
-                        DOCS / 'RADIANCE-CAMPAIGN-2026-10-21.md', DOCS / 'CHARTS.md']
+        destinations = [ROOT / 'index.md', DOCS / 'RADIANCE-VS-VLLM.md',
+                        DOCS / 'VLLM-RADIANCE.md', DOCS / 'RADIANCE.md', DOCS / 'CHARTS.md',
+                        DOCS / 'CODE-CORNER.md', DOCS / 'REPRODUCIBILITY.md']
         links = []
         for destination in destinations:
             if destination == page or not destination.exists():
                 continue
             rel = Path(__import__('os').path.relpath(destination, page.parent)).as_posix()
             label = {ROOT / 'index.md': 'Home', ROOT / 'README.md': 'Overview',
-                     DOCS / 'RADIANCE-CAMPAIGN-2026-10-21.md': 'Latest campaign',
-                     DOCS / 'CHARTS.md': 'Charts'}[destination]
+                     DOCS / 'RADIANCE-VS-VLLM.md': 'Compare',
+                     DOCS / 'VLLM-RADIANCE.md': 'vllm-radiance',
+                     DOCS / 'RADIANCE.md': 'radiance',
+                     DOCS / 'CHARTS.md': 'Charts',
+                     DOCS / 'CODE-CORNER.md': 'Stuff for nerds',
+                     DOCS / 'REPRODUCIBILITY.md': 'Disclosure'}[destination]
             links.append(f'[{label}]({rel})')
-        footer = '\n\n' + NAV_START + '\n\n' + ' · '.join(links) + '\n'
+        footer = '\n\n' + NAV_START + '\n\n' + ' · '.join(links) + '\n' + NAV_END + '\n'
         page.write_text(content + footer, encoding='utf-8')
 
 
 def main():
+    from build_code_corner import main as build_code_corner
+    build_code_corner()
     from build_unchosen_graphs import main as build_archive
     build_archive()
-    from chart_theme import main as apply_chart_theme
-    apply_chart_theme()
+    from render_editorial import main as render_editorial
+    render_editorial()
     from build_game_gallery import main as build_game_gallery
     if (ROOT / 'examples/rocm-10.1/falling-blocks/manifest.json').exists():
         build_game_gallery()

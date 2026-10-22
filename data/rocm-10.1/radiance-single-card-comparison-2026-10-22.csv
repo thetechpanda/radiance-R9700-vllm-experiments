@@ -1,13 +1,13 @@
-engine_setup,agents,depth_cap_tokens,turns,seconds_per_turn,ttft_avg_s,ttft_max_s,decode_per_request_tps,source
-"vllm-radiance single-card (27-turn family, non-spec)",1,126000,27,12.59,7.46,18.78,40.0,follow-up-single-vs-dual-text-growth-2026-10-18.csv
-"vllm-radiance single-card (27-turn family, non-spec)",2,126000,63,9.74,11.92,40.64,32.4,follow-up-single-vs-dual-text-growth-2026-10-18.csv
-"vllm-radiance single-card (27-turn family, non-spec)",3,126000,94,30.09,71.46,456.19,26.0,follow-up-single-vs-dual-text-growth-2026-10-18.csv
-"vllm-radiance single-card (27-turn family, non-spec)",4,126000,114,34.65,101.38,654.91,25.5,follow-up-single-vs-dual-text-growth-2026-10-18.csv
-radiance TP1 MTP-4,1,126000,10,9.68,7.07,9.54,84.4,radiance-single-card-2026-10-22.csv
-radiance TP1 MTP-4,2,126000,20,9.67,8.87,12.53,26.6,radiance-single-card-2026-10-22.csv
-radiance TP1 MTP-4,3,122630,30,9.60,11.34,16.38,23.3,radiance-single-card-2026-10-22.csv
-radiance TP1 MTP-4,4,88913,32,9.06,14.34,22.02,17.4,radiance-single-card-2026-10-22.csv
-radiance TP2 MTP-4,1,126000,10,10.23,8.37,9.89,137.9,radiance-campaign-2026-10-21.csv
-radiance TP2 MTP-4,2,126000,20,10.23,10.72,16.57,41.0,radiance-campaign-2026-10-21.csv
-radiance TP2 MTP-4,3,126000,30,10.02,12.85,20.28,25.9,radiance-campaign-2026-10-21.csv
-radiance TP2 MTP-4,4,126000,40,10.07,17.1,28.5,16.8,radiance-campaign-2026-10-21.csv
+engine_setup,agents,depth_cap_tokens,turns,seconds_per_turn,ttft_avg_s,ttft_max_s,decode_per_request_tps,source,max_observed_context_tokens,prefix_tier_mib
+"vllm-radiance single-card (historical growth family, MTP-4)",1,126000,27,12.59,7.46,18.78,40.0,follow-up-single-vs-dual-text-growth-2026-10-18.csv,123462,10240
+"vllm-radiance single-card (historical growth family, MTP-4)",2,126000,63,9.74,11.92,40.64,32.4,follow-up-single-vs-dual-text-growth-2026-10-18.csv,127278,10240
+"vllm-radiance single-card (historical growth family, MTP-4)",3,126000,94,30.09,71.46,456.19,26.0,follow-up-single-vs-dual-text-growth-2026-10-18.csv,127658,10240
+"vllm-radiance single-card (historical growth family, MTP-4)",4,126000,114,34.65,101.38,654.91,25.5,follow-up-single-vs-dual-text-growth-2026-10-18.csv,126691,10240
+radiance TP1 MTP-4,1,126000,10,9.68,7.07,9.54,84.4,radiance-single-card-2026-10-22.csv,120325,13312
+radiance TP1 MTP-4,2,126000,20,9.67,8.87,12.53,26.6,radiance-single-card-2026-10-22.csv,123515,13312
+radiance TP1 MTP-4,3,122630,30,9.60,11.34,16.38,23.3,radiance-single-card-2026-10-22.csv,123710,13312
+radiance TP1 MTP-4,4,88913,32,9.06,14.34,22.02,17.4,radiance-single-card-2026-10-22.csv,99075,13312
+radiance TP2 MTP-4,1,126000,10,10.23,8.37,9.89,137.9,radiance-campaign-2026-10-21.csv,120666,10240
+radiance TP2 MTP-4,2,126000,20,10.24,10.72,16.57,41.0,radiance-campaign-2026-10-21.csv,123696,10240
+radiance TP2 MTP-4,3,126000,30,10.02,12.85,20.28,25.9,radiance-campaign-2026-10-21.csv,123709,10240
+radiance TP2 MTP-4,4,126000,40,10.07,17.1,28.5,16.8,radiance-campaign-2026-10-21.csv,123710,10240

@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+<title id="title">One card: less waiting, less tested context</title>
+<desc id="desc">Four-agent results · different run lengths, host tiers and model representations</desc>
+<rect width="1200" height="100%" rx="16" fill="#0e1828"/>
+<g font-family="system-ui,sans-serif">
+<text x="36" y="42" font-size="12" fill="#6ae1bc" text-anchor="start" font-weight="bold">R9700 / MEASURED FIELD NOTES</text>
+<text x="36" y="83" font-size="29" fill="#e9edf3" text-anchor="start" font-weight="bold">One card: less waiting, less tested context</text>
+<text x="36" y="115" font-size="15" fill="#9cacc0" text-anchor="start" font-weight="normal">Four-agent results · different run lengths, host tiers and model representations</text>
+<text x="36" y="170" font-size="20" fill="#e9edf3" text-anchor="start" font-weight="bold">Mean TTFT</text>
+<text x="36" y="194" font-size="13" fill="#9cacc0" text-anchor="start" font-weight="normal">s · lower is better</text>
+<line x1="71.0" x2="71.0" y1="222" y2="316" stroke="#29364a"/>
+<text x="71.0" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">0</text>
+<line x1="182.25" x2="182.25" y1="222" y2="316" stroke="#29364a"/>
+<text x="182.25" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">30</text>
+<line x1="293.5" x2="293.5" y1="222" y2="316" stroke="#29364a"/>
+<text x="293.5" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">60</text>
+<line x1="404.75" x2="404.75" y1="222" y2="316" stroke="#29364a"/>
+<text x="404.75" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">90</text>
+<line x1="516.0" x2="516.0" y1="222" y2="316" stroke="#29364a"/>
+<text x="516.0" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">120</text>
+<rect x="71" y="228" width="375.95" height="26" rx="4" fill="#ffbd69"/>
+<text x="453.9508333333333" y="247" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">101.38</text>
+<rect x="71" y="270" width="53.18" height="26" rx="4" fill="#62c6ff"/>
+<text x="131.1775" y="289" font-size="14" fill="#62c6ff" text-anchor="start" font-weight="normal">14.34</text>
+<text x="624" y="170" font-size="20" fill="#e9edf3" text-anchor="start" font-weight="bold">Maximum observed TTFT</text>
+<text x="624" y="194" font-size="13" fill="#9cacc0" text-anchor="start" font-weight="normal">s · lower is better</text>
+<line x1="659.0" x2="659.0" y1="222" y2="316" stroke="#29364a"/>
+<text x="659.0" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">0</text>
+<line x1="770.25" x2="770.25" y1="222" y2="316" stroke="#29364a"/>
+<text x="770.25" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">175</text>
+<line x1="881.5" x2="881.5" y1="222" y2="316" stroke="#29364a"/>
+<text x="881.5" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">350</text>
+<line x1="992.75" x2="992.75" y1="222" y2="316" stroke="#29364a"/>
+<text x="992.75" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">525</text>
+<line x1="1104.0" x2="1104.0" y1="222" y2="316" stroke="#29364a"/>
+<text x="1104.0" y="341" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">700</text>
+<rect x="659" y="228" width="416.34" height="26" rx="4" fill="#ffbd69"/>
+<text x="1082.3356428571428" y="247" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">654.91</text>
+<rect x="659" y="270" width="14.00" height="26" rx="4" fill="#62c6ff"/>
+<text x="679.9984285714286" y="289" font-size="14" fill="#62c6ff" text-anchor="start" font-weight="normal">22.02</text>
+<text x="36" y="410" font-size="20" fill="#e9edf3" text-anchor="start" font-weight="bold">Maximum observed prompt depth</text>
+<text x="36" y="434" font-size="13" fill="#9cacc0" text-anchor="start" font-weight="normal">k tokens · higher is deeper</text>
+<line x1="71.0" x2="71.0" y1="462" y2="556" stroke="#29364a"/>
+<text x="71.0" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">0</text>
+<line x1="182.25" x2="182.25" y1="462" y2="556" stroke="#29364a"/>
+<text x="182.25" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">35</text>
+<line x1="293.5" x2="293.5" y1="462" y2="556" stroke="#29364a"/>
+<text x="293.5" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">70</text>
+<line x1="404.75" x2="404.75" y1="462" y2="556" stroke="#29364a"/>
+<text x="404.75" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">105</text>
+<line x1="516.0" x2="516.0" y1="462" y2="556" stroke="#29364a"/>
+<text x="516.0" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">140</text>
+<rect x="71" y="468" width="402.70" height="26" rx="4" fill="#ffbd69"/>
+<text x="480.6963928571429" y="487" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">126.7</text>
+<rect x="71" y="510" width="314.92" height="26" rx="4" fill="#62c6ff"/>
+<text x="392.9169642857143" y="529" font-size="14" fill="#62c6ff" text-anchor="start" font-weight="normal">99.1</text>
+<text x="624" y="410" font-size="20" fill="#e9edf3" text-anchor="start" font-weight="bold">Reported request generation estimate</text>
+<text x="624" y="434" font-size="13" fill="#9cacc0" text-anchor="start" font-weight="normal">tok/s · see metric caveat</text>
+<line x1="659.0" x2="659.0" y1="462" y2="556" stroke="#29364a"/>
+<text x="659.0" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">0</text>
+<line x1="770.25" x2="770.25" y1="462" y2="556" stroke="#29364a"/>
+<text x="770.25" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">7.5</text>
+<line x1="881.5" x2="881.5" y1="462" y2="556" stroke="#29364a"/>
+<text x="881.5" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">15</text>
+<line x1="992.75" x2="992.75" y1="462" y2="556" stroke="#29364a"/>
+<text x="992.75" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">22.5</text>
+<line x1="1104.0" x2="1104.0" y1="462" y2="556" stroke="#29364a"/>
+<text x="1104.0" y="581" font-size="13" fill="#9cacc0" text-anchor="middle" font-weight="normal">30</text>
+<rect x="659" y="468" width="378.25" height="26" rx="4" fill="#ffbd69"/>
+<text x="1044.25" y="487" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">25.50</text>
+<rect x="659" y="510" width="258.10" height="26" rx="4" fill="#62c6ff"/>
+<text x="924.0999999999999" y="529" font-size="14" fill="#62c6ff" text-anchor="start" font-weight="normal">17.40</text>
+<text x="36" y="675" font-size="14" fill="#ffbd69" text-anchor="start" font-weight="normal">● vllm-radiance / MTP-4 / 10 GiB tier / 126k cap / 114 timed turns</text>
+<text x="36" y="702" font-size="14" fill="#62c6ff" text-anchor="start" font-weight="normal">● radiance / MTP-4 / 13 GiB tier / 88.9k cap / 32 turns</text>
+<text x="36" y="732" font-size="14" fill="#9cacc0" text-anchor="start" font-weight="normal">Request generation estimates use different export definitions; not aggregate throughput or a controlled speedup.</text>
+</g></svg>

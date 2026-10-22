@@ -1,0 +1,29 @@
+{
+  "providers": {
+    "radiance": {
+      "baseUrl": "http://127.0.0.1:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "REPLACE_IF_REQUIRED",
+      "models": [
+        {
+          "id": "ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ",
+          "contextWindow": 131070,
+          "maxTokens": 32768,
+          "reasoning": true,
+          "input": [
+            "text"
+          ],
+          "thinkingLevelMap": {
+            "off": "low",
+            "minimal": "low",
+            "low": "low",
+            "medium": "medium",
+            "high": "xhigh",
+            "xhigh": "xhigh",
+            "max": "xhigh"
+          }
+        }
+      ]
+    }
+  }
+}

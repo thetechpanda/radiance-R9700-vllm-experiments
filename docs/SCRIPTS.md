@@ -5,7 +5,7 @@ title: "Rewritten scripts and launch instructions"
 
 # Rewritten scripts and launch instructions
 
-This release includes compact replacement tools, not copies of the archived operational scripts. They preserve the useful workflows while avoiding captured host configuration, raw conversation fixtures, credentials, and machine-local paths.
+This release includes both compact replacement tools and explicitly labelled [recovered originals/adapters](../scripts/recovered/README.md). The [code corner](CODE-CORNER.md) inventories every shipped script and gives worked examples; the [disclosure](REPRODUCIBILITY.md) explains the remaining gaps. They preserve the useful workflows while avoiding captured host configuration, raw conversation fixtures, credentials, and machine-local paths.
 
 The primary historical server runs studied the hybrid **Qwen3.8 27B** checkpoint [`ukisai/Swift-1.5-Qwen3.8-27b-INT4`](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27b-INT4). The checkpoint and calibration artifacts are not included. For comparable measurements, use the same model variant with the matching server configuration; another model is a separate experiment. See the [Hugging Face model inventory](MODELS.md) for related models and drafters.
 
@@ -117,7 +117,7 @@ The active value does not include `iommu=pt`. Keep the two variants distinct. Th
 
 ## Server command used for the single-card RAM16 test profile
 
-Compare the [side-by-side requirements and completed results](../README.md#best-recorded-single-card-setup-for-34-deep-context-agents) before choosing a profile. `launch-tp1-rocm10.sh` reproduces the measured ROCm 10.1 / 10 GiB configuration; it is not a qualified 3–4-agent recommendation. Both portable single-card launchers explicitly use TP=1 and expose one GPU’s DRM nodes. Set `GPU_CARD_DEVICE`, `GPU_RENDER_DEVICE` and optionally `GPU_UUID` together for another card. FP8 mode requires the scale sidecar and its sibling `.manifest.json`; both are mounted read-only with verification enabled.
+Compare the [side-by-side requirements and completed results](../HISTORICAL-OVERVIEW.md#best-recorded-single-card-setup-for-34-deep-context-agents) before choosing a profile. `launch-tp1-rocm10.sh` reproduces the measured ROCm 10.1 / 10 GiB configuration; it is not a qualified 3–4-agent recommendation. Both portable single-card launchers explicitly use TP=1 and expose one GPU’s DRM nodes. Set `GPU_CARD_DEVICE`, `GPU_RENDER_DEVICE` and optionally `GPU_UUID` together for another card. FP8 mode requires the scale sidecar and its sibling `.manifest.json`; both are mounted read-only with verification enabled.
 
 The historical four-agent single-card milestone used one R9700, a 16 GiB RAM-only KV tier, a 131,070-token model limit, four scheduler slots, MTP with four draft tokens, R4D attention, and a 16 GiB host-memory tier. This rewritten launcher expresses that server configuration with user-supplied image/model paths and no saved credentials:
 
@@ -140,7 +140,7 @@ python3 scripts/agent_bench.py \
   --max-tool-chars 12000 --output results/run.json
 ```
 
-The released benchmark is a clean synthetic replacement, not the original historical harness. It does not exactly reproduce the historical prompt distribution or its run totals. See the [benchmark guide](BENCHMARKS.md) and [run index](RUN-INDEX.md) before comparing results.
+`scripts/agent_bench.py` is a clean synthetic replacement. The original v4 harness is now separately available at `scripts/recovered/bench_agents4.py`; they are not interchangeable. It does not exactly reproduce the historical prompt distribution or its run totals. See the [benchmark guide](BENCHMARKS.md) and [run index](RUN-INDEX.md) before comparing results.
 
 ## Build and run the ROCm 10.1 TP=2 profile
 
@@ -200,7 +200,7 @@ For model-matched FP8 cache scales, follow the [coding-agent history calibration
 
 ## Regenerate release data and graphs
 
-Generate the current summary reports from existing local CSV exports with `python3 tools/render_follow_up.py`. Use `python3 tools/chart_theme.py` to apply the shared dark palette to all retained and archived SVGs. The normal navigation/release generators also apply the theme. These commands only write local artefacts and do not contact the inference server.
+Generate the current summary reports from existing local CSV exports with `python3 tools/render_follow_up.py`. Use `python3 tools/chart_theme.py` to apply the shared dark palette to all retained and archived SVGs. The navigation generator calls the editorial renderer; use the theme command explicitly when changing the older SVG families. These commands only write local artefacts and do not contact the inference server.
 
 From the release package root, maintainers with access to the separately held source CSVs can rebuild the derived outputs:
 
@@ -219,4 +219,5 @@ After importing games and their reviewed `manifest.json`, run `python3 tools/bui
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

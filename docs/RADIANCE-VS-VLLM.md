@@ -1,68 +1,129 @@
 ---
 layout: default
-title: "radiance vs radiance-vllm: what actually changes"
+title: "vllm-radiance vs radiance: the evidence side by side"
+description: "Wall time, TTFT, generation, context and memory compared with model revisions and test limits visible."
 ---
 
-# radiance vs radiance-vllm: what actually changes
+# vllm-radiance vs radiance: the evidence side by side
 
-## The engines
+The engine story depends on which column you read. In the closest workload family, **vllm-radiance has shorter non-speculative wall times**, while **radiance has shorter MTP-4 wall times**. Generation estimates and first-token latency tell a more mixed story. Here are the observations, their denominators and the differences that prevent a controlled engine verdict.
 
-**radiance-vllm** is the old stack: a vLLM fork shipped as a `vllm-radiance:*` container, metrics under the `vllm:*` families. It loads weights from a Hugging Face layout — boot takes minutes, weights first — and publishes CPU KV offload as a fill percentage plus store/load byte counters. Prefix caching ran as a 10 GiB ARC tier; MTP K4 drafting came from `--speculative-config`.
+For each stack’s configurations and practical operating range, use the dedicated [vllm-radiance](VLLM-RADIANCE.md) and [radiance](RADIANCE.md) pages.
 
-**radiance** is the new engine: `stilldeadcode/radiance` 1.9.0, digest-pinned, loading converted `.rad` bundles, metrics under `radiance:*`. It publishes steady-window gauges — `prefill_tokens_per_second` and `decode_tokens_per_second` — and splits prompt intake into counters. Every number on this page traces to [the campaign export](../data/rocm-10.1/radiance-campaign-2026-10-21.csv) and [the fleet export](../data/rocm-10.1/radiance-falling-blocks-fleet-2026-10-21.csv).
+## The comparison contract
 
-## What the metric vocabulary change means for monitoring
+These are historical deployments on **one Minisforum MS-01, 32 GB host RAM, with two R9700 32 GB GPUs**. GPU A uses PCIe 4.0 ×8; GPU B uses ×4 through an adapter/redriver. [Hardware details](HARDWARE.md).
 
-The fill gauge is gone. `radiance` reports intake as one number and splits it with counters: `prefill_tokens_total` is GPU recompute; `attn_cached_tokens_total` and `linear_cached_tokens_total` are cache-served. Under n=4 load I measured intake at 8,648 tok/s = 1,690 recompute + 6,958 cache-served. Monitoring now means reading rates, not a dial. The RAM tier has no fill gauge at all: counters only — `prefix_hit_cut_tokens_total`, `prefix_cache_evictions_total`, and `prefix_cache_ckpt_evictions_by_reason_total {reason="retention"|"store_full"}`. The `store_full` reason is the eviction signal that matters.
+| Variable | vllm-radiance Y/Z references · 19 Oct | radiance R1–R6 · 21 Oct |
+|---|---|---|
+| Engine | `1.1.0-rc1.vllm0.30.0` | `stilldeadcode/radiance` 1.9.0 |
+| Exported target / serving name | `ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ` | Same API name; converted `.rad` bundle |
+| Recorded revision | `9dba8a05` | `81a28ee75eb1cd469f209813a368a79a7e3db3bc` |
+| Weight representation | AWQ INT4 / W4A16 | `awq-int4-rad`; conversion notes name the Swift-1.5 INT4 source |
+| Attention KV | **BF16** | **FP8** |
+| TP / slots / host tier | 2 / 4 / 10 GiB ARC | 2 / 4 / 10 GiB prefix tier |
+| Server context limit | 131,070 | 131,072 |
+| Workload | Ten turns per agent, 126k growth target | Same recovered harness/workload family |
+| Repeated alongside the new run? | **No** | New measurements on 21 Oct |
 
-## KV and tiers
+Sources: [Y/Z sweep CSV](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv), [radiance campaign CSV](../data/rocm-10.1/radiance-campaign-2026-10-21.csv), [model identities](MODELS.md). The recovered harness hash is recorded in the [data dictionary](DATA-DICTIONARY.md). A shared serving name and harness do not prove identical weights, tokenization or cache behaviour.
 
-Live KV lives only in the GPU pool: 524,304–524,336 tokens (FP8) at TP2 — 4×131k at 18.6 KiB/token. The RAM tier is deeper but stores *finished* conversations, not live KV. Pinned host pages are capped by the driver's `ttm.pages_limit` (15.29 GiB here), so on this 30 GiB host the prefix tier tops out at about 13 GiB. No disk tier exists; RAM is the deepest published tier.
+The 19 October sweep included repeat non-speculative **Swift-Quark** cells around 373–439 s. That roughly 15% spread is evidence of variability in that setup, not a confidence interval or a universal threshold for the Y/Z and radiance comparisons. There are no matched repeat distributions here to establish statistical significance.
 
-Pool ÷ agents sets the depth cap: 4 → 131k, 5 → 104.8k, 6 → 87.4k; 6×131k is impossible (14.5 GiB KV vs 9.74 GiB pool).
+## Dual-card wall time
 
-## Drafter rules
+Wall is the elapsed time for the **whole cell**: ten turns per agent, including waiting and prompt processing. Lower is better. All 16 text rows below are observations, not projected performance.
 
-The `.rad` conversion carries the MTP head (verified: `mtp_num_hidden_layers 1`). `RADIANCE_SPECULATIVE_CONFIG` takes MTP *or* DFlash2 — never both. With spec on, `/server_info` reports `drafter:"mtp" kind:"serial" depth:4`. Measured draft acceptance on the campaign workload: 0.657 mid-run, 0.679 final.
+![Whole-cell wall seconds for both engines, separated by speculation lane](../graphs/rocm-10.1/engine-wall-comparison.svg)
 
-## Operational deltas
+| Agents | vllm-radiance non-spec · Y | radiance non-spec · R1–R4 | Relative change | vllm-radiance MTP-4 · Z | radiance MTP-4 · R6 | Relative change |
+|---|---:|---:|---:|---:|---:|---:|
+| 1 | 126.7 s | 130.6 s | +3.1% | 115.1 s | 102.3 s | −11.1% |
+| 2 | 212.1 s | 232.1 s | +9.4% | 231.6 s | 204.7 s | −11.6% |
+| 3 | 306.4 s | 327.0 s | +6.7% | 323.1 s | 300.5 s | −7.0% |
+| 4 | 401.8 s | 429.3 s | +6.8% | 488.7 s | 402.7 s | −17.6% |
 
-- **Startup budget checks.** The engine aborts fast, with arithmetic, when host allocations exceed budget: available RAM minus tier, checkpoint slots and arenas must cover pinned towers plus `--host-headroom-mib` (default 4 GiB). A 16 GiB tier boot died in this check with the exact shortfall printed. The vision tower (1.72 GiB pinned) and 144 MiB checkpoint slots (store capped at 1/8 of host RAM, 24 slots ≈ 3.4 GiB) are budget-checked too.
-- **Cold-boot device race.** `kfd` registers the second card late, so `--tp 2` aborts in under a second with "1 device usable". The unit needs a delayed start plus `Restart=on-failure`. vLLM never hit this — it spends minutes loading weights before it touches a device.
-- **Gating.** `/metrics` and `/v1/models` are bearer-gated (keyless on my LAN); `/health` is open. `/server_info` exposes drafter, depth, KV, version — there is no `--version` flag.
-- **Page-cache warming is a boot-time tool.** With the engine resident (24 GiB), a 17.4 GiB model file warms in 11 s, reclaimed to ~0% within minutes. Boot order: warm (11 s) → engine (UP +40 s).
+Relative change = **(radiance / named vllm-radiance baseline − 1) × 100**. Positive wall change means more time. Source cells: **Y1–Y4 / Z1–Z4** in the [sweep](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv), **R1–R4 / R6-mtp4-n1…n4** in the [radiance grid](../data/rocm-10.1/radiance-campaign-2026-10-21.csv).
 
-## Measured deltas
+![Percentage wall-time differences on a shared zero line](../graphs/rocm-10.1/engine-wall-deltas.svg)
 
-Same client, byte-identical harness, same checkpoint (the vllm-radiance fork). Wall seconds, lower is better:
+Radiance MTP-4 also has shorter observed walls than radiance’s own non-speculative lane: **21.7%, 11.8%, 8.1% and 6.2%** at n=1–4. At four agents it is **0.2% longer** than historical vllm-radiance non-spec: 402.7 vs 401.8 s. The choice of baseline changes the headline.
 
-| Cell | radiance non-spec | old non-spec | radiance MTP-4 | old MTP-4 |
-|---|---:|---:|---:|---:|
-| n=1 | 130.6 | 126.7 | 102.3 | 115.1 |
-| n=2 | 232.1 | 212.1 | 204.7 | 231.6 |
-| n=3 | 327.0 | 306.4 | 300.5 | 323.1 |
-| n=4 | 429.3 | 401.8 | 402.7 | 488.7 |
-| n=4 vision | 685.7 | 651.9 | — | — |
+The synthetic image-input cell is separate: **685.7 vs 651.9 s**, radiance non-spec vs Y5, **5.2% longer**. These are procedural screenshots, not the real coding fleets. Radiance’s 13 GiB-tier R9 records **402.0 s vs 402.7 s** at 10 GiB; that 0.7 s gap does not establish a tier-speed benefit.
 
-[Machine-readable export](../data/rocm-10.1/radiance-campaign-2026-10-21.csv)
+## Latency and generation
 
-Read:
+Three metrics answer three different questions. **TTFT** measures the wait for first streamed content, including queueing. **Mean turn TG** averages completion tokens ÷ (request wall − TTFT) over valid turns. **End-to-end output rate** divides total successful output tokens by the whole cell wall, including prompt work and waits. Neither rate is raw kernel decode speed.
 
-- Non-spec, radiance trails the old engine at every n (3.1–9.4%) — inside seed noise, not separable.
-- MTP-4 beats the old engine's MTP arm at every n (−7% to −18%) and radiance non-spec at every n; at n=4, 402.7 lands on the old non-spec wall (401.8).
-- Per-agent decode at n=1: 54.4 tok/s non-spec, 137.9 with MTP-4 (2.5×); aggregate 19.61 vs 10.33 (+90%).
-- TTFT by depth band (mean, s): 8.32 vs 11.79 (n=1, 60–90k, −30%); 10.19 vs 22.77 (n=2, 90–120k, −55%); 10.37 vs 29.08 (n=3, 90–120k, −64%).
-- Shallow-band caveat: first-turn TTFT on warm prompts ran 11.97–14.32 s vs 0.0–1.78 s on the old engine — prefix-cache admission, not compute.
-- Fleet: 4/4 delivered games, 4/4 node-syntax PASS; prefix-cache hit share 80.1–94.3%.
+Both tables below compare the **MTP-4 lanes**: old **Z1–Z4** vs new **R6-n1…n4**. Rates and averages are as exported; short outputs and streaming behaviour make TG estimates sensitive to accounting.
 
-## Caveats
+| Agents | Mean TTFT: vllm-radiance / radiance | Mean turn TG: vllm-radiance / radiance | End-to-end output: vllm-radiance / radiance |
+|---|---:|---:|---:|
+| 1 | 10.82 / 8.37 s | 185.7 / 137.9 tok/s | 12.94 / 24.79 tok/s |
+| 2 | 5.69 / 10.72 s | 42.0 / 41.0 tok/s | 19.75 / 24.97 tok/s |
+| 3 | 16.65 / 12.85 s | 68.5 / 25.9 tok/s | 16.14 / 24.29 tok/s |
+| 4 | 20.67 / 17.10 s | 36.9 / 16.8 tok/s | 16.35 / 24.56 tok/s |
 
-- Single host: 2× R9700 32 GiB, 30 GiB RAM, custom kernel. Numbers do not generalize silently.
-- Baseline re-validation on the old engine was not run (user decision; recorded); comparability is workload-to-workload, not a fresh baseline.
-- The engine reports 1.9.0 at the pinned digest; the onboarding docs I reviewed were 1.8.1-era.
-- FB/vision cells are seed-sensitive (inherited campaign finding).
-- 13 GiB tier A/B (R9) is within seed noise; tier growth is justified by fleet pressure (570 `store_full` refusals on 10 GiB), not the single-cell grid.
+Sources: the same [Y/Z sweep](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv) and [radiance grid](../data/rocm-10.1/radiance-campaign-2026-10-21.csv). The export columns are `ttft_avg_s`, `turn_tg_avg` / `tg_avg_tokens_s`, and `decode_tokens_s`. Output quantity is model-generated and can vary; higher aggregate output rate does not mean greater task productivity.
+
+At n=1, radiance MTP-4 shows **25.7% lower mean turn TG**, **91.6% higher end-to-end output rate** and **11.1% shorter wall**. At n=2, its mean TTFT is **88.4% higher**. Those counterpoints belong beside the favourable wall-time result.
+
+Within radiance at n=1, turning MTP-4 on changes mean turn TG **54.4 → 137.9 tok/s (+153.5%)** and end-to-end output **19.61 → 24.79 tok/s (+26.4%)**. The previous write-up’s “+90%” mixed a historical non-speculative baseline into this within-engine explanation; it was not the MTP gain.
+
+### Deep bands and shallow bands
+
+Selected **non-speculative** depth bands show lower radiance TTFT than historical Y cells:
+
+| Agents / depth band | vllm-radiance Y | radiance R | Observed change |
+|---|---:|---:|---:|
+| 1 / 60–90k | 11.79 s | 8.32 s | −29.4% |
+| 2 / 90–120k | 22.77 s | 10.19 s | −55.2% |
+| 3 / 90–120k | 29.08 s | 10.37 s | −64.3% |
+| 4 / 90–120k | 34.94 s | 10.67 s | −69.5% |
+| 3 / 0–30k | 1.78 s | 14.32 s | +704.5% |
+
+This is a selection of bands, not an all-depth speedup. The historical n=2 shallow-band `0.0` is a **no-sample marker**, not zero latency, so no percentage is calculated from it. The released data does not isolate the mechanism behind these differences.
+
+### PP: leave the missing benchmark missing
+
+**No validated matched kernel PP measurement is available.** The sweep’s `pp_effective_ingest_tok_s` uses prompt tokens ÷ TTFT and includes the effects of cache reuse. Monitor intake rates and bursty prompt-credit counters have different meanings again. Substituting those into a prefill leaderboard would manufacture a comparison the tests did not run. [Definitions and formulas](DATA-DICTIONARY.md).
+
+## Single card: compare depth before latency
+
+The 18 October single-card vllm-radiance profile uses **MTP-4, FP8 KV and a 10 GiB tier**; radiance TP1 uses **MTP-4, FP8 KV and 13 GiB**. The checkpoint representations and turn histories differ. At four agents, radiance has a **29.4% smaller growth cap**, 88,913 vs 126,000 tokens.
+
+| Four-agent observation | vllm-radiance GPU A | radiance TP1 |
+|---|---:|---:|
+| Timed turns, total | 114 | 32 |
+| Growth stopping target | 126,000 | 88,913 |
+| Maximum observed prompt | 126,691 | 99,075 |
+| Mean / maximum TTFT | 101.38 / 654.91 s | 14.34 / 22.02 s |
+| Reported request / turn generation estimate | 25.5 tok/s | 17.4 tok/s |
+| Whole-cell wall ÷ timed turns | 34.65 s | 9.06 s |
+
+Sources: [original follow-up](../data/rocm-10.1/follow-up-single-vs-dual-text-growth-2026-10-18.csv), [historical config](../data/rocm-10.1/single-card-gpu-a-configuration.json), [radiance TP1](../data/rocm-10.1/radiance-single-card-2026-10-22.csv). The lower radiance mean TTFT is **85.9%**; maximum observed depth is **21.8% lower**. These paired facts describe a different operating point, not an equal-depth speedup. [Complete single-card report](RADIANCE-SINGLE-CARD-2026-10-22.md).
+
+## Memory: allocation is not throughput
+
+The radiance TP2 pool grows **524,304 → 786,448 → 1,228,816 tokens** as slots/context change. The original 524k figure was the four-slot target, not the physical two-card ceiling. The later pool represents **+134.4% allocated capacity** over that first boot. There is no sustained six-agent 200k grid. A host prefix cache stores completed conversation state; it does not add live GPU concurrency. [Measured/projection ladder](RADIANCE-200K-CONTEXT-2026-10-22.md) · [capacity CSV](../data/rocm-10.1/radiance-pool-ceiling-2026-10-22.csv).
+
+## Real tasks: delivery and clean exit
+
+Radiance’s fleet produces **4/4 complete deliveries, 4/4 reported syntax passes, 2/4 clean deliveries**: agents 0–1 time out at 3,600 seconds while agents 2–3 exit cleanly. Historical vllm-radiance dual produces **4/4 complete and clean deliveries** in 30:10, with reported behaviour checks. Different budgets, context settings and validation scope prevent a coding-quality ranking. [Radiance fleet CSV](../data/rocm-10.1/radiance-falling-blocks-fleet-2026-10-21.csv) · [historical fleet CSV](../data/rocm-10.1/falling-blocks-fleet-outcomes-2026-10-18.csv) · [play the artefacts](../examples/rocm-10.1/falling-blocks/index.html).
+
+## Evidence map
+
+| Finding | Public source / cells |
+|---|---|
+| Dual wall, TTFT and generation | [19 Oct sweep](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv), Y1–Y5 / Z1–Z5; [21 Oct radiance](../data/rocm-10.1/radiance-campaign-2026-10-21.csv), R1–R9 |
+| Single-card depth/latency | [18 Oct follow-up](../data/rocm-10.1/follow-up-single-vs-dual-text-growth-2026-10-18.csv), gpu-a n1–4; [22 Oct radiance](../data/rocm-10.1/radiance-single-card-2026-10-22.csv), R1x n1–4 |
+| Memory headline | [Capacity ladder](../data/rocm-10.1/radiance-pool-ceiling-2026-10-22.csv), measured TP2 four-slot 131k and six-slot 200k rows |
+| Fleet headline | [Radiance agent outcomes](../data/rocm-10.1/radiance-falling-blocks-fleet-2026-10-21.csv), agents 0–3 |
+| Chart reproduction | `python3 tools/render_editorial.py`; [source hashes](../graphs/rocm-10.1/editorial-chart-sources.json) |
+
+The result is a set of useful operating observations, with different strengths across wall time, first-token latency, output rate, context and completion. It does not establish a universal engine winner.
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

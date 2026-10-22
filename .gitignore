@@ -50,6 +50,8 @@ HANDOVER-*.md
 /data/rocm-7.14/host-memory-trace-for-the-six-agent-real-agent-campaign.csv
 
 src/**
-# Agent instruction file — not a site page; self-referential NAVIGATION marker
-# makes the nav generator truncate it (see journal 2026-10-19).
-AGENTS.md
+# AGENTS.md is versioned maintenance guidance and excluded from the site.
+
+# Operator-provided Pi credentials are local, never release inputs.
+scripts/recovered/pi-fleet/models.json
+scripts/recovered/pi-fleet/settings.json

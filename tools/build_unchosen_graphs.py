@@ -22,7 +22,7 @@ def main():
                  'Version attribution for older traces follows the recorded profile and collection date, rather than an immutable image ID captured with every run. Companion memory plots are not independent workload results.', '']
         for e in archived:
             filename = e['slug']+'.svg'
-            lines += [f'<details><summary>{e["title"]}</summary>', '',
+            lines += ['<details markdown="1">', f'<summary markdown="0">{e["title"]}</summary>', '',
                       '**Why unchosen:** '+e['selection_reason']+'.', '',
                       f'![{e["title"]}]({filename})', '', f'[Open full-size SVG]({filename})', '', '</details>', '']
         lines += ['No graph is shown for the empty speculative-depth companion recorder: it contained no usable samples. Its absence is not a successful test result.', ''] if version=='rocm-7.14' else []

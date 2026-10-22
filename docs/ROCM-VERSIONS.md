@@ -5,7 +5,7 @@ title: "ROCm 7.14 and ROCm 10.1 evidence"
 
 # ROCm 7.14 and ROCm 10.1 evidence
 
-The primary research objective is ROCm 7.14 versus ROCm 10.1 using the `vllm-radiance` repository. This page separates results from the two software profiles. The eight-cell ROCm 10.1 follow-up matrix and first single/dual coding fleets have recorded outcomes; the raised-budget single-card retry completed with four clean deliveries in 75:23. The archived build record identifies the older profile as ROCm **7.14**: the base image is tagged 7.14.0 and the PyTorch package carries `+rocm7.14`. There is no basis here for interpreting that version as ROCm 7.1.4.
+This historical branch compares ROCm 7.14 and ROCm 10.1 deployments of `vllm-radiance`. The broader investigation now also includes the [standalone radiance engine](RADIANCE.md); this page does not compare those two engines. This page separates results from the two software profiles. The eight-cell ROCm 10.1 follow-up matrix and first single/dual coding fleets have recorded outcomes; the raised-budget single-card retry completed with four clean deliveries in 75:23. The archived build record identifies the older profile as ROCm **7.14**: the base image is tagged 7.14.0 and the PyTorch package carries `+rocm7.14`. There is no basis here for interpreting that version as ROCm 7.1.4.
 
 ## Newer dual-card campaign — 19 October
 
@@ -41,7 +41,7 @@ This later campaign is internally more comparable because the profile and worklo
 
 The [matrix and fleet report](FINAL-REPORT-20261018.md) records GPU A and dual-card deployments at 1–4 agents. GPU A mean TTFT rose from 7.46/11.92 seconds at 1/2 agents to 71.46/101.38 seconds at 3/4. Dual mean TTFT ranged from 5.19 to 10.85 seconds, with no recorded KV preemptions. Both used a 10 GiB ARC CPU tier; TP, context limit, slots and MTP depth differed. These are deployment comparisons within ROCm 10.1.
 
-The historical RAM16 three/four-agent means were 13.34/16.88 seconds. They are useful operating references, but do not isolate a runtime effect. A 16 GiB tier later caused host slowdown and is not the current recommendation. See [both single-card configurations](../README.md#best-recorded-single-card-setup-for-34-deep-context-agents).
+The historical RAM16 three/four-agent means were 13.34/16.88 seconds. They are useful operating references, but do not isolate a runtime effect. A 16 GiB tier later caused host slowdown and is not the current recommendation. See [both single-card configurations](../HISTORICAL-OVERVIEW.md#best-recorded-single-card-setup-for-34-deep-context-agents).
 
 ## What is not a version comparison
 
@@ -52,4 +52,5 @@ The historical RAM16 three/four-agent means were 13.34/16.88 seconds. They are u
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

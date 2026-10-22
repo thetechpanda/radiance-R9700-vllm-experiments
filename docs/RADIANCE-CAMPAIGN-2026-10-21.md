@@ -7,42 +7,86 @@ title: "The radiance campaign: same agents, new engine (21 October 2026)"
 
 ## What ran
 
-The same four-agent deep-context workload as the 19 October campaign, new engine. `stilldeadcode/radiance` 1.9.0, digest-pinned, loading the converted M2 checkpoint (`ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ`, rev `81a28ee7`, `.rad` bundle). Fixed knobs: TP=2, 131,072-token context, fp8 KV, 4 sequence slots, MTP-4 speculative lane. The harness is byte-identical to the one that produced the old campaign's S/Y/Z arms: `bench_agents4.py`, sha256 `ab17f129…` — ~7.9k-token system prompt, +11,983 tokens per turn, cap checked before the turn on previous prompt tokens, temperature 0.7, streaming, procedural 512×512 PNGs with `--images` on the vision cell.
+Ten radiance cells, 280 total timed turns, zero errors. Engine: `stilldeadcode/radiance` 1.9.0, digest-pinned. Model: `ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ` (API id W4A16-AWQ; the conversion record names the source INT4 `.rad`), revision `81a28ee7`, FP8 KV. Historical references (Y/Z arms): same model family, revision `9dba8a05`, BF16 KV, vllm 1.1.0-rc1. Harness: `bench_agents4.py`, sha256 `ab17f129b9571a0bac353801669b853a039da2fa1834a20e675b469f409f741b`. Fixed knobs: TP=2, 131 072-token context, 4 sequence slots (a configuration allocation, not a hardware ceiling), MTP-4 speculative lane where marked. Depth cap checked before each turn on previous prompt tokens (preturn); overshoot is expected.
 
-One number to keep in view. Baseline re-validation on the old engine was NOT run (user decision, recorded). What that licenses: comparing the new engine to the old campaign's measurements, workload-to-workload, same client, same checkpoint. What it does not license: claiming the old engine would reproduce those numbers today, or attributing every delta to the engine alone.
+No baseline re-validation on the old engine was run (user decision). This licenses workload-to-workload comparison, the recovered client and related model family. Different revisions and KV formats prevent an isolated engine effect. It does not license claiming the old engine would reproduce those numbers today.
 
-## Deep-context grid
+![Dual-engine wall-time comparison](../graphs/rocm-10.1/engine-wall-comparison.svg)
 
-Wall seconds, 10 turns per agent, 126k harness depth cap. Radiance cells (R1–R4, R4-vision, R6-n1..n4, R9): [data/rocm-10.1/radiance-campaign-2026-10-21.csv](../data/rocm-10.1/radiance-campaign-2026-10-21.csv); old-engine twins (Y/Z arms): [data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv). Ten radiance cells, 280 turns, zero errors.
+[Open full-size chart](../graphs/rocm-10.1/engine-wall-comparison.svg).
 
-| Cell | radiance non-spec | Y-arm (old, non-spec) | radiance MTP-4 | Z-arm (old, MTP-4) |
-|---|---:|---:|---:|---:|
-| n=1 | 130.6 | 126.7 | 102.3 | 115.1 |
-| n=2 | 232.1 | 212.1 | 204.7 | 231.6 |
-| n=3 | 327.0 | 306.4 | 300.5 | 323.1 |
-| n=4 | 429.3 | 401.8 | 402.7 | 488.7 |
-| n=4 vision | 685.7 | 651.9 | — | — |
+## Wall table
 
-## Where the wins live
+Whole-cell wall seconds, 126,000-token growth target, ten turns per agent (10/20/30/40 total at n1–4). Every row here is **TP2**; the smaller TP1 n4 target belongs to the [separate single-card report](RADIANCE-SINGLE-CARD-2026-10-22.md).
 
-Per-agent decode at n=1 goes 54.4 → 137.9 t/s with MTP-4, a 2.5× (R1 vs R6-n1); aggregate decode at n=1 is 10.33 vs 19.61 t/s, +90%. TTFT by depth band drops across the board: n=1 60–90k, 8.32 s vs 11.79 s old (−30%); n=2 90–120k, 10.19 s vs 22.77 s (−55%); n=3, 10.37 s vs 29.08 s (−64%). Draft acceptance measured live on the campaign workload: 0.657 mid-run, 0.679 final. MTP-4 beats the old engine's own MTP arm at every n (−7% to −18%) and beats radiance non-spec at every n; at n=4 the MTP wall (402.7 s) lands on the old engine's non-spec wall (401.8 s). The prefix cache does the prefill work: under n=4 load, intake 8,648 t/s = 1,690 t/s GPU recompute + 6,958 t/s cache-served — 80% of prompt volume served from cache.
+| Cell | Radiance (FP8 KV) | Y/Z historical reference (BF16 KV) |
+|---|---:|---:|
+| n=1 non-spec | 130.6 | 126.7 (Y1) |
+| n=2 non-spec | 232.1 | 212.1 (Y2) |
+| n=3 non-spec | 327.0 | 306.4 (Y3) |
+| n=4 non-spec | 429.3 | 401.8 (Y4) |
+| n=4 vision | 685.7 | 651.9 (Y5) |
+| n=1 MTP-4 | 102.3 | 115.1 (Z1) |
+| n=2 MTP-4 | 204.7 | 231.6 (Z2) |
+| n=3 MTP-4 | 300.5 | 323.1 (Z3) |
+| n=4 MTP-4 | 402.7 | 488.7 (Z4) |
+| n=4 MTP-4, 13 GiB tier | 402.0 | — |
 
-## What the old engine kept
+Data: [radiance-campaign-2026-10-21.csv](../data/rocm-10.1/radiance-campaign-2026-10-21.csv) · [dual-r9700-agent-count-sweep-2026-10-19.csv](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv)
 
-Two things. First, shallow-band TTFT on warm initial prompts: radiance measures 11.97–14.32 s where the old engine measured 0.0–1.78 s — a prefix-cache admission effect, not compute (R2/R3 `ttft_0_30k`). Second, the 13 GiB tier A/B (R9, 402.0 s against R6-n4's 402.7) is inside seed noise. The caveat list stays visible: single host (2× R9700 32 GiB, 30 GiB RAM, custom kernel) — no silent generalization; no baseline re-validation on the old engine; the engine reports 1.9.0 at the pinned digest while the onboarding docs reviewed were 1.8.1-era; FB/vision cells are seed-sensitive; tier growth is justified by fleet pressure (570 `store_full` refusals at 10 GiB), not by the single-cell grid.
+## Throughput
 
-## Fleet acceptance
+Two metrics with distinct denominators:
 
-Four Pi coding agents, real Falling Blocks builds, 60-minute cap, seeds 100–103: **4/4 games delivered, 4/4 node-syntax PASS**. Agents 2–3 exited clean (0); agents 0–1 timed out at the 60-minute cap after delivering complete games (exit 124 — the campaign's delivered-then-timeout pattern; per-agent exit codes from the fleet receipts). Prefix-cache hit share ran 80.1–94.3% of fleet prompt volume. The games are published under [examples/rocm-10.1/falling-blocks/radiance-20261021/](../examples/rocm-10.1/falling-blocks/radiance-20261021/), with per-file sha256 in [manifest.json](../examples/rocm-10.1/falling-blocks/radiance-20261021/manifest.json); fleet numbers in [data/rocm-10.1/radiance-falling-blocks-fleet-2026-10-21.csv](../data/rocm-10.1/radiance-falling-blocks-fleet-2026-10-21.csv). Campaign baselines for reference: 3/4 delivered on the first single-card attempt; dual-card best 4/4 with clean exits for 2.
+- **Aggregate end-to-end output** (`decode_tokens_s`): sum of successful output tokens ÷ whole-cell wall. End-to-end rate including prefill and queueing. Not a per-request steady-state figure.
+- **Per-turn TG** (`tg_avg` / `turn_tg_avg`): arithmetic mean of completion_tokens ÷ (request wall − TTFT) over valid turns with duration > 0.5 s. Not all turns qualify.
 
-## Concurrency physics
+At n=1 MTP-4: old engine (Z1) aggregate 12.94 t/s, per-turn TG 185.7 t/s. New engine (R6-n1) aggregate 24.79 t/s, per-turn TG 137.9 t/s. Radiance records **91.6% higher aggregate end-to-end output**, **25.7% lower mean turn TG**, and **11.1% shorter wall** for these n1 MTP cells. Prompt work, output quantity, stream timing and waiting contribute differently to those metrics; the export does not isolate the cause of the wall-time difference.
 
-The fp8 KV pool is 524,304–524,336 tokens at TP2 — 4×131k, 18.6 KiB/token. The depth cap is arithmetic: pool ÷ agents. Four agents get 131k; five get 104.8k; six get 87.4k. Six agents at full 131k depth is impossible on this box: 14.5 GiB of KV against a 9.74 GiB pool. The pinned host tier tops out at ~13 GiB (driver page limit 15.29 GiB on this 30 GiB host; a 16 GiB boot ABORTED with exact arithmetic), and the RAM tier is the deepest published tier — no disk tier exists in the engine.
+## TTFT
 
-## Verdict
+Mean TTFT, MTP-4, all n:
 
-The engine change bought exactly what the old campaign's physics said it should buy: MTP-4 is now the default lane for deep-context agent service, beating the old engine's MTP arm at every agent count and its non-spec twin at n=1–3 (a 0.2% tie at n=4), with decode +90% at n=1 and TTFT down 30–64% in the bands that matter. The old engine keeps its warm-prefix shallow-band edge and the 13 GiB tier tie. The honest shape of the win is a fleet win: 4/4 delivered with 80–94% of prompt volume cache-served, on a box whose hard ceiling is four 131k agents. Past four, depth falls by the arithmetic above — that is a pool-size statement, not an engine limitation, and it applies to both engines.
+| n | Radiance | Old (Z) |
+|---|---:|---:|
+| 1 | 8.37 s | 10.82 s |
+| 2 | 10.72 s | 5.69 s |
+| 3 | 12.85 s | 16.65 s |
+| 4 | 17.10 s | 20.67 s |
+
+Depth-band comparison, non-spec radiance vs Y-arm (old non-spec):
+
+| Band | n=1 Rad | n=1 Y | n=2 Rad | n=2 Y | n=3 Rad | n=3 Y |
+|---|---:|---:|---:|---:|---:|---:|
+| 0–30 k | 7.48 | 3.59 | 11.97 | 0.0* | 14.32 | 1.78 |
+| 30–60 k | 7.72 | 11.76 | 8.80 | 7.43 | 10.90 | 8.78 |
+| 60–90 k | 8.32 | 11.79 | 9.19 | 19.45 | 9.32 | 18.22 |
+| 90–120 k | 9.16 | 13.52 | 10.19 | 22.77 | 10.37 | 29.08 |
+
+\* 0 or blank in the sweep CSV means no turns fell in that depth band; it does not indicate zero TTFT.
+
+The valid shallow-band observations favour the older engine; several deeper bands favour radiance. Cache admission, prompt work and other effects are not isolated by the export. Do not turn the missing Y2 shallow sample into a zero-latency claim.
+
+## Fleet
+
+Four Pi coding agents, real Falling Blocks builds, 60-minute cap, seeds 100–103: **4/4 games delivered, 2/4 clean exits** (agents 0–1 exit 124 after delivery; agents 2–3 exit 0). The released per-agent `cache_hit_pct` spans 80.1–94.3%. Fleet `cache_hit_pct` is a separate metric from the sweep's `prefix_cache_hit_frac`; one is not a proxy for the other. Games published under [the game gallery](../examples/rocm-10.1/falling-blocks/index.html); fleet data in [radiance-falling-blocks-fleet-2026-10-21.csv](../data/rocm-10.1/radiance-falling-blocks-fleet-2026-10-21.csv). Campaign baseline: vllm dual fleet 4/4 delivered, 4/4 clean.
+
+## Caveats
+
+- Single host (2× R9700 32 GiB, 30 GiB RAM, custom kernel). No universal winner; results do not generalize silently.
+- 4 sequence slots is a configuration allocation, not a hardware ceiling.
+- TP1 vs TP2 gaps of 4–6 % do not isolate allreduce cost.
+- The 6×200 k context run was a boot-allocation test only.
+- A 15 % repeat spread observed on a different model is not a significance threshold for this campaign.
+- Private probes referenced in discussion are not CSV-exported; only public CSV data is cited here.
+
+## What this campaign establishes
+
+All ten radiance cells complete **280 turns with zero reported errors**. Historical non-speculative walls are shorter; radiance MTP-4 walls are shorter than the historical MTP lane by **7.0–17.6%**. Mean MTP TTFT is lower at n1, n3 and n4, higher at n2. The aggregate-output and turn-TG metrics favour different deployments at n1. These are useful measurements with different strengths, not one engine winning every column.
+
+The campaign's four-slot pool is an allocation choice, not a hardware ceiling. The later [six-slot capacity ladder](RADIANCE-200K-CONTEXT-2026-10-22.md) supersedes that allocation without retroactively qualifying six-agent performance. For all percentages, model identities, side-by-side generation columns and source cells, read the [full engine comparison](RADIANCE-VS-VLLM.md).
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

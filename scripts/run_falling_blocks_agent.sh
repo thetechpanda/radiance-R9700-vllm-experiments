@@ -23,8 +23,14 @@ mkdir -p "$WORK_DIR" "$WORK_DIR/.sessions"
 python3 "$SCRIPT_DIR/falling_blocks_prompt.py" --seed "$SEED" --output "$WORK_DIR/prompt.txt"
 PROMPT=$(<"$WORK_DIR/prompt.txt")
 
+# Optional host networking for an API configured at the host's localhost.
+set -- run --rm
+if [[ -n ${PI_NETWORK:-} ]]; then
+  set -- "$@" --network "$PI_NETWORK"
+fi
+
 set +e
-timeout "$TIMEOUT_SECONDS" "$PODMAN" run --rm \
+timeout "$TIMEOUT_SECONDS" "$PODMAN" "$@" \
   --name "falling_blocks-agent-$AGENT_ID" \
   --volume "$WORK_DIR:/work:Z" \
   --workdir /work \

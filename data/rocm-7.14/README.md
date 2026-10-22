@@ -17,4 +17,5 @@ This folder contains the selected results only. Version assignment follows the r
 
 <!-- NAVIGATION START -->
 
-[Home](../../index.md) · [Overview](../../README.md) · [Latest campaign](../../docs/RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](../../docs/CHARTS.md)
+[Home](../../index.md) · [Compare](../../docs/RADIANCE-VS-VLLM.md) · [vllm-radiance](../../docs/VLLM-RADIANCE.md) · [radiance](../../docs/RADIANCE.md) · [Charts](../../docs/CHARTS.md) · [Stuff for nerds](../../docs/CODE-CORNER.md) · [Disclosure](../../docs/REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

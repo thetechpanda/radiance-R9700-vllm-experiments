@@ -32,7 +32,7 @@ These are single observations per cell, with no statistical replication. Zero cl
 
 ## Follow-up results available
 
-The follow-up completed records cover GPU A alone and dual-card operation at 1–4 agents, with a 126k growth target. See the [README comparison](../README.md#latest-rocm-101-results), [eight-cell CSV](../data/rocm-10.1/follow-up-single-vs-dual-text-growth-2026-10-18.csv) and [review limits](../data/rocm-10.1/follow-up-single-vs-dual-notes.json).
+The follow-up completed records cover GPU A alone and dual-card operation at 1–4 agents, with a 126k growth target. See the [README comparison](../HISTORICAL-OVERVIEW.md#latest-rocm-101-results), [eight-cell CSV](../data/rocm-10.1/follow-up-single-vs-dual-text-growth-2026-10-18.csv) and [review limits](../data/rocm-10.1/follow-up-single-vs-dual-notes.json).
 
 At four agents, mean/maximum TTFT was 101.38/654.91 seconds on GPU A, versus 10.85/27.23 seconds on dual. GPU A recorded 12 KV preemptions in that cell; dual recorded none. Both reported zero client errors. Do not merge these cells with the earlier 8 GiB campaign.
 
@@ -50,4 +50,5 @@ The single-card retry raises the per-request token budget to 65,536 and the per-
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Compare](RADIANCE-VS-VLLM.md) · [vllm-radiance](VLLM-RADIANCE.md) · [radiance](RADIANCE.md) · [Charts](CHARTS.md) · [Stuff for nerds](CODE-CORNER.md) · [Disclosure](REPRODUCIBILITY.md)
+<!-- NAVIGATION END -->

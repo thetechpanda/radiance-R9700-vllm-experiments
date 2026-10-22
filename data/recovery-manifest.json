@@ -1,0 +1,177 @@
+{
+  "date": "2026-10-22",
+  "scope": "Selected recovered scripts; hashes prove source identity, not measured results. Adaptations and examples are labelled.",
+  "entries": [
+    {
+      "path": "scripts/recovered/bench_agents4.py",
+      "source_name": "bench_agents4.py",
+      "role": "original benchmark v4",
+      "status": "recovered_exact",
+      "source_sha256": "ab17f129b9571a0bac353801669b853a039da2fa1834a20e675b469f409f741b",
+      "released_sha256": "ab17f129b9571a0bac353801669b853a039da2fa1834a20e675b469f409f741b"
+    },
+    {
+      "path": "scripts/recovered/needle160k.py",
+      "source_name": "needle160k.py",
+      "role": "original long-context needle probe",
+      "status": "recovered_exact",
+      "source_sha256": "403e8d07489bef104ff5a7dd061d9793a68b17e7fb3138076a8335786ea8135a",
+      "released_sha256": "403e8d07489bef104ff5a7dd061d9793a68b17e7fb3138076a8335786ea8135a"
+    },
+    {
+      "path": "tools/editorial_fleet/fleet.py",
+      "source_name": "fleet.py",
+      "role": "editorial pass 1 orchestrator and prompts",
+      "status": "recovered_exact",
+      "source_sha256": "9a85aae05344bd907b355b7e6b363cfd02aed4ce0ce317def629bb2b87cfa3b2",
+      "released_sha256": "9a85aae05344bd907b355b7e6b363cfd02aed4ce0ce317def629bb2b87cfa3b2"
+    },
+    {
+      "path": "tools/editorial_fleet/round2.py",
+      "source_name": "round2.py",
+      "role": "editorial pass 2 prompts",
+      "status": "recovered_exact",
+      "source_sha256": "d492baac958d0503c0f2b335e42d3a428afc9b20f632e5d4a90230852024141d",
+      "released_sha256": "d492baac958d0503c0f2b335e42d3a428afc9b20f632e5d4a90230852024141d"
+    },
+    {
+      "path": "tools/editorial_fleet/round3.py",
+      "source_name": "round3.py",
+      "role": "editorial pass 3 prompts",
+      "status": "recovered_exact",
+      "source_sha256": "33bcf7a28e0507a6fb58faf421d85faf40e95fe4932d03646d70621d62843ebd",
+      "released_sha256": "33bcf7a28e0507a6fb58faf421d85faf40e95fe4932d03646d70621d62843ebd"
+    },
+    {
+      "path": "scripts/run_falling_blocks_agent.sh",
+      "source_name": "run_falling_blocks_agent.sh",
+      "role": "recovered coding-fleet runner with optional network mode",
+      "status": "recovered_exact",
+      "source_sha256": "77f768007db29cce61c65807a994d98980f303e2f8c968d955f658299d9e7c9a",
+      "released_sha256": "77f768007db29cce61c65807a994d98980f303e2f8c968d955f658299d9e7c9a"
+    },
+    {
+      "path": "scripts/run_falling_blocks_fleet.sh",
+      "source_name": "run_falling_blocks_fleet.sh",
+      "role": "coding-fleet launcher",
+      "status": "verified_existing_exact",
+      "source_sha256": "a6fee8ccac4ba5fc82ef8b636ab38e5b48a1579894bada99a8d671277152c598",
+      "released_sha256": "a6fee8ccac4ba5fc82ef8b636ab38e5b48a1579894bada99a8d671277152c598"
+    },
+    {
+      "path": "scripts/falling_blocks_prompt.py",
+      "source_name": "falling_blocks_prompt.py",
+      "role": "seeded coding-task prompt generator",
+      "status": "verified_existing_exact",
+      "source_sha256": "bcf32c62a283e75f4873513d2fc0921bec52025d557247598ccf36e4062ff5d5",
+      "released_sha256": "bcf32c62a283e75f4873513d2fc0921bec52025d557247598ccf36e4062ff5d5"
+    },
+    {
+      "path": "scripts/parse_falling_blocks_events.py",
+      "source_name": "parse_falling_blocks_events.py",
+      "role": "coding-fleet event parser",
+      "status": "verified_existing_exact",
+      "source_sha256": "90b8ab2783bd064dbfb41c465fabb1f58467ea34f51eead0663a2a52b5e0ec59",
+      "released_sha256": "90b8ab2783bd064dbfb41c465fabb1f58467ea34f51eead0663a2a52b5e0ec59"
+    },
+    {
+      "path": "scripts/recovered/run_grid.sh",
+      "source_name": "campaign-run.sh",
+      "role": "non-spec grid (fleet phase excluded from adapter)",
+      "status": "adapted",
+      "source_sha256": "cdd6cb5a4f7af9263fd9b2c6fbcf03a043217b3159c107c400b45e8a22ab9a39",
+      "changes": "Operator paths parameterized; portable adapter is not byte-identical. See recovered-scripts README.",
+      "released_sha256": "74b807adad7437a0fd26af63869f0b6345198920471590d8a1c876dfae493263"
+    },
+    {
+      "path": "scripts/recovered/run_grid.sh",
+      "source_name": "mtp-grid.sh",
+      "role": "MTP grid",
+      "status": "adapted",
+      "source_sha256": "87c5c91591f885e83e6707a30e92058fa79f3e55dd5e9be3e91bfdb127edc60c",
+      "changes": "Operator paths parameterized; portable adapter is not byte-identical. See recovered-scripts README.",
+      "released_sha256": "74b807adad7437a0fd26af63869f0b6345198920471590d8a1c876dfae493263"
+    },
+    {
+      "path": "scripts/recovered/run_grid.sh",
+      "source_name": "1card-grid.sh",
+      "role": "single-card per-agent-count cap grid",
+      "status": "adapted",
+      "source_sha256": "1bc71cced7e58f3a91294908f63238e42bb39e0efd0f9eb5babec1be473b05ce",
+      "changes": "Operator paths parameterized; portable adapter is not byte-identical. See recovered-scripts README.",
+      "released_sha256": "74b807adad7437a0fd26af63869f0b6345198920471590d8a1c876dfae493263"
+    },
+    {
+      "path": "scripts/recovered/convert_model.sh",
+      "source_name": "convert-m2.sh",
+      "role": "INT4 .rad conversion recipe",
+      "status": "adapted",
+      "source_sha256": "9390c183ad24f76342097738e792768ad991fff2ea2b725356710ebd8d1fdcf2",
+      "changes": "Operator paths parameterized; portable adapter is not byte-identical. See recovered-scripts README.",
+      "released_sha256": "e61ecfd23aa638608d39b1a0ac798c427822c4654fcf1a2d7b6bd5b732e0d8ea"
+    },
+    {
+      "path": "tools/editorial_fleet/documentation_followup.py",
+      "role": "new follow-up prompts, not a historical recovery",
+      "status": "new",
+      "released_sha256": "276f3092f0a9c63455b4b22cba6b3113a0cd94b50658e1889fb722a9f6277ca8"
+    },
+    {
+      "path": "scripts/recovered/pi-fleet/Containerfile",
+      "role": "recovered Pi base-client build recipe",
+      "status": "recovered_exact",
+      "released_sha256": "e55cd04c6d964e738710308bc8180166d98155406728aff8790b3a58fdde1c6d",
+      "source_sha256": "e55cd04c6d964e738710308bc8180166d98155406728aff8790b3a58fdde1c6d"
+    },
+    {
+      "path": "scripts/recovered/pi-fleet/models.example.json",
+      "role": "sanitized provider example: endpoint/key replaced",
+      "status": "adapted_example",
+      "released_sha256": "fcefc33ced9119c58f23984e84e6ac4b6cca2f262d9e8209407f7d769db00cb3"
+    },
+    {
+      "path": "scripts/recovered/pi-fleet/settings.example.json",
+      "role": "recovered non-secret Pi settings",
+      "status": "adapted_example",
+      "released_sha256": "4646890b8c807e5334291c060e4d531ab563bf5e6173f04d0a311a55483ba858"
+    },
+    {
+      "path": "data/receipts/radiance-fleet-20261021/agent-0.exit-status.txt",
+      "source_name": "agent-0/exit-status.txt",
+      "role": "integer-only original acceptance-fleet process exit receipt",
+      "status": "recovered_exact",
+      "source_sha256": "ca2ebdf97d7469496b1f4b78958f9dc8447efdcb623953fee7b6996b762f6fff",
+      "released_sha256": "ca2ebdf97d7469496b1f4b78958f9dc8447efdcb623953fee7b6996b762f6fff"
+    },
+    {
+      "path": "data/receipts/radiance-fleet-20261021/agent-1.exit-status.txt",
+      "source_name": "agent-1/exit-status.txt",
+      "role": "integer-only original acceptance-fleet process exit receipt",
+      "status": "recovered_exact",
+      "source_sha256": "ca2ebdf97d7469496b1f4b78958f9dc8447efdcb623953fee7b6996b762f6fff",
+      "released_sha256": "ca2ebdf97d7469496b1f4b78958f9dc8447efdcb623953fee7b6996b762f6fff"
+    },
+    {
+      "path": "data/receipts/radiance-fleet-20261021/agent-2.exit-status.txt",
+      "source_name": "agent-2/exit-status.txt",
+      "role": "integer-only original acceptance-fleet process exit receipt",
+      "status": "recovered_exact",
+      "source_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "released_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "data/receipts/radiance-fleet-20261021/agent-3.exit-status.txt",
+      "source_name": "agent-3/exit-status.txt",
+      "role": "integer-only original acceptance-fleet process exit receipt",
+      "status": "recovered_exact",
+      "source_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "released_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    {
+      "path": "tools/editorial_fleet/documentation_proof.py",
+      "role": "new six-task documentation proofing driver; not a historical recovery",
+      "status": "new",
+      "released_sha256": "383490e397435bfba6782e831023ac91fb9adfbf02c4afd2dc7e227b88b394de"
+    }
+  ]
+}
