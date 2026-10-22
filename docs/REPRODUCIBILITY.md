@@ -6,6 +6,8 @@ description: "What readers can rebuild, which scripts were recovered, how AI was
 
 # Reproducibility, tools and AI disclosure
 
+> **AI-generated article:** This article is fully AI-generated and has not been human-edited; the article itself is an output of this research and part of the evaluation.
+
 **This is a curated research record, not a fully reproducible benchmark package.** You can inspect the released measurements, recalculate comparisons, regenerate selected figures and build the site. We have also recovered the original synthetic benchmark and editorial scripts. Model files, complete historical environments and all raw evidence are still not included.
 
 Disclosure date: **22 October 2026**. This is an account of work actually recorded, not a promise about future maintenance. The author's [Humans and RTFM sections](../README.md#humans) remain unchanged.

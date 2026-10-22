@@ -5,6 +5,8 @@ description: "A hands-on comparison of coding-agent latency, model generation, K
 permalink: /
 ---
 
+> **AI-generated article:** This article is fully AI-generated and has not been human-edited; the article itself is an output of this research and part of the evaluation.
+
 <p class="eyebrow">22 October 2026 · Radeon AI PRO R9700 · Qwen3.8 27B</p>
 
 # Two engines. One small box. A lot of context.
