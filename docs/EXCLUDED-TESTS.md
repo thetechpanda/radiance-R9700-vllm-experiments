@@ -17,7 +17,9 @@ The historical one- and two-agent references are short growth tests; the RAM16 t
 |---|---:|---|
 | Telemetry slots | 30 | Exploratory tuning, instrumentation, storage, compaction, capacity boundaries or separate harness trials; includes one empty slot. |
 | Historical benchmark cells | 42 | Redundant or unmatched workload/configuration variants outside the focused comparison. |
+| Shallow DFlash2 reproduction arms R3/R4 | 2 | Cancelled by scope decision after R1/R2; no completed performance measurement. Literal 8K also failed the fixed-prompt size gate; completed shallow cells used a 16K engine limit. |
+| Spec-campaign gate-fail arms | 2 | Arm C (Quark FP8-dynamic target): four-agent bench killed mid-run after deep-band collapse under the FP8 fallback kernel — recorded as partial, not a measured cell. Arm D (NVFP4→MXFP4 load-time conversion): the converter is absent from the image (emulation kernel selected), so the bench was skipped; documented as a gate-fail. |
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [ROCm 10.1 results](FINAL-REPORT-20261018.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)

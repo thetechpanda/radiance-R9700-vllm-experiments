@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="435" viewBox="0 0 1440 435" role="img" font-family="system-ui, sans-serif" fill="#e2e8f0">
+<title>Observed lane ordering across shallow and deep workload profiles</title><desc>Same Quark target and TP=2/BF16 KV, but context, concurrency, turn counts and pool differ. Each profile is normalised to its own non-spec wall time.</desc>
+<rect width="1440" height="435" fill="#0b1220" />
+<text x="30.0" y="38.0" font-size="26" fill="#e2e8f0" text-anchor="start">Observed lane ordering across shallow and deep workload profiles</text>
+<text x="30.0" y="68.0" font-size="14" fill="#94a3b8" text-anchor="start">Same Quark target and TP=2/BF16 KV, but context, concurrency, turn counts and pool differ. Each profile is normalised to its own non-spec wall time.</text>
+<text x="30.0" y="150.0" font-size="15" fill="#e2e8f0" text-anchor="start">16K / 8 agents / 21 turns</text>
+<rect x="400" y="135" width="450.0" height="24" fill="#38bdf8" />
+<text x="1180.0" y="153.0" font-size="13" fill="#e2e8f0" text-anchor="start">Non-spec: 93.5 s (1.00×)</text>
+<rect x="400" y="167" width="394.2" height="24" fill="#a78bfa" />
+<text x="1180.0" y="185.0" font-size="13" fill="#e2e8f0" text-anchor="start">MTP K4: 81.9 s (0.88×)</text>
+<text x="30.0" y="255.0" font-size="15" fill="#e2e8f0" text-anchor="start">131070 limit / 4 agents / 40 turns</text>
+<rect x="400" y="240" width="450.0" height="24" fill="#38bdf8" />
+<text x="1180.0" y="258.0" font-size="13" fill="#e2e8f0" text-anchor="start">Non-spec: 420.8 s (1.00×)</text>
+<rect x="400" y="272" width="756.7" height="24" fill="#a78bfa" />
+<text x="1180.0" y="290.0" font-size="13" fill="#e2e8f0" text-anchor="start">MTP K4: 707.6 s (1.68×)</text>
+<text x="30.0" y="360.0" font-size="14" fill="#e2e8f0" text-anchor="start">At 16K, MTP wall is 12.4% lower — inside the ≈15% repeat-spread floor. At deep load it is 68.2% higher.</text>
+<text x="30.0" y="388.0" font-size="13" fill="#94a3b8" text-anchor="start">These observations do not isolate depth or reproduce the project benchmark. Literal 8K overflowed; DFlash2 repro arms were cancelled.</text>
+<text x="30.0" y="414.0" font-size="13" fill="#94a3b8" text-anchor="start">Compare within-profile ordering cautiously; do not compare raw wall times as equivalent work.</text>
+</svg>

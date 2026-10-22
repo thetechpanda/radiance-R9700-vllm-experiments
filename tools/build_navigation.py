@@ -7,6 +7,26 @@ from page_metadata import public_page, ensure_front_matter
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / 'docs'
+NAV_START = '<!-- NAVIGATION START -->'
+NAV_END = '<!-- NAVIGATION END -->'
+# Shape of this tool's own legacy footer: marker, blank line, one link line, EOF.
+LEGACY_FOOTER = re.compile(re.escape(NAV_START) + r'\n\n\[Home\]\([^\n]*\n\Z')
+
+
+def strip_navigation(content):
+    """Drop a navigation block only when it is the file's trailing content.
+    A START/END block qualifies when nothing but whitespace follows NAV_END;
+    a START-only block qualifies only when it matches this tool's own footer
+    shape exactly. A marker inside prose (e.g. AGENTS.md) never truncates."""
+    start = content.rfind(NAV_START)
+    if start == -1:
+        return content
+    end = content.find(NAV_END, start)
+    if end != -1:
+        return content[:start].rstrip() if not content[end + len(NAV_END):].strip() else content
+    if LEGACY_FOOTER.search(content):
+        return content[:start].rstrip()
+    return content
 
 
 def title(path):
@@ -22,6 +42,15 @@ def build_chart_gallery():
     entries = json.loads((ROOT/'data/telemetry-catalog.json').read_text())
     for version, label in [('rocm-10.1','ROCm 10.1'), ('rocm-7.14','ROCm 7.14'), ('version-unverified','Version unverified or mixed')]:
         output += [f'## {label}', '', f'[Graph folder](../graphs/{version}/README.md) · [Data folder](../data/{version}/README.md)', '']
+        if version == 'rocm-10.1':
+            output += ['### Dual R9700 model & spec-decode campaign — 19 October 2026', '',
+                       '![Spec-decode campaign cells](../graphs/rocm-10.1/dual-r9700-spec-campaign-2026-10-19.svg)', '',
+                       '![Agent-count sweep: wall time and prompt ingest by setup](../graphs/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.svg)', '',
+                       '![Within-lane vision increments](../graphs/rocm-10.1/dual-r9700-vision-increment-2026-10-19.svg)', '',
+                       '![Mean TTFT by depth band](../graphs/rocm-10.1/dual-r9700-depth-band-ttft-2026-10-19.svg)', '',
+                       '![16K fast-lane repro cells](../graphs/rocm-10.1/dual-r9700-8k-repro-2026-10-19.svg)', '',
+                       '![Lane transfer: 16K vs 126k](../graphs/rocm-10.1/dual-r9700-lane-transfer-16k-vs-126k.svg)', '',
+                       'Eight setups, 41 sweep cells, 1,160 turns, zero client errors. The PNG-input cells are synthetic, separate from the game-building fleets. Recommendation: Swift-Quark non-spec at four agents; keep the ≈15% spread floor, boot-pool variation and vision seed sensitivity. Effective ingest is not kernel prefill. The shallow ordering is observational, with multiple settings changed. [Campaign write-up](DUAL-R9700-SPEC-CAMPAIGN.md) · [Campaign CSV](../data/rocm-10.1/dual-r9700-spec-campaign-2026-10-19.csv) · [Sweep CSV](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv) · [16K repro CSV](../data/rocm-10.1/dual-r9700-8k-repro-2026-10-19.csv).', '']
         for entry in entries:
             if not entry.get('included', False) or entry['version'] != version:
                 continue
@@ -40,7 +69,7 @@ def build_chart_gallery():
         if version == 'rocm-10.1':
             output += ['### Completed Falling Blocks fleets', '',
                        '![Per-agent model time for completed coding fleets](../graphs/rocm-10.1/falling-blocks-completed-fleet-model-time-2026-10-18.svg)', '',
-                       '[Play all eleven games](../examples/rocm-10.1/falling-blocks/index.html) · [Per-agent outcomes CSV](../data/rocm-10.1/falling-blocks-fleet-outcomes-2026-10-18.csv). Both final fleets delivered four games; budgets and client settings differed. The failed first single-card attempt remains in the report.', '']
+                       '[Play all fifteen games](../examples/rocm-10.1/falling-blocks/index.html) · [Per-agent outcomes CSV](../data/rocm-10.1/falling-blocks-fleet-outcomes-2026-10-18.csv). Both final fleets delivered four games; budgets and client settings differed. The failed first single-card attempt remains in the report.', '']
             output += ['### Single-card GPU A context-growth report', '', '![ROCm 10.1 single-card GPU A mean and maximum TTFT](../graphs/rocm-10.1/single-card-gpu-a-text-growth-2026-10-18.svg)', '',
                        '### Follow-up: single versus dual cards', '',
                        '![Mean TTFT by agent count](../graphs/rocm-10.1/follow-up-single-vs-dual-mean-ttft-2026-10-18.svg)', '',
@@ -58,23 +87,22 @@ def build_chart_gallery():
 def add_navigation():
     pages = sorted(p for p in ROOT.rglob('*.md') if public_page(p))
     for page in pages:
-        content = page.read_text(encoding='utf-8')
-        content = content.split('<!-- NAVIGATION START -->')[0].rstrip()
+        content = strip_navigation(page.read_text(encoding='utf-8')).rstrip()
         if page in (ROOT / 'README.md', ROOT / 'index.md'):
             page.write_text(content + '\n', encoding='utf-8')
             continue
         destinations = [ROOT / 'index.md', ROOT / 'README.md',
-                        DOCS / 'FINAL-REPORT-20261018.md', DOCS / 'CHARTS.md']
+                        DOCS / 'RADIANCE-CAMPAIGN-2026-10-21.md', DOCS / 'CHARTS.md']
         links = []
         for destination in destinations:
             if destination == page or not destination.exists():
                 continue
             rel = Path(__import__('os').path.relpath(destination, page.parent)).as_posix()
             label = {ROOT / 'index.md': 'Home', ROOT / 'README.md': 'Overview',
-                     DOCS / 'FINAL-REPORT-20261018.md': 'ROCm 10.1 results',
+                     DOCS / 'RADIANCE-CAMPAIGN-2026-10-21.md': 'Latest campaign',
                      DOCS / 'CHARTS.md': 'Charts'}[destination]
             links.append(f'[{label}]({rel})')
-        footer = '\n\n<!-- NAVIGATION START -->\n\n' + ' · '.join(links) + '\n'
+        footer = '\n\n' + NAV_START + '\n\n' + ' · '.join(links) + '\n'
         page.write_text(content + footer, encoding='utf-8')
 
 

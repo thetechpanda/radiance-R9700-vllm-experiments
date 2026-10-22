@@ -13,6 +13,18 @@ This folder contains the selected results only. Version assignment follows the r
 
 [What was excluded and why](../../docs/EXCLUDED-TESTS.md). Different workload/configuration histories are not a controlled ROCm A/B.
 
+## Latest model and speculation campaign — 19 October
+
+- [Initial eight-cell campaign](dual-r9700-spec-campaign-2026-10-19.svg)
+- [All eight setups at 1–4 agents: wall time and effective ingest](dual-r9700-agent-count-sweep-2026-10-19.svg)
+- [Vision-input increment within each target and lane](dual-r9700-vision-increment-2026-10-19.svg)
+- [Mean TTFT by depth band: all 41 sweep cells](dual-r9700-depth-band-ttft-2026-10-19.svg)
+- [Two completed shallow reproduction cells](dual-r9700-8k-repro-2026-10-19.svg)
+- [Observed lane ordering at 16K versus deep load](dual-r9700-lane-transfer-16k-vs-126k.svg)
+- [CSV hashes and chart provenance](dual-r9700-spec-chart-sources.json)
+
+Read the [campaign limits](../../docs/DUAL-R9700-SPEC-CAMPAIGN.md): ≈15% repeat-spread floor, boot-pool variation, seed-sensitive vision histories, and effective ingest distinct from kernel prefill speed. These charts do not claim a new game-building fleet.
+
 ## Completed coding fleets
 
 [Per-agent model time: dual and successful single-card retry](falling-blocks-completed-fleet-model-time-2026-10-18.svg) · [Play the eleven games](../../examples/rocm-10.1/falling-blocks/index.html). Budget, client context and reserve changed; this is not an isolated hardware speed comparison.
@@ -31,4 +43,4 @@ The seven-cell dual chart uses an 8 GiB CPU tier. The later GPU A/dual compariso
 
 <!-- NAVIGATION START -->
 
-[Home](../../index.md) · [Overview](../../README.md) · [ROCm 10.1 results](../../docs/FINAL-REPORT-20261018.md) · [Charts](../../docs/CHARTS.md)
+[Home](../../index.md) · [Overview](../../README.md) · [Latest campaign](../../docs/RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](../../docs/CHARTS.md)

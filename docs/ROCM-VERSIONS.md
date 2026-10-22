@@ -7,6 +7,10 @@ title: "ROCm 7.14 and ROCm 10.1 evidence"
 
 The primary research objective is ROCm 7.14 versus ROCm 10.1 using the `vllm-radiance` repository. This page separates results from the two software profiles. The eight-cell ROCm 10.1 follow-up matrix and first single/dual coding fleets have recorded outcomes; the raised-budget single-card retry completed with four clean deliveries in 75:23. The archived build record identifies the older profile as ROCm **7.14**: the base image is tagged 7.14.0 and the PyTorch package carries `+rocm7.14`. There is no basis here for interpreting that version as ROCm 7.1.4.
 
+## Newer dual-card campaign — 19 October
+
+The [model/speculation campaign](DUAL-R9700-SPEC-CAMPAIGN.md) adds an eight-cell initial comparison and a 41-cell sweep under ROCm 10.1. The later sweep varies target, lane and concurrency with BF16 KV. Its recommendation is Swift-Quark RTN MXFP4 with speculation off for four-agent load (S4/S6; initial reference E1). It is not evidence of a ROCm 7.14→10.1 speedup, and it does not replace the earlier single-card capacity finding. [Sweep CSV](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv).
+
 ## Recorded software profiles
 
 | Profile | Recorded components | Evidence scope |
@@ -48,4 +52,4 @@ The historical RAM16 three/four-agent means were 13.34/16.88 seconds. They are u
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [ROCm 10.1 results](FINAL-REPORT-20261018.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)

@@ -382,5 +382,125 @@
     "included": true,
     "selection_reason": "Older-stack four-agent 100k reference; unmatched comparison",
     "source_label_sha256": "efc7e17d27f3f47bd79ac90fd5036b9a739d1fbf105abc808fbc37edde3ec2bc"
+  },
+  {
+    "legacy_id": "CASE-49",
+    "title": "Radiance engine non-spec, one agent, 126k deep-context grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "ec55e0b1da1446106e436ed434653b73f81e46e52ea2d7502490dd8507f8b913"
+  },
+  {
+    "legacy_id": "CASE-50",
+    "title": "Radiance engine non-spec, two agents, 126k deep-context grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "803b5e1eec86eda280992d7e6c743db8b948eef22e423d3494c53cb9918021bf"
+  },
+  {
+    "legacy_id": "CASE-51",
+    "title": "Radiance engine non-spec, three agents, 126k deep-context grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "893d79785f3ca9d49c9b2ff7998cdd5af5bb32c00446fa02b7705510f34579b5"
+  },
+  {
+    "legacy_id": "CASE-52",
+    "title": "Radiance engine non-spec, four agents, 126k deep-context grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "654a141b5ccf5d47aa99248bd0ea08b6d312a0b544019b868e014bff1e7b8846"
+  },
+  {
+    "legacy_id": "CASE-53",
+    "title": "Radiance engine non-spec, four agents with vision input, 126k grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "5cd5280081a2f670b9a29743f3f28c8c660758ff7a4c38b510c3d98228a6505f"
+  },
+  {
+    "legacy_id": "CASE-54",
+    "title": "Radiance engine MTP-4, one agent, 126k deep-context grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "43753e45d5550c9ae7f0839bef5dcc486ad39fa9c5ce4129194e89a95a414cff"
+  },
+  {
+    "legacy_id": "CASE-55",
+    "title": "Radiance engine MTP-4, two agents, 126k deep-context grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "eb363c2684d7adfb1e66af39bca514af307a81459a1a443aeea393da7522db0c"
+  },
+  {
+    "legacy_id": "CASE-56",
+    "title": "Radiance engine MTP-4, three agents, 126k deep-context grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "cecf7631c1b79b45653723db8b7978d588d9bc5a25230ffd10c6d02d3511e806"
+  },
+  {
+    "legacy_id": "CASE-57",
+    "title": "Radiance engine MTP-4, four agents, 126k deep-context grid",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "0a0f71be687cbe2a1bd83e49768f2c31a3f2607553fa0b38db6ce2268a542c4c"
+  },
+  {
+    "legacy_id": "CASE-58",
+    "title": "Radiance engine MTP-4, four agents, 13 GiB prefix-tier A/B",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance 1.9.0 engine campaign (21 October 2026), recovered byte-identical client",
+    "source_label_sha256": "eab57a6a4baa592dc5849409b8d5d48f298932dd666a26788e6b160e489072fa"
+  },
+  {
+    "legacy_id": "CASE-59",
+    "title": "Radiance engine four-agent Falling Blocks fleet acceptance",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Real coding-agent acceptance run on the radiance 1.9.0 engine: 4/4 delivered, 4/4 syntax PASS",
+    "source_label_sha256": "a4cd06675d8d17b519ad0b378297a340c6ad7ac8877d6bc4f3cd01a512413769"
+  },
+  {
+    "legacy_id": "CASE-60",
+    "title": "Radiance engine single-card MTP-4, 1 agent, pool-derived depth cap",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance single-card campaign (22 October 2026): TP1 pool measured at boot, depth caps derived from pool arithmetic",
+    "source_label_sha256": "974b3dc014ea12d0e601f82e3ec7f8cd8de01b0b5b590197056cc50772a8d0ce"
+  },
+  {
+    "legacy_id": "CASE-61",
+    "title": "Radiance engine single-card MTP-4, 2 agents, pool-derived depth cap",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance single-card campaign (22 October 2026): TP1 pool measured at boot, depth caps derived from pool arithmetic",
+    "source_label_sha256": "05134a5580eec9c9b1c9cc67f78830de3d3e79262f60c6a8a550331e2f1356fa"
+  },
+  {
+    "legacy_id": "CASE-62",
+    "title": "Radiance engine single-card MTP-4, 3 agents, pool-derived depth cap",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance single-card campaign (22 October 2026): TP1 pool measured at boot, depth caps derived from pool arithmetic",
+    "source_label_sha256": "ce5f2af87737dec79cc329c17dc65df91bcbcad33ea7072c2e0a213750a6b142"
+  },
+  {
+    "legacy_id": "CASE-63",
+    "title": "Radiance engine single-card MTP-4, 4 agents, pool-derived depth cap",
+    "version": "rocm-10.1",
+    "included": true,
+    "selection_reason": "Published cell of the radiance single-card campaign (22 October 2026): TP1 pool measured at boot, depth caps derived from pool arithmetic",
+    "source_label_sha256": "7484e1beaf7f8b8fc5e288590ff9f69ebf592c947aafc2c841842d8dada7cc28"
   }
 ]

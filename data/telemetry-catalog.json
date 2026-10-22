@@ -383,5 +383,38 @@
     "included": false,
     "selection_reason": "A resource companion to the early six-agent harness trial; its telemetry does not establish successful task completion",
     "source_name_sha256": "3a45c2bb2dbaa603d71d12c346b7ae6ee31760fffc993f0e5a8de11d6717817a"
+  },
+  {
+    "legacy_id": "RUN-36",
+    "slug": "radiance-campaign-2026-10-21",
+    "title": "Radiance 1.9.0 campaign: wall seconds vs vllm-radiance twins, 21 October 2026",
+    "interpretation": "Grouped wall seconds for the recovered byte-identical agent harness under the radiance engine (non-spec and MTP-4) against the vllm-radiance Y/Z arms on the same checkpoint, n=1..4. MTP-4 is the winning lane: it beats the old MTP arm at every agent count and the old non-spec arm at n=1-3; the non-spec lane trails the old engine inside seed noise. Read with the campaign write-up; baseline re-validation on the old engine was not run.",
+    "version": "rocm-10.1",
+    "provenance": "radiance 1.9.0 at a pinned image digest, TP2, fp8 KV, M2 converted checkpoint (awq-int4-rad); collected 21 October 2026 on the dual R9700 host. Old-engine arms are the published 19 October campaign numbers for the same checkpoint, not a re-run.",
+    "included": true,
+    "selection_reason": "Primary engine-transition chart: the new engine against its own checkpoint's published baselines",
+    "source_name_sha256": "9246d754b3e230b85bb00e7f37ff84d013e3867cf9d17eb20f0cfc61290c763a"
+  },
+  {
+    "legacy_id": "RUN-37",
+    "slug": "radiance-single-card-comparison-2026-10-22",
+    "title": "Single-card serving: per-turn price and TTFT, old engine vs radiance (22 October 2026)",
+    "interpretation": "Two-panel comparison of single-card agent serving: seconds per turn and mean TTFT at n=1..4 for vllm-radiance single-card (27-turn family, non-spec), radiance TP1 MTP-4 and radiance TP2 MTP-4. The old engine's per-turn price explodes 2.7x with load (12.59 to 34.65) and its TTFT collapses at n=3-4 (71.46/101.38 mean, 654.91 max, depth held via preemption); radiance stays flat (9.68 to 9.06 s/turn, TTFT max 22.02) at an honest 88,913-token cap on n=4. Turn families differ; s/turn normalizes turns, not lane.",
+    "version": "rocm-10.1",
+    "provenance": "radiance 1.9.0 pinned digest, M2 checkpoint (awq-int4-rad); TP1 grid 22 October, TP2 grid 21 October 2026, same recovered client; old-engine rows are the published 18 October follow-up campaign, not a re-run.",
+    "included": true,
+    "selection_reason": "Primary single-card engine-transition chart: the queue behaving differently, not an optimization",
+    "source_name_sha256": "53a46f7d10412a4ca8c16dc7a6fcdc86e6672613764dce76c118b3677ecb56e0"
+  },
+  {
+    "legacy_id": "RUN-38",
+    "slug": "radiance-pool-ceiling-2026-10-22",
+    "title": "KV pool ceiling ladder: measured boots and marked projections (22 October 2026)",
+    "interpretation": "Horizontal bars of KV pool tokens per engine configuration: four measured boot prints (TP1 4-slot 404,608; TP2 4-slot 524,304; TP2 6-slot 131k 786,448; TP2 6-slot 200k 1,228,816, the current default) plus two dashed projections (elastic ceiling ~1,284,500 at ~9.8 sessions; TTM tier max ~471,400) and the host tier measured at 400,912. The engine rule pool = min(what fits, slots x context) explains why 1-card and 2-card pools looked similar at 4 slots: both targeted 4x131k; the cards were never the 524k limit.",
+    "version": "rocm-10.1",
+    "provenance": "Boot prints of radiance 1.9.0 at the pinned digest on the dual R9700 host, 21-22 October 2026; projection rows are elastic GiB over measured KV density (18.2 KiB/token/card), marked dashed.",
+    "included": true,
+    "selection_reason": "Canonical capacity picture: what the box can back, measured against projected",
+    "source_name_sha256": "bc17301cc66cdcc89e7931c7736e2352990e92b6784c4ee6212029d21e1be482"
   }
 ]

@@ -7,11 +7,22 @@ title: "ROCm 10.1 Falling Blocks games and provenance"
 
 [Play the gallery](index.html) · [Campaign and per-agent outcomes](../../../docs/FINAL-REPORT-20261018.md)
 
-Eleven imported Qwen3.8 27B game artefacts from the completed ROCm 10.1 campaign. The first single-card attempt, completed dual fleet and successful single-card retry remain separate. Agent 0 in the first attempt produced no file; there is no substitute game for it.
+Fifteen imported Qwen3.8 27B game artefacts from the completed ROCm 10.1 campaigns. The first single-card attempt, completed dual fleet, successful single-card retry and the radiance-engine acceptance fleet of 21 October remain separate. Agent 0 in the first attempt produced no file; there is no substitute game for it.
 
-The target campaign reported syntax and mocked-DOM checks passing for all eleven original outputs, including movement, rotation, pause, hard drop, reset and line clearing. This is not full browser qualification or a fresh functional test of the imported copies. Where needed, release naming was changed to Falling Blocks; both original and released hashes are retained in [manifest.json](manifest.json). The generator verifies released bytes and hashes without modifying the games.
+The target campaigns reported checks passing for all fifteen original outputs: syntax and mocked-DOM probes for the October 18–19 fleets, node --check on the embedded script for the radiance fleet. This is not full browser qualification or a fresh functional test of the imported copies. Where needed, release naming was changed to Falling Blocks and agent files were published as index.html; both original and released hashes are retained in [manifest.json](manifest.json). The generator verifies released bytes and hashes without modifying the games.
 
 Only HTML games and provenance are published here. Private agent sessions, tool histories, server paths and credentials are omitted. Some variants store high scores in browser local storage.
+
+## Radiance engine — fleet acceptance
+
+All four agents delivered on the radiance 1.9.0 engine (MTP-4 lane, TP2, 131,072 context, seeds 100–103, 60-minute cap). Agents 2–3 exited clean; agents 0–1 timed out at the cap after delivering complete games. Syntax PASS 4/4; prefix-cache hit 80.1–94.3%.
+
+| Agent / seed | Game | Exit / delivery | Released bytes | SHA-256 |
+|---|---|---|---:|---|
+| 0 / 100 | [Play](radiance-20261021/agent-0/index.html) | Exit 124; files delivered before timeout | 19,567 | `500080e5931b85a0da2ffaab8fce6d72b374275318a92d25b07c0a505772697d` |
+| 1 / 101 | [Play](radiance-20261021/agent-1/index.html) | Exit 124; files delivered before timeout | 18,407 | `40f3fcff9a731da51f8a5e2bfd359251c378d9461e66c8adfc9b72621094490f` |
+| 2 / 102 | [Play](radiance-20261021/agent-2/index.html) | Exit 0; delivered | 19,624 | `128f7ebc4982c8369539d3b4e3f057c457fe7c155eef4d5d13a58ce0b67fdb2b` |
+| 3 / 103 | [Play](radiance-20261021/agent-3/index.html) | Exit 0; delivered | 18,632 | `b57bc39313ee6933ce989f1d2de055ee149a0609d14925afc72f64077be51719` |
 
 ## Single card — completed retry
 
@@ -47,4 +58,4 @@ Three games produced; one clean delivery, two timeouts after producing files. Ag
 
 <!-- NAVIGATION START -->
 
-[Home](../../../index.md) · [Overview](../../../README.md) · [ROCm 10.1 results](../../../docs/FINAL-REPORT-20261018.md) · [Charts](../../../docs/CHARTS.md)
+[Home](../../../index.md) · [Overview](../../../README.md) · [Latest campaign](../../../docs/RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](../../../docs/CHARTS.md)

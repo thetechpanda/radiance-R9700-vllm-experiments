@@ -71,3 +71,7 @@ benchmark,CASE-42,"comparison trial, 4 agents, 32.0k target, with-images",rocm-7
 benchmark,CASE-45,"comparison trial, 3 agents, 126.0k target, text-only",rocm-7.14,Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison
 benchmark,CASE-46,"capacity trial, 1 agents, 100.0k target, text-only",rocm-7.14,Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison
 benchmark,CASE-47,"capacity trial, 2 agents, 100.0k target, text-only",rocm-7.14,Exploratory or redundant configuration/workload; not required for the focused concurrency and version comparison
+benchmark,ARM-C,Swift Quark FP8-dynamic four-agent bench (partial),rocm-10.1,"Killed mid-run after deep-band collapse under the RowWiseTorch FP8 fallback kernel; recorded as partial, not a measured cell"
+benchmark,ARM-D,Swift NVFP4 to MXFP4 load-time conversion,rocm-10.1,"Conversion gate-fail: converter absent from the image (emulation kernel selected); bench skipped, documented as gate-fail"
+spec-repro,R3-quark-dflash7,Shallow Quark DFlash2 K7 reproduction,rocm-10.1,Cancelled by scope decision after R1/R2; no completed performance measurement.
+spec-repro,R4-swift-quark-dflash7,Shallow Swift-Quark DFlash2 K7 reproduction,rocm-10.1,Cancelled by scope decision after R1/R2; no completed performance measurement.

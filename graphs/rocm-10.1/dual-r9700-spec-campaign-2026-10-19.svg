@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="604" viewBox="0 0 1440 604" role="img" font-family="system-ui, sans-serif" fill="#e2e8f0">
+<title>Initial four-agent campaign: three targets and their decoding lanes</title><desc>Eight cells; 40 turns each, ~126k growth cap, TP=2, context 131070, BF16 KV, 10 GiB ARC. Separate from the later 41-cell sweep.</desc>
+<rect width="1440" height="604" fill="#0b1220" />
+<text x="30.0" y="38.0" font-size="26" fill="#e2e8f0" text-anchor="start">Initial four-agent campaign: three targets and their decoding lanes</text>
+<text x="30.0" y="68.0" font-size="14" fill="#94a3b8" text-anchor="start">Eight cells; 40 turns each, ~126k growth cap, TP=2, context 131070, BF16 KV, 10 GiB ARC. Separate from the later 41-cell sweep.</text>
+<path d="M365.0 118 V502" stroke="#263449" />
+<text x="365.0" y="527.0" font-size="12" fill="#94a3b8" text-anchor="middle">0</text>
+<path d="M479.0 118 V502" stroke="#263449" />
+<text x="479.0" y="527.0" font-size="12" fill="#94a3b8" text-anchor="middle">201</text>
+<path d="M593.0 118 V502" stroke="#263449" />
+<text x="593.0" y="527.0" font-size="12" fill="#94a3b8" text-anchor="middle">402</text>
+<path d="M707.0 118 V502" stroke="#263449" />
+<text x="707.0" y="527.0" font-size="12" fill="#94a3b8" text-anchor="middle">603</text>
+<path d="M821.0 118 V502" stroke="#263449" />
+<text x="821.0" y="527.0" font-size="12" fill="#94a3b8" text-anchor="middle">805</text>
+<path d="M935.0 118 V502" stroke="#263449" />
+<text x="935.0" y="527.0" font-size="12" fill="#94a3b8" text-anchor="middle">1006</text>
+<text x="350.0" y="146.0" font-size="14" fill="#e2e8f0" text-anchor="end">B2-quark-mxfp4-nospec</text>
+<rect x="365" y="127" width="238.5" height="24" fill="#38bdf8" />
+<text x="960.0" y="146.0" font-size="13" fill="#e2e8f0" text-anchor="start">420.8 s | decode 17.0 tok/s | TTFT 16.8 s</text>
+<text x="350.0" y="194.0" font-size="14" fill="#e2e8f0" text-anchor="end">E1-swift-quark-nospec</text>
+<rect x="365" y="175" width="249.1" height="24" fill="#38bdf8" />
+<text x="960.0" y="194.0" font-size="13" fill="#e2e8f0" text-anchor="start">439.6 s | decode 17.0 tok/s | TTFT 14.7 s</text>
+<text x="350.0" y="242.0" font-size="14" fill="#e2e8f0" text-anchor="end">A2-swift-w4a16-nospec</text>
+<rect x="365" y="223" width="274.5" height="24" fill="#38bdf8" />
+<text x="960.0" y="242.0" font-size="13" fill="#e2e8f0" text-anchor="start">484.3 s | decode 12.7 tok/s | TTFT 23.2 s</text>
+<text x="350.0" y="290.0" font-size="14" fill="#e2e8f0" text-anchor="end">A1-swift-w4a16-mtp4</text>
+<rect x="365" y="271" width="280.7" height="24" fill="#a78bfa" />
+<text x="960.0" y="290.0" font-size="13" fill="#e2e8f0" text-anchor="start">495.4 s | decode 16.2 tok/s | TTFT 23.2 s</text>
+<text x="350.0" y="338.0" font-size="14" fill="#e2e8f0" text-anchor="end">B1-quark-mxfp4-mtp4</text>
+<rect x="365" y="319" width="401.0" height="24" fill="#a78bfa" />
+<text x="960.0" y="338.0" font-size="13" fill="#e2e8f0" text-anchor="start">707.6 s | decode 11.0 tok/s | TTFT 36.6 s</text>
+<text x="350.0" y="386.0" font-size="14" fill="#e2e8f0" text-anchor="end">E3-swift-quark-dflash7</text>
+<rect x="365" y="367" width="488.6" height="24" fill="#fbbf24" />
+<text x="960.0" y="386.0" font-size="13" fill="#e2e8f0" text-anchor="start">862.1 s | decode 8.7 tok/s | TTFT 53.0 s</text>
+<text x="350.0" y="434.0" font-size="14" fill="#e2e8f0" text-anchor="end">B4-quark-mxfp4-dflash7</text>
+<rect x="365" y="415" width="516.7" height="24" fill="#fbbf24" />
+<text x="960.0" y="434.0" font-size="13" fill="#e2e8f0" text-anchor="start">911.7 s | decode 7.8 tok/s | TTFT 57.5 s</text>
+<text x="350.0" y="482.0" font-size="14" fill="#e2e8f0" text-anchor="end">E2-swift-quark-mtp4</text>
+<rect x="365" y="463" width="527.8" height="24" fill="#a78bfa" />
+<text x="960.0" y="482.0" font-size="13" fill="#e2e8f0" text-anchor="start">931.3 s | decode 7.5 tok/s | TTFT 67.2 s</text>
+<text x="30.0" y="556.0" font-size="14" fill="#e2e8f0" text-anchor="start">Blue: non-spec | purple: MTP K4 | amber: DFlash2 K7. Wall seconds; lower is better.</text>
+<text x="30.0" y="581.0" font-size="13" fill="#94a3b8" text-anchor="start">One observation per cell. Pools differ across setups; blue = non-spec, purple = MTP, amber = DFlash2.</text>
+</svg>

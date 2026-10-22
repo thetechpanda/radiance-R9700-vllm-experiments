@@ -1,0 +1,27 @@
+{
+  "generator": "tools/render_spec_campaign.py",
+  "sources": {
+    "data/rocm-10.1/dual-r9700-spec-campaign-2026-10-19.csv": "082da0debe7661d34875cb7c4bee8d93927feb4fd5fb24ec9274f69e91b9759c",
+    "data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv": "277f4c729ebb002ab654a3c0682f591be9591555a4f8899ee9607c32097235db",
+    "data/rocm-10.1/dual-r9700-8k-repro-2026-10-19.csv": "6da7d9015c6329ddec6afb18f58ecf60bfecc8d2b4420da7d361ad48b1015e59"
+  },
+  "outputs": [
+    "graphs/rocm-10.1/dual-r9700-spec-campaign-2026-10-19.svg",
+    "graphs/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.svg",
+    "graphs/rocm-10.1/dual-r9700-vision-increment-2026-10-19.svg",
+    "graphs/rocm-10.1/dual-r9700-depth-band-ttft-2026-10-19.svg",
+    "graphs/rocm-10.1/dual-r9700-8k-repro-2026-10-19.svg",
+    "graphs/rocm-10.1/dual-r9700-lane-transfer-16k-vs-126k.svg"
+  ],
+  "counts": {
+    "initial_campaign_cells": 8,
+    "sweep_cells": 41,
+    "sweep_turns": 1160,
+    "shallow_completed_cells": 2
+  },
+  "limits": [
+    "One observation per cell except stated repeats; \u224815% repeat-spread floor.",
+    "Effective ingest is cache-influenced; it is not kernel prefill throughput.",
+    "Vision inputs are synthetic; no new game-building fleet is implied."
+  ]
+}

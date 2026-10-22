@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" font-family="system-ui, sans-serif" fill="#e2e8f0">
+<title>Single-card serving, old engine vs radiance: per-turn price and TTFT (22 Oct 2026)</title>
+<desc>Grouped bars, two panels, 1-4 concurrent agents. Panel A: seconds per turn, scale 0-40 s over 310 px (7.75 px per second). Panel B: TTFT mean seconds, scale 0-110 s over 310 px (2.818 px per second). Series: vllm-radiance single card (old engine, 27-turn non-spec family), radiance TP1 MTP-4, radiance TP2 MTP-4 (10-turn family; radiance TP1 n=4 at the honest 88,913-token cap).</desc>
+<rect width="1200" height="520" fill="#0b1220" />
+<text x="30.0" y="36.0" font-size="18" fill="#e2e8f0" text-anchor="start">Single-card serving, old engine vs radiance: per-turn price and TTFT (22 Oct 2026)</text>
+<text x="30.0" y="60.0" font-size="14" fill="#94a3b8" text-anchor="start">Old engine: 27-turn family (non-spec) · radiance: 10-turn MTP-4 family · radiance TP1 n=4 at the honest 88,913-token cap</text>
+<text transform="translate(48 245) rotate(-90)" font-size="13" fill="#94a3b8" text-anchor="middle">seconds per turn</text>
+<text transform="translate(646 245) rotate(-90)" font-size="13" fill="#94a3b8" text-anchor="middle">TTFT mean seconds</text>
+<path d="M110 90 H560" stroke="#263449" />
+<path d="M110 167.5 H560" stroke="#263449" />
+<path d="M110 245 H560" stroke="#263449" />
+<path d="M110 322.5 H560" stroke="#263449" />
+<path d="M110 400 H560" stroke="#263449" />
+<text x="102.0" y="94.0" font-size="11" fill="#94a3b8" text-anchor="end">40</text>
+<text x="102.0" y="171.5" font-size="11" fill="#94a3b8" text-anchor="end">30</text>
+<text x="102.0" y="249.0" font-size="11" fill="#94a3b8" text-anchor="end">20</text>
+<text x="102.0" y="326.5" font-size="11" fill="#94a3b8" text-anchor="end">10</text>
+<text x="102.0" y="404.0" font-size="11" fill="#94a3b8" text-anchor="end">0</text>
+<rect x="121.25" y="302.43" width="26" height="97.57" fill="#38bdf8" />
+<rect x="153.25" y="324.98" width="26" height="75.02" fill="#fbbf24" />
+<rect x="185.25" y="320.72" width="26" height="79.28" fill="#fde68a" />
+<text x="134.25" y="296.43" font-size="11" fill="#e2e8f0" text-anchor="middle">12.59</text>
+<text x="166.25" y="318.98" font-size="11" fill="#e2e8f0" text-anchor="middle">9.68</text>
+<text x="198.25" y="314.72" font-size="11" fill="#e2e8f0" text-anchor="middle">10.23</text>
+<rect x="233.75" y="324.51" width="26" height="75.49" fill="#38bdf8" />
+<rect x="265.75" y="325.06" width="26" height="74.94" fill="#fbbf24" />
+<rect x="297.75" y="320.64" width="26" height="79.36" fill="#fde68a" />
+<text x="246.75" y="318.51" font-size="11" fill="#e2e8f0" text-anchor="middle">9.74</text>
+<text x="278.75" y="319.06" font-size="11" fill="#e2e8f0" text-anchor="middle">9.67</text>
+<text x="310.75" y="314.64" font-size="11" fill="#e2e8f0" text-anchor="middle">10.24</text>
+<rect x="346.25" y="166.80" width="26" height="233.20" fill="#38bdf8" />
+<rect x="378.25" y="325.60" width="26" height="74.40" fill="#fbbf24" />
+<rect x="410.25" y="322.34" width="26" height="77.66" fill="#fde68a" />
+<text x="359.25" y="160.80" font-size="11" fill="#e2e8f0" text-anchor="middle">30.09</text>
+<text x="391.25" y="319.60" font-size="11" fill="#e2e8f0" text-anchor="middle">9.60</text>
+<text x="423.25" y="316.34" font-size="11" fill="#e2e8f0" text-anchor="middle">10.02</text>
+<rect x="458.75" y="131.46" width="26" height="268.54" fill="#38bdf8" />
+<rect x="490.75" y="329.78" width="26" height="70.22" fill="#fbbf24" />
+<rect x="522.75" y="321.96" width="26" height="78.04" fill="#fde68a" />
+<text x="471.75" y="125.46" font-size="11" fill="#e2e8f0" text-anchor="middle">34.65</text>
+<text x="503.75" y="323.78" font-size="11" fill="#e2e8f0" text-anchor="middle">9.06</text>
+<text x="535.75" y="315.96" font-size="11" fill="#e2e8f0" text-anchor="middle">10.07</text>
+<path d="M700 90 H1150" stroke="#263449" />
+<path d="M700 118.18 H1150" stroke="#263449" />
+<path d="M700 146.36 H1150" stroke="#263449" />
+<path d="M700 174.55 H1150" stroke="#263449" />
+<path d="M700 202.73 H1150" stroke="#263449" />
+<path d="M700 230.91 H1150" stroke="#263449" />
+<path d="M700 259.09 H1150" stroke="#263449" />
+<path d="M700 287.27 H1150" stroke="#263449" />
+<path d="M700 315.45 H1150" stroke="#263449" />
+<path d="M700 343.64 H1150" stroke="#263449" />
+<path d="M700 371.82 H1150" stroke="#263449" />
+<path d="M700 400 H1150" stroke="#263449" />
+<text x="692.0" y="404.0" font-size="11" fill="#94a3b8" text-anchor="end">0</text>
+<text x="692.0" y="375.82" font-size="11" fill="#94a3b8" text-anchor="end">10</text>
+<text x="692.0" y="347.64" font-size="11" fill="#94a3b8" text-anchor="end">20</text>
+<text x="692.0" y="319.45" font-size="11" fill="#94a3b8" text-anchor="end">30</text>
+<text x="692.0" y="291.27" font-size="11" fill="#94a3b8" text-anchor="end">40</text>
+<text x="692.0" y="263.09" font-size="11" fill="#94a3b8" text-anchor="end">50</text>
+<text x="692.0" y="234.91" font-size="11" fill="#94a3b8" text-anchor="end">60</text>
+<text x="692.0" y="206.73" font-size="11" fill="#94a3b8" text-anchor="end">70</text>
+<text x="692.0" y="178.55" font-size="11" fill="#94a3b8" text-anchor="end">80</text>
+<text x="692.0" y="150.36" font-size="11" fill="#94a3b8" text-anchor="end">90</text>
+<text x="692.0" y="122.18" font-size="11" fill="#94a3b8" text-anchor="end">100</text>
+<text x="692.0" y="94.0" font-size="11" fill="#94a3b8" text-anchor="end">110</text>
+<rect x="711.25" y="378.98" width="26" height="21.02" fill="#38bdf8" />
+<rect x="743.25" y="380.08" width="26" height="19.92" fill="#fbbf24" />
+<rect x="775.25" y="376.39" width="26" height="23.61" fill="#fde68a" />
+<text x="724.25" y="372.98" font-size="11" fill="#e2e8f0" text-anchor="middle">7.46</text>
+<text x="756.25" y="374.08" font-size="11" fill="#e2e8f0" text-anchor="middle">7.07</text>
+<text x="788.25" y="370.39" font-size="11" fill="#e2e8f0" text-anchor="middle">8.37</text>
+<rect x="823.75" y="366.41" width="26" height="33.59" fill="#38bdf8" />
+<rect x="855.75" y="375.00" width="26" height="25.00" fill="#fbbf24" />
+<rect x="887.75" y="369.79" width="26" height="30.21" fill="#fde68a" />
+<text x="836.75" y="360.41" font-size="11" fill="#e2e8f0" text-anchor="middle">11.92</text>
+<text x="868.75" y="369.00" font-size="11" fill="#e2e8f0" text-anchor="middle">8.87</text>
+<text x="900.75" y="363.79" font-size="11" fill="#e2e8f0" text-anchor="middle">10.72</text>
+<rect x="936.25" y="198.61" width="26" height="201.39" fill="#38bdf8" />
+<rect x="968.25" y="368.04" width="26" height="31.96" fill="#fbbf24" />
+<rect x="1000.25" y="363.79" width="26" height="36.21" fill="#fde68a" />
+<text x="949.25" y="192.61" font-size="11" fill="#e2e8f0" text-anchor="middle">71.46</text>
+<text x="981.25" y="362.04" font-size="11" fill="#e2e8f0" text-anchor="middle">11.34</text>
+<text x="1013.25" y="357.79" font-size="11" fill="#e2e8f0" text-anchor="middle">12.85</text>
+<rect x="1048.75" y="114.30" width="26" height="285.70" fill="#38bdf8" />
+<rect x="1080.75" y="359.58" width="26" height="40.42" fill="#fbbf24" />
+<rect x="1112.75" y="351.81" width="26" height="48.19" fill="#fde68a" />
+<text x="1061.75" y="108.30" font-size="11" fill="#e2e8f0" text-anchor="middle">101.38</text>
+<text x="1093.75" y="353.58" font-size="11" fill="#e2e8f0" text-anchor="middle">14.34</text>
+<text x="1125.75" y="345.81" font-size="11" fill="#e2e8f0" text-anchor="middle">17.10</text>
+<text x="166.25" y="420.0" font-size="13" fill="#94a3b8" text-anchor="middle">1 agent</text>
+<text x="278.75" y="420.0" font-size="13" fill="#94a3b8" text-anchor="middle">2 agents</text>
+<text x="391.25" y="420.0" font-size="13" fill="#94a3b8" text-anchor="middle">3 agents</text>
+<text x="503.75" y="420.0" font-size="13" fill="#94a3b8" text-anchor="middle">4 agents</text>
+<text x="335.0" y="440.0" font-size="12" fill="#94a3b8" text-anchor="middle">concurrent agents</text>
+<text x="756.25" y="420.0" font-size="13" fill="#94a3b8" text-anchor="middle">1 agent</text>
+<text x="868.75" y="420.0" font-size="13" fill="#94a3b8" text-anchor="middle">2 agents</text>
+<text x="981.25" y="420.0" font-size="13" fill="#94a3b8" text-anchor="middle">3 agents</text>
+<text x="1093.75" y="420.0" font-size="13" fill="#94a3b8" text-anchor="middle">4 agents</text>
+<text x="925.0" y="440.0" font-size="12" fill="#94a3b8" text-anchor="middle">concurrent agents</text>
+<rect x="302" y="456" width="12" height="12" fill="#38bdf8" />
+<text x="320.0" y="466.0" font-size="13" fill="#e2e8f0" text-anchor="start">vllm-radiance single card (old engine)</text>
+<rect x="578" y="456" width="12" height="12" fill="#fbbf24" />
+<text x="596.0" y="466.0" font-size="13" fill="#e2e8f0" text-anchor="start">radiance TP1 (MTP-4)</text>
+<rect x="750" y="456" width="12" height="12" fill="#fde68a" />
+<text x="768.0" y="466.0" font-size="13" fill="#e2e8f0" text-anchor="start">radiance TP2 (MTP-4)</text>
+<text x="30.0" y="495.0" font-size="13" fill="#94a3b8" text-anchor="start">data/rocm-10.1/radiance-single-card-comparison-2026-10-22.csv</text>
+</svg>

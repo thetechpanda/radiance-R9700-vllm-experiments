@@ -5,6 +5,8 @@ title: "ROCm 10.1 matrix and Falling Blocks fleets — final report, 18 October 
 
 # ROCm 10.1 matrix and Falling Blocks fleets — final report, 18 October 2026
 
+This report covers the 18 October INT4/FP8-KV matrix and coding fleets. The later [19 October target/speculation campaign](DUAL-R9700-SPEC-CAMPAIGN.md) uses a different BF16-KV profile and supplies the newer dual-card recommendation; it does not replace these historical results.
+
 Campaign `20261018T025319Z`, as recorded in the local research handover. All fleets are complete, including the GPU A retry (successful). Scope: the eight-cell synthetic agent matrix on the service-managed single-GPU-A and dual-card deployments under ROCm 10.1, comparison against the 7.14-era evidence, and the real coding-agent Falling Blocks fleets on both deployments. GPU B alone is out of scope: every historical single-card baseline ran on card A at PCIe 4.0 ×8; the ×4 second card has no baseline.
 
 ## Deployment profiles
@@ -108,7 +110,7 @@ Every produced game passed the reported probes. Those checks establish the exerc
 - [Retained historical references](../data/rocm-7.14/historical-agent-workloads.csv) and [version provenance](ROCM-VERSIONS.md).
 - The table above includes one empty completion in GPU A n4 and one in dual n2. Their counts are 115/64 completed responses versus 114/63 timed turns in the exported CSVs. Do not combine these counting conventions.
 - Wall times above cover accepted case execution; CSV harness elapsed times use a narrower interval and can differ slightly.
-- Fleet outcomes and headless checks are reported from the local handover. The underlying sessions, target paths and private transcripts are not published. The eleven games are published under [`examples/rocm-10.1/falling-blocks/`](../examples/rocm-10.1/falling-blocks/README.md) with a [gallery](../examples/rocm-10.1/falling-blocks/index.html) and a [manifest](../examples/rocm-10.1/falling-blocks/manifest.json) recording original and released hashes; seven games had the four-line-clear banner and matching sound identifiers renamed for public naming (rules unchanged), and every released file was re-verified on its released bytes.
+- Fleet outcomes and headless checks are reported from the local handover. The underlying sessions, target paths and private transcripts are not published. The eleven games are published under [`examples/rocm-10.1/falling-blocks/`](../examples/rocm-10.1/falling-blocks/README.md) with a [gallery](../examples/rocm-10.1/falling-blocks/index.html) — shared with the four radiance-engine fleet games of 21 October — and a [manifest](../examples/rocm-10.1/falling-blocks/manifest.json) recording original and released hashes; seven games had the four-line-clear banner and matching sound identifiers renamed for public naming (rules unchanged), and every released file was re-verified on its released bytes.
 - The earlier seven-cell campaign is separate and remains unchanged. The raised-budget single-card fleet retry completed successfully (4/4 clean, all artefacts, all checks passed) and is recorded above.
 
 All tables are single-observation records. Fleet outcomes and headless checks were executed on the target during the campaign and captured in the handover; no new tests were run for the document itself.
@@ -117,4 +119,4 @@ This document is licensed under [Creative Commons Attribution 4.0 International 
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)

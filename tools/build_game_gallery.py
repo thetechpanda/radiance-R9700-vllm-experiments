@@ -12,6 +12,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 GAMES = ROOT / 'examples/rocm-10.1/falling-blocks'
 PROFILES = [
+    ('radiance-20261021', 'Radiance engine — fleet acceptance',
+     'All four agents delivered on the radiance 1.9.0 engine (MTP-4 lane, TP2, 131,072 context, seeds 100–103, 60-minute cap). Agents 2–3 exited clean; agents 0–1 timed out at the cap after delivering complete games. Syntax PASS 4/4; prefix-cache hit 80.1–94.3%.'),
     ('single-card-retry', 'Single card — completed retry',
      'All four agents delivered and exited cleanly. Fleet wall 75:23; 65,536-token request budget, 90-minute per-agent cap; client context corrected to 131,070.'),
     ('dual-card', 'Dual card — completed fleet',
@@ -25,7 +27,7 @@ def main():
     entries = json.loads((GAMES / 'manifest.json').read_text())
     expected = {(fleet, agent) for fleet, agents in [
         ('single-card', range(1, 4)), ('dual-card', range(4)),
-        ('single-card-retry', range(4))] for agent in agents}
+        ('single-card-retry', range(4)), ('radiance-20261021', range(4))] for agent in agents}
     identities = [(e['fleet'], e['agent']) for e in entries]
     if len(identities) != len(set(identities)) or set(identities) != expected:
         raise ValueError('Incomplete or duplicate campaign game inventory')
@@ -40,21 +42,21 @@ def main():
     output = ['<!doctype html>', '<html lang="en-AU"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">',
               '<title>ROCm 10.1 — Qwen3.8 Falling Blocks gallery</title>', f'<style>{css}</style></head><body>',
               '<nav><a href="../../../index.html">Research home</a> · <a href="../../../docs/FINAL-REPORT-20261018.html">Results</a> · <a href="README.html">Provenance</a> · <a href="../../rocm-7.14/falling-blocks/index.html">Historical games</a></nav>',
-              '<header><p>QWEN3.8 27B · ROCm 10.1 · R9700</p><h1>Eleven games.<br>Three recorded fleet attempts.</h1>',
-              '<p>Start with the completed single-card retry or dual-card fleet. Each agent built its own seeded Falling Blocks variant. Use a keyboard; controls are shown inside each game.</p>',
-              '<p>All eleven original outputs passed reported target-side syntax and mocked-DOM checks. That is not full browser qualification. Fleet completion and file production are distinct: the first single-card attempt failed overall.</p></header><main>']
+              '<header><p>QWEN3.8 27B · ROCm 10.1 · R9700</p><h1>Fifteen games.<br>Four recorded fleet attempts.</h1>',
+              '<p>Start with the radiance-engine acceptance fleet of 21 October — the newest builds — or the completed single-card retry. Each agent built its own seeded Falling Blocks variant. Use a keyboard; controls are shown inside each game.</p>',
+              '<p>All fifteen original outputs passed reported target-side checks — syntax and mocked-DOM probes for the October 18–19 fleets, node-syntax on the embedded script for the radiance fleet. That is not full browser qualification. Fleet completion and file production are distinct: the first single-card attempt failed overall.</p></header><main>']
     md = ['---', 'layout: default', 'title: "ROCm 10.1 Falling Blocks games and provenance"', '---', '',
           '# ROCm 10.1 Falling Blocks games and provenance', '',
           '[Play the gallery](index.html) · [Campaign and per-agent outcomes](../../../docs/FINAL-REPORT-20261018.md)', '',
-          'Eleven imported Qwen3.8 27B game artefacts from the completed ROCm 10.1 campaign. The first single-card attempt, completed dual fleet and successful single-card retry remain separate. Agent 0 in the first attempt produced no file; there is no substitute game for it.', '',
-          'The target campaign reported syntax and mocked-DOM checks passing for all eleven original outputs, including movement, rotation, pause, hard drop, reset and line clearing. This is not full browser qualification or a fresh functional test of the imported copies. Where needed, release naming was changed to Falling Blocks; both original and released hashes are retained in [manifest.json](manifest.json). The generator verifies released bytes and hashes without modifying the games.', '',
+          'Fifteen imported Qwen3.8 27B game artefacts from the completed ROCm 10.1 campaigns. The first single-card attempt, completed dual fleet, successful single-card retry and the radiance-engine acceptance fleet of 21 October remain separate. Agent 0 in the first attempt produced no file; there is no substitute game for it.', '',
+          'The target campaigns reported checks passing for all fifteen original outputs: syntax and mocked-DOM probes for the October 18–19 fleets, node --check on the embedded script for the radiance fleet. This is not full browser qualification or a fresh functional test of the imported copies. Where needed, release naming was changed to Falling Blocks and agent files were published as index.html; both original and released hashes are retained in [manifest.json](manifest.json). The generator verifies released bytes and hashes without modifying the games.', '',
           'Only HTML games and provenance are published here. Private agent sessions, tool histories, server paths and credentials are omitted. Some variants store high scores in browser local storage.', '']
     for fleet, title, description in PROFILES:
         output += [f'<section><h2>{html.escape(title)}</h2><p>{html.escape(description)}</p><div class="cards">']
         md += [f'## {title}', '', description, '', '| Agent / seed | Game | Exit / delivery | Released bytes | SHA-256 |', '|---|---|---|---:|---|']
         for entry in sorted((e for e in entries if e['fleet'] == fleet), key=lambda e:e['agent']):
             agent = entry['agent']
-            status = 'Exit 124; files delivered before timeout' if fleet == 'single-card' and agent in (2, 3) else 'Exit 0; delivered'
+            status = 'Exit 0; delivered' if entry['exit_status'] == 0 else 'Exit 124; files delivered before timeout'
             file = html.escape(entry['file'], quote=True)
             output += [f'<article><h3>Agent {agent}</h3><p class="muted">Seed {entry["seed"]} · {entry["bytes"]:,} bytes</p><p>{status}</p><a class="play" href="{file}">Play Agent {agent}</a></article>']
             md += [f'| {agent} / {entry["seed"]} | [Play]({entry["file"]}) | {status} | {entry["bytes"]:,} | `{entry["sha256"]}` |']

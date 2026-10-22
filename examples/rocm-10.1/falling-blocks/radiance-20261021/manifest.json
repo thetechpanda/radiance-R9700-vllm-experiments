@@ -1,0 +1,42 @@
+{
+  "fleet": "radiance-20261021",
+  "date": "2026-10-21",
+  "engine": "radiance-1.9.0",
+  "model": "ukisai/Swift-1.5-Qwen3.8-27b-W4A16-AWQ (converted Swift INT4 AWQ, MTP-4 lane, TP2, :8000)",
+  "agent_runtime": "Pi coding agent (container), text-only, 60-min per-agent cap, seeds 100-103",
+  "outcome": "4/4 delivered; all sessions timed out post-delivery (exit 124); syntax PASS 4/4",
+  "games": [
+    {
+      "agent": 0,
+      "seed": 100,
+      "file": "agent-0/index.html",
+      "bytes": 19567,
+      "sha256": "500080e5931b85a0da2ffaab8fce6d72b374275318a92d25b07c0a505772697d",
+      "syntax_check": "PASS (node --check, embedded script)"
+    },
+    {
+      "agent": 1,
+      "seed": 101,
+      "file": "agent-1/index.html",
+      "bytes": 18407,
+      "sha256": "40f3fcff9a731da51f8a5e2bfd359251c378d9461e66c8adfc9b72621094490f",
+      "syntax_check": "PASS (node --check, embedded script)"
+    },
+    {
+      "agent": 2,
+      "seed": 102,
+      "file": "agent-2/index.html",
+      "bytes": 19624,
+      "sha256": "128f7ebc4982c8369539d3b4e3f057c457fe7c155eef4d5d13a58ce0b67fdb2b",
+      "syntax_check": "PASS (node --check, embedded script)"
+    },
+    {
+      "agent": 3,
+      "seed": 103,
+      "file": "agent-3/index.html",
+      "bytes": 18632,
+      "sha256": "b57bc39313ee6933ce989f1d2de055ee149a0609d14925afc72f64077be51719",
+      "syntax_check": "PASS (node --check, embedded script)"
+    }
+  ]
+}

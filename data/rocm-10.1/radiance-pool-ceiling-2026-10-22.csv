@@ -1,0 +1,8 @@
+config,kv_gib_per_card,pool_tokens,sessions_at_full_depth,backing_pct,kind
+"TP1, 4 slots, 131072 context",14.27,404608,3.1,77,measured (boot print)
+"TP2, 4 slots, 131072 context",9.74,524304,4.0,100,measured (boot print)
+"TP2, 6 slots, 131072 context",13.61,786448,6.0,100,measured (boot print)
+"TP2, 6 slots, 204800 context",20.79,1228816,6.0,100,"measured (boot print, current default)"
+"TP2, elastic ceiling (slots ignored)",22.23,1284500,9.8,projection,projection (elastic GiB / measured density)
+host tier 13 GiB (finished conversations),13.00,400912,3.1,n/a,measured (tier print)
+host tier TTM max 15.29 GiB,15.29,471400,3.6,n/a,projection (TTM cap / measured density)

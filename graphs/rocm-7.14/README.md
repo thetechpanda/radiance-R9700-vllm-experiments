@@ -26,4 +26,4 @@ The list below contains the selected results. This folder also retains archived 
 
 <!-- NAVIGATION START -->
 
-[Home](../../index.md) · [Overview](../../README.md) · [ROCm 10.1 results](../../docs/FINAL-REPORT-20261018.md) · [Charts](../../docs/CHARTS.md)
+[Home](../../index.md) · [Overview](../../README.md) · [Latest campaign](../../docs/RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](../../docs/CHARTS.md)

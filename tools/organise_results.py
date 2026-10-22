@@ -133,6 +133,11 @@ def main():
             if family == 'graphs' and version == 'rocm-7.14':
                 lines += ['', '[Unchosen graph archive and individual exclusion reasons](unchosen.md).']
             notes = editorial_section(page, 'Campaigns and counting')
+            if family == 'graphs' and version == 'rocm-10.1':
+                latest = editorial_section(page, 'Latest model and speculation campaign — 19 October')
+                if latest:
+                    latest = latest.lstrip().split("\n## ", 1)[0]
+                    notes = "\n" + latest + "\n" + notes
             lines += ['', '[Latest matrix and fleet report](../../docs/FINAL-REPORT-20261018.md).'] if version == 'rocm-10.1' else []
             if version == 'version-unverified' and len(lines) == 6:
                 lines = [f'# {LABELS[version]} {family}', '', f'No selected {family} currently require this reserved category.', '']

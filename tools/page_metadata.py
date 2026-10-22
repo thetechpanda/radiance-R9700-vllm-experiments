@@ -5,10 +5,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# Gitignored private/agent files, not site pages: never stamped, navigated or link-checked.
+EXCLUDED_MD = {'AGENTS.md', 'runbook.md'}
+# Raw investigation archive is private and gitignored; generators must never touch it.
+EXCLUDED_DIRS = {'src', 'stilldeadcode-radiance'}
+
 
 def public_page(path):
     relative = path.relative_to(ROOT)
-    return not any(part.startswith(('.', '_')) for part in relative.parts) and path.name.lower() != 'runbook.md'
+    if any(part.startswith(('.', '_')) or part in EXCLUDED_DIRS for part in relative.parts):
+        return False
+    return path.name.lower() not in {name.lower() for name in EXCLUDED_MD}
 
 
 def ensure_front_matter():

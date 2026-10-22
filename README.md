@@ -34,13 +34,35 @@ You won't find much here about the dual-card setup. There's already plenty of in
 
 ## Research overview
 
-How many coding agents can each work near **131k context on one Radeon AI PRO R9700 plus host RAM**? This research compares recorded ROCm 7.14 and ROCm 10.1 deployments of `vllm-radiance`, serving Swift-1.5 Qwen3.8 27B INT4. It covers memory capacity, latency and real coding-task completion, including a later two-card deployment.
+How many coding agents can each work near **131k context on one Radeon AI PRO R9700 plus host RAM**? This research compares recorded ROCm 7.14 and ROCm 10.1 deployments of `vllm-radiance`, initially serving Swift-1.5 Qwen3.8 27B INT4, then comparing MXFP4 and W4A16 targets on two cards. It covers memory capacity, latency and real coding-task completion, including a later two-card deployment.
 
 **The measured ROCm 10.1 single-card setup was useful for 1–2 deep-context agents and saturated at 3–4.** The dual-card setup handled four agents with much lower latency. Historical ROCm 7.14 RAM16 runs achieved better single-card deep-concurrency latency, but a 16 GiB tier later made this host crawl. Keep the current CPU tier at **10 GiB**; the older result is historical evidence, not a recommendation to enlarge it.
 
 The runtime versions, tier budgets, image patches and scheduling profiles differ. These are deployment observations, not an isolated ROCm speed comparison. A configured 131,070-token ceiling does not establish simultaneous sustained use of that entire context by every agent.
 
 ## Latest ROCm 10.1 results
+
+### 19 October: model and speculative-decoding sweep
+
+The completed follow-on sweep covers **41 cells, 1,160 turns and zero client errors**, across eight dual-card target/lane setups. It keeps TP=2, a 131,070-token context limit, four slots and a 10 GiB ARC CPU tier fixed, using **BF16 KV**. This is a different model/cache campaign from the FP8-KV matrix below.
+
+**For four agents, the recommended measured profile is Swift-Quark RTN MXFP4 with speculation off.** The corresponding sweep cells are S4/S6; the initial campaign reference is E1. Their wall times are 372.8 / 439.0 / 439.6 seconds for 40 turns. The recommendation has not been applied to systemd. It does not establish that all agents sustained the full configured 131k context simultaneously.
+
+| Swift-Quark lane | 1 agent | 2 agents | 3 agents | 4 agents | 4 agents + image inputs |
+|---|---:|---:|---:|---:|---:|
+| Non-spec (S1–S6) | 134.2 s | 203.7 s | 264.7 s | 372.8 / 439.0 s | 537.1 s |
+| MTP K4 (T1–T5) | 94.9 s | 179.3 s | 244.2 s | 406.6 s | 664.6 s |
+| DFlash2 K7 (U1–U5) | 95.8 s | 171.4 s | 328.4 s | 969.2 s | 1674.9 s |
+
+Each agent performs ten synthetic turns towards a 126k growth cap. Speculation offers a low-concurrency option, not the four-agent default. The **≈15% repeat-spread floor** prevents separating smaller gaps; in particular Swift-Quark MTP is unresolved against the n=4 non-spec repeats. DFlash2's n=4 slowdown is clear on both MXFP4 targets. Boot KV pool size is a major comparison variable, so these are not speculation-only causal measurements.
+
+[Full sweep CSV and cell IDs](data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv) · [Initial campaign CSV, E1](data/rocm-10.1/dual-r9700-spec-campaign-2026-10-19.csv) · [Campaign findings and limits](docs/DUAL-R9700-SPEC-CAMPAIGN.md)
+
+![All eight setups: wall time and effective ingest](graphs/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.svg)
+
+The image-input cells inject synthetic game screenshots; they are separate from the real game-building fleets below. Effective ingest includes cache reuse and queueing, **not kernel prefill speed**. The [gallery](docs/CHARTS.md) also shows within-lane vision increments and TTFT depth bands.
+
+### 18 October: single-card and dual-card INT4/FP8-KV matrix
 
 The eight-cell follow-up matrix completed on GPU A alone and on both cards, at 1–4 concurrent agents. All cells reported zero client errors. TTFT is time to first streamed content, including queueing and recovery; maximum values are observed tails from one run per cell.
 
@@ -85,7 +107,7 @@ The successful retry raised the per-request budget to 65,536 tokens, corrected t
 
 The first GPU A agent exhausted a 32,768-token request budget in reasoning without calling tools. Exit 0 therefore did not mean successful delivery. All eleven produced games passed reported syntax and mocked-DOM behaviour probes, including line clearing; these are not full browser qualification. A single fleet per profile cannot establish that hardware changes model competence.
 
-Play the [historical Qwen3.8 game gallery](examples/rocm-7.14/falling-blocks/index.html). The [ROCm 10.1 gallery](examples/rocm-10.1/falling-blocks/index.html) now includes all eleven produced games, grouped by fleet and attempt. See [per-agent results](docs/FINAL-REPORT-20261018.md#falling-blocks-fleets--real-coding-agents) and the [task and harness guide](docs/REAL-AGENT-TEST.md).
+Play the [historical Qwen3.8 game gallery](examples/rocm-7.14/falling-blocks/index.html). The [ROCm 10.1 gallery](examples/rocm-10.1/falling-blocks/index.html) now includes all fifteen produced games across four fleet attempts, grouped by fleet — the newest four built on the radiance engine, 21 October. See [per-agent results](docs/FINAL-REPORT-20261018.md#falling-blocks-fleets--real-coding-agents) and the [task and harness guide](docs/REAL-AGENT-TEST.md).
 
 ## Best recorded single-card setup for 3–4 deep-context agents
 
@@ -116,7 +138,9 @@ The table gives the configuration needed to reproduce each recorded profile, not
 
 ## FP8 KV cache and host memory
 
-**FP8 KV is essential to reclaiming memory for long histories.** Compact FP8 attention K/V uses roughly half the BF16 payload bytes; later deployment observations reported approximately doubled capacity. An earlier padded allocation path barely changed capacity, which must not be generalised to the later backend. Verify actual startup capacity and RAM/VRAM use for the exact image.
+The 19 October dual-card sweep used BF16 KV; it did not test FP8 calibration or measure a BF16/FP8 gain on the new checkpoint. Keep these evidence scopes separate.
+
+**FP8 KV was a key capacity saving in the earlier single-card profile.** Compact FP8 attention K/V uses roughly half the BF16 payload bytes; later deployment observations reported approximately doubled capacity. An earlier padded allocation path barely changed capacity, which must not be generalised to the later backend. Verify actual startup capacity and RAM/VRAM use for the exact image.
 
 Use representative coding-agent conversations and tool output to calibrate the exact checkpoint, then load the verified Q/K/V sidecar and its manifest. The [calibration guide](docs/FP8-KV-CALIBRATION.md) explains corpus preparation, scale generation, verification and held-out checks. Private conversation histories and model weights are not redistributed.
 
@@ -169,7 +193,3 @@ Except where otherwise noted, the original notes, tables, charts and derived dat
 Suggested attribution: *“R9700 vLLM research notes — ROCm 7.14 vs ROCm 10.1 (vllm-radiance), CC BY 4.0”* with a link to this site.
 
 The agent-generated [Falling Blocks game files](examples/rocm-10.1/falling-blocks/README.md) are code artefacts of the recorded runs; CC licences are not designed for software and no separate software licence is asserted over them, but the same attribution request applies as a courtesy and their provenance and hashes are recorded in their manifests.
-
-## Licence
-
-The original notes, tables, charts and derived data are licensed under [Creative Commons Attribution 4.0 International](LICENSE). See the licence file for its scope and terms.

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="654" viewBox="0 0 1440 654" role="img" font-family="system-ui, sans-serif" fill="#e2e8f0">
+<title>Vision-input increment: image cell minus its four-agent text twin</title><desc>One procedural 512×512 PNG per agent per turn; synthetic input stress, not a real game-building fleet. Each comparison stays within its target and lane.</desc>
+<rect width="1440" height="654" fill="#0b1220" />
+<text x="30.0" y="38.0" font-size="26" fill="#e2e8f0" text-anchor="start">Vision-input increment: image cell minus its four-agent text twin</text>
+<text x="30.0" y="68.0" font-size="14" fill="#94a3b8" text-anchor="start">One procedural 512×512 PNG per agent per turn; synthetic input stress, not a real game-building fleet. Each comparison stays within its target and lane.</text>
+<text x="355.0" y="144.0" font-size="13" fill="#e2e8f0" text-anchor="end">Swift-Quark RTN MXFP4 · Non-spec</text>
+<rect x="375" y="125" width="115.6" height="24" fill="#38bdf8" />
+<text x="970.0" y="144.0" font-size="14" fill="#e2e8f0" text-anchor="start">+164.3 s (+44.1%) | S4 → S5</text>
+<text x="355.0" y="197.0" font-size="13" fill="#e2e8f0" text-anchor="end">Swift-Quark RTN MXFP4 · MTP K4</text>
+<rect x="375" y="178" width="181.5" height="24" fill="#a78bfa" />
+<text x="970.0" y="197.0" font-size="14" fill="#e2e8f0" text-anchor="start">+258.0 s (+63.5%) | T4 → T5</text>
+<text x="355.0" y="250.0" font-size="13" fill="#e2e8f0" text-anchor="end">Swift-Quark RTN MXFP4 · DFlash2 K7</text>
+<rect x="375" y="231" width="496.5" height="24" fill="#fbbf24" />
+<text x="970.0" y="250.0" font-size="14" fill="#e2e8f0" text-anchor="start">+705.7 s (+72.8%) | U4 → U5</text>
+<text x="355.0" y="303.0" font-size="13" fill="#e2e8f0" text-anchor="end">Quark AWQ MXFP4 · Non-spec</text>
+<rect x="375" y="284" width="93.6" height="24" fill="#38bdf8" />
+<text x="970.0" y="303.0" font-size="14" fill="#e2e8f0" text-anchor="start">+133.0 s (+40.3%) | V4 → V5</text>
+<text x="355.0" y="356.0" font-size="13" fill="#e2e8f0" text-anchor="end">Quark AWQ MXFP4 · MTP K4</text>
+<rect x="375" y="337" width="532.7" height="24" fill="#a78bfa" />
+<text x="970.0" y="356.0" font-size="14" fill="#e2e8f0" text-anchor="start">+757.2 s (+120.6%) | W4 → W5</text>
+<text x="355.0" y="409.0" font-size="13" fill="#e2e8f0" text-anchor="end">Quark AWQ MXFP4 · DFlash2 K7</text>
+<rect x="375" y="390" width="476.5" height="24" fill="#fbbf24" />
+<text x="970.0" y="409.0" font-size="14" fill="#e2e8f0" text-anchor="start">+677.3 s (+72.7%) | X4 → X5</text>
+<text x="355.0" y="462.0" font-size="13" fill="#e2e8f0" text-anchor="end">Swift W4A16 AWQ · Non-spec</text>
+<rect x="375" y="443" width="176.0" height="24" fill="#38bdf8" />
+<text x="970.0" y="462.0" font-size="14" fill="#e2e8f0" text-anchor="start">+250.1 s (+62.2%) | Y4 → Y5</text>
+<text x="355.0" y="515.0" font-size="13" fill="#e2e8f0" text-anchor="end">Swift W4A16 AWQ · MTP K4</text>
+<rect x="375" y="496" width="221.0" height="24" fill="#a78bfa" />
+<text x="970.0" y="515.0" font-size="14" fill="#e2e8f0" text-anchor="start">+314.2 s (+64.3%) | Z4 → Z5</text>
+<text x="30.0" y="583.0" font-size="13" fill="#e2e8f0" text-anchor="start">Text/vision histories and cache-hit rates differ: observed increments do not isolate image-compute cost. Seed sensitivity matters.</text>
+<text x="30.0" y="608.0" font-size="13" fill="#94a3b8" text-anchor="start">Swift non-spec uses S4 as its text twin; using repeat S6 changes +44.1% to +22.3%. W4A16 vision cells have unusually high cache hits.</text>
+<text x="30.0" y="633.0" font-size="13" fill="#94a3b8" text-anchor="start">Deep-band absence means no observation at that depth, not zero latency. See the band heatmap and source CSV.</text>
+</svg>

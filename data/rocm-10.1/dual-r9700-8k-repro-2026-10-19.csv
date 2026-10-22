@@ -1,0 +1,5 @@
+arm,target_model,target_revision,quantization,spec_mode,spec_k,drafter_model,agents,depth_cap_tokens,turns_ok,errors,wall_s,max_depth_tokens,decode_tokens_s,turn_tg_avg,ttft_avg_s,ttft_max_s,tp99_itl_ms,ttft_0_30k_s,ttft_30_60k_s,ttft_60_90k_s,ttft_90_120k_s,ttft_120k_plus_s,kv_pool_tokens,kv_concurrency,rocm,engine,status
+R1-quark-nospec,amd/Qwen3.8-27B-Quark-AWQ-MXFP4,5233554c,quark-mxfp4-awq-w4a8,none,0,,8,15000,21,0,93.5,15446,39.31,31.3,15.4,39.25,1462,15.4,,,,,453080,27.65,10.1,1.1.0-rc1.vllm0.30.0,complete
+R2-quark-mtp4,amd/Qwen3.8-27B-Quark-AWQ-MXFP4,5233554c,quark-mxfp4-awq-w4a8,mtp,4,target-native,8,15000,21,0,81.9,15412,50.05,34.7,9.75,45.68,0,9.75,,,,,227651,13.89,10.1,1.1.0-rc1.vllm0.30.0,complete
+R3-quark-dflash7,amd/Qwen3.8-27B-Quark-AWQ-MXFP4,5233554c,quark-mxfp4-awq-w4a8,dflash2,7,tcclaviger/Qwen3.8-27B-DFlash2-FP8,8,16384,,,,,,,,,,,,,,,,,10.1,1.1.0-rc1.vllm0.30.0,cancelled_by_scope
+R4-swift-quark-dflash7,ethanwtodd/Swift-1.5-Qwen3.8-27b-Quark-RTN-MXFP4,459bc7fe,quark-mxfp4-rtn-w4a8,dflash2,7,tcclaviger/Qwen3.8-27B-DFlash2-FP8,8,16384,,,,,,,,,,,,,,,,,10.1,1.1.0-rc1.vllm0.30.0,cancelled_by_scope

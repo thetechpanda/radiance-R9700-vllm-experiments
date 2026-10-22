@@ -1,19 +1,32 @@
 #!/usr/bin/env python3
-"""radiance-top - top/htop-style ncurses top for a radiance vLLM server.
-SOURCES: vLLM server (/metrics + /v1/models) and local AMD GPU sysfs sensors.
-vLLM metrics carry no per-request identity, so the session view is a
+"""radiance-top - top/htop-style ncurses top for a vllm-radiance server.
+SOURCES: server (/metrics + /v1/models + /server_info) and local AMD GPU
+sysfs sensors. Dual-engine: auto-detects the vllm-radiance vLLM fork and the
+radiance engine (radiance: metric families) and remaps metric names per
+engine. vLLM lanes carry no per-request identity, so the session view is a
 per-REQUEST windowed stats table (queue/prefill/decode/TTFT/TPOT/tokens/
 preemptions) + running/waiting gauges.
+radiance engine: PP/TG now-lanes read the engine's steady-window gauges
+(radiance:prefill_tokens_per_second / radiance:decode_tokens_per_second);
+window and lifetime columns use the counter credits (prefill_tokens_total +
+cached-token counters for intake, generation_tokens_total for TG). Lanes the
+radiance engine does not publish (queue/prefill per-request, alloc failures)
+read - / n/a. radiance RAM tier has no fill gauge: the lane reads hits % from
+prefix_hit_cut_tokens / prompt intake and RAM evict/s from
+prefix_cache_evictions_total; PRESS C fires on store_full ckpt evictions.
 Layout: title bar, SERVER PERFORMANCE, TOKEN FLOW (graphs flush right),
 REQUEST FLOW, LATENCY, CONFIG (gray), PRESSURE, footer.
-usage: radiance-top [metrics-url] [--plain]
+usage: radiance-top [metrics-url] [--plain] [--api-key KEY]
+env RADIANCE_TOP_API_KEY: bearer key for key-gated servers (radiance gates
+/metrics and /v1/models).
 keys: q quit | p pause | w cycle window 30/60/120/300/600s/since-start | 1 toggle per-GPU stats
 Stream colors: n/a (metrics have no stream identity).
-PRESS flags: G GPU KV>=95%, C RAM KV>=85%, Q capacity wait,
+PRESS flags: G GPU KV>=95%, C RAM KV>=85% (vLLM) / store_full tier refusals
+(radiance), Q capacity wait,
 F allocation failures, E preemptions. Activity rates are informational.
 """
 import curses, sys, time, json, collections, urllib.request
-import atexit, re, subprocess, threading
+import re, threading, os
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -24,9 +37,18 @@ _parser.add_argument('--url')
 _parser.add_argument('--plain', action='store_true')
 _parser.add_argument('--interval', type=float, default=1.0)
 _parser.add_argument('--window', choices=('30','60','120','300','600','since-start'), default='60')
+_parser.add_argument('--cpu-tier-gib', type=float,
+                     help='CPU KV tier budget (GiB) for the RAM pins bar; needed when the '
+                          'engine does not publish kv_offloading_size (OffloadingConnector '
+                          'tiers are declared in --kv-transfer-config, which /metrics hides)')
+_parser.add_argument('--api-key',
+                     help='bearer key for key-gated servers (radiance gates /metrics and '
+                          '/v1/models); env RADIANCE_TOP_API_KEY also accepted')
 _args = _parser.parse_args()
 if _args.interval <= 0: _parser.error('--interval must be positive')
 URL = _args.url or _args.metrics_url or 'http://localhost:8000/metrics'
+API_KEY = _args.api_key or os.environ.get("RADIANCE_TOP_API_KEY")
+ENGINE = [None]   # None -> probing; "vllm" | "radiance", set on first metrics read
 PLAIN = _args.plain
 INTERVAL = _args.interval
 WINSZ = [30, 60, 120, 300, 600, None]
@@ -56,7 +78,9 @@ def table_columns(width):
 SPK = "▁▂▃▄▅▆▇█"
 
 def grab(url):
-    with urllib.request.urlopen(url, timeout=0.9) as r:
+    req = urllib.request.Request(url)
+    if API_KEY: req.add_header("Authorization", "Bearer " + API_KEY)
+    with urllib.request.urlopen(req, timeout=0.9) as r:
         return r.read().decode("utf-8", "replace")
 
 def parse(txt):
@@ -80,6 +104,25 @@ def parse(txt):
             elif 'source="external_kv_transfer"' in head: X["p_xfer"] = v
         elif name == "vllm:kv_offload_tiering_chunk_hits_total" and 'tier="0:primary"' in head: X["h_hits"] = v
         elif name == "vllm:kv_offload_tiering_chunk_queries_total" and 'tier="0:primary"' in head: X["h_q"] = v
+        # radiance engine: prompt intake splits into recompute (prefill_tokens_total)
+        # and cache-served tokens (attn/linear cached); the *_per_second gauges are
+        # the engine's own steady-window pp/tg readings (now-lane sources).
+        elif name.startswith("radiance:"):
+            X["engine"] = "radiance"
+            if name == "radiance:prefill_tokens_total": X["p_comp"] = v
+            elif name in ("radiance:attn_cached_tokens_total",
+                          "radiance:linear_cached_tokens_total"):
+                X["p_hit"] = X.get("p_hit", 0.0) + v
+            elif name == "radiance:prefill_tokens_per_second": X["g_pp"] = v
+            elif name == "radiance:decode_tokens_per_second": X["g_tg"] = v
+            elif name == "radiance:draft_acceptance_ratio": X["g_acc"] = v
+            elif name == "radiance:linear_prefix_cache_hit_rate": X["g_hit"] = v
+            elif name == "radiance:prefix_hit_cut_tokens_total": X["p_hitcut"] = v
+            elif name == "radiance:prefix_cache_evictions_total": X["p_evict"] = v
+            elif name == "radiance:prefix_cache_ckpt_evictions_by_reason_total" \
+                    and 'reason="store_full"' in head: X["p_cksf"] = v
+            elif name == "radiance:http_queue_depth": X["g_q"] = v
+            elif name == "radiance:kv_cache_max_tokens": X["kv_max_tok"] = v
     return S, X
 
 P = "vllm:"
@@ -103,6 +146,26 @@ KEYS = dict(gpu=P+"kv_cache_usage_perc", pins=P+"kv_offload_cpu_cache_usage_perc
             itn=P+"iteration_tokens_total_sum", itc2=P+"iteration_tokens_total_count",
             pstart=P+"process_start_time_seconds",
             su=P+"request_success_total")
+
+def apply_radiance():
+    """radiance engine metric names. Lanes the engine does not publish point at
+    the radiance:none sentinel (parses to a constant 0 -> the row reads -/n/a).
+    itn/itc2 remap: prefill_tokens_total is the prefill-compute credit,
+    engine_steps_total is the step count (tg_s = decode tokens per step).
+    e2e replaces inference-time; TPOT is renamed vs vLLM (no request_ prefix)."""
+    NONE = "radiance:none"
+    KEYS.update(pins=NONE, af=NONE, sb=NONE, lb=NONE,
+                d="radiance:draft_tokens_total", acc="radiance:draft_accepted_total",
+                pre="radiance:num_requests_preempted",
+                rq_s=NONE, rq_c=NONE, pf_s=NONE, pf_c=NONE,
+                np_s=NONE, np_c=NONE, kc_s=NONE, kc_c=NONE, pstart=NONE,
+                in_s=P+"e2e_request_latency_seconds_sum",
+                in_c=P+"e2e_request_latency_seconds_count",
+                po_s=P+"time_per_output_token_seconds_sum",
+                po_c=P+"time_per_output_token_seconds_count",
+                itn="radiance:prefill_tokens_total",
+                itc2="radiance:engine_steps_total",
+                pt_tot=P+"prompt_tokens_total")
 
 # ring -> (sum key, count key, scale): per-request ratio metrics
 REQMAP = dict(queue=("rq_s", "rq_c", 1), ttft=("ts", "tc", 1),
@@ -141,7 +204,10 @@ PRESSURE_FLAGS = (("G", "GPU KV>=95%", 2), ("C", "RAM KV>=85%", 2),
                   ("E", "preemptions", 2))
 
 def pressure_flags(v):
-    conditions = (v["gpu"] >= .95, v["pins"] >= .85, v["wcap"] > 0,
+    # vLLM C = CPU tier fill >= 85%; radiance publishes no fill gauge, so C
+    # fires on store_full checkpoint evictions (the host tier refusing stores)
+    c_ram = v["cksf"] > 0 if "cksf" in v else v["pins"] >= .85
+    conditions = (v["gpu"] >= .95, c_ram, v["wcap"] > 0,
                   v["af"] > 0, v["pre"] > 0)
     return "".join(flag if on else "-" for (flag, _, _), on in zip(PRESSURE_FLAGS, conditions))
 
@@ -201,67 +267,143 @@ def sensor_spark(values, width, ceiling=None):
     return "".join(" " if v is None else SPK[max(0, min(7, int((v - lo) / span * 7.99)))]
                    for v in values).rjust(width)
 
+def _json_walk(o):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            yield k, v
+            yield from _json_walk(v)
+    elif isinstance(o, list):
+        for it in o: yield from _json_walk(it)
+
+def _json_find(o, names):
+    for k, v in _json_walk(o):
+        if k in names and (isinstance(v, (int, float, str)) and not isinstance(v, bool)):
+            return v
+    return None
+
 def get_cfg():
-    """metrics-first config facts; fields /metrics hides fall back to the
-    container launch cmd (server-side config, not test data)."""
+    """metrics-first config facts. Fields /metrics does not publish are
+    reported as n/a — this tool reads /metrics (and /v1/models) only."""
     import re as _re
     L = {}
+    spec_on = False
+    radiance = False
+    kv_max_tok = None
+    body = ""
     try:
-        for ln in grab(URL).splitlines():
+        body = grab(URL)
+        for ln in body.splitlines():
             if ln.startswith("vllm:cache_config_info{"):
                 L = dict(_re.findall(r'(\w+)="([^"]*)"', ln)); break
+        spec_on = any(ln.startswith("vllm:spec_decode_num_draft") for ln in body.splitlines())
+        radiance = any(ln.startswith("radiance:") for ln in body.splitlines())
+        for ln in body.splitlines():
+            if ln.startswith("radiance:kv_cache_max_tokens"):
+                try: kv_max_tok = int(float(ln.rpartition(" ")[2]))
+                except ValueError: pass
+                break
     except Exception: pass
+    ENGINE[0] = "radiance" if radiance else "vllm"
+    if radiance: apply_radiance()
     model = ctx = None
     try:
         m = json.loads(grab(URL.rsplit("/metrics", 1)[0] + "/v1/models"))["data"][0]
         model, ctx = m["id"], m.get("max_model_len")
     except Exception: pass
-    cmd = []
-    try:
-        import subprocess
-        if urlsplit(URL).hostname not in ("localhost", "127.0.0.1", "::1"): raise ValueError("Remote configuration")
-        out = subprocess.run(["podman", "inspect", "vllm-radiance.1", "--format", "{{json .Config.Cmd}}"],
-                             capture_output=True, text=True, timeout=4).stdout
-        cmd = json.loads(out); cmd = cmd if isinstance(cmd, list) else str(cmd).split()
-    except Exception: pass
-    def flag(n): return cmd[cmd.index(n) + 1] if n in cmd and cmd.index(n) + 1 < len(cmd) else None
-    def jflag(n):
-        try: return json.loads(flag(n))
-        except Exception: return {}
-    spec = jflag("--speculative-config"); kv = jflag("--kv-transfer-config")
-    ext = kv.get("kv_connector_extra_config") or {}
-    cb = ext.get("cpu_bytes_to_use")
-    guards = [f"{n.replace('--','')} {flag(n)}" for n in
-              ("--scheduling-policy", "--watermark", "--prefill-schedule-interval",
-               "--max-num-scheduled-tokens") if flag(n)]
+    if radiance:
+        si = {}
+        try:
+            si = json.loads(grab(URL.rsplit("/metrics", 1)[0] + "/server_info"))
+        except Exception: pass
+        eng = si.get("engine") if isinstance(si.get("engine"), dict) else {}
+        srv = si.get("server") if isinstance(si.get("server"), dict) else {}
+        ctx = srv.get("max_model_len") or _json_find(si, ("max_model_len", "model_len", "n_ctx"))
+        dtype = eng.get("quant") or _json_find(si, ("kv_cache_dtype", "kv_dtype", "cache_dtype"))
+        prefix_on = eng.get("prefix_cache")
+        sp = eng.get("speculation") if isinstance(eng.get("speculation"), dict) else {}
+        spec_n = sp.get("num_speculative_tokens") or sp.get("tokens")
+        ver = srv.get("version") or _json_find(si, ("version", "engine_version", "radiance_version"))
+        kv_tok = kv_max_tok
+        if not kv_tok:
+            for g in eng.get("kv_groups") or []:
+                if isinstance(g, dict) and g.get("kind") == "full" and g.get("tokens"):
+                    kv_tok = int(g["tokens"]); break
+        if sp.get("enabled") is not None: spec_on = bool(sp.get("enabled"))
+        elif spec_n is None:  # config silent: infer from draft counters growing
+            try:
+                spec_on = any(ln.startswith("radiance:draft_tokens_total") and
+                              float(ln.rpartition(" ")[2]) > 0 for ln in body.splitlines())
+            except Exception: pass
+        if spec_n: spec_on = True
+        boot = None
+        up_s = srv.get("uptime_s")
+        if isinstance(up_s, (int, float)) and up_s >= 0: boot = time.time() - up_s
+        cpu_bytes = None
+        declared = _args.cpu_tier_gib or os.environ.get("RADIANCE_TOP_CPU_TIER_GIB")
+        if declared:
+            try: cpu_bytes = float(declared) * 2**30
+            except ValueError: pass
+        lines = [("model", (model or "?").split("/")[-1]),
+                 ("ctx", str(ctx) if ctx else "?"),
+                 ("gpu-util", "n/a (headroom)"),
+                 ("cache", str(dtype) if dtype else "fp8 (engine default)"),
+                 ("prefix", "on" if prefix_on is True else ("off" if prefix_on is False else "on?")),
+                 ("GPU KV", f"{fmt(kv_tok)} tok" if kv_tok else "?"),
+                 ("KV tier", (f"host prefix-cache {cpu_bytes/2**30:g} GiB" if cpu_bytes
+                              else "host prefix-cache (size n/a)")),
+                 ("evict", "?"),
+                 ("fs tier", "n/a"),
+                 ("spec", (f"on (depth {spec_n})" if spec_n else "on (depth n/a)")
+                          if spec_on else "off"),
+                 ("engine", f"radiance {ver}" + (f" tp{eng.get('tensor_parallel')}"
+                          if eng.get("tensor_parallel") else "") if ver
+                          else "radiance (version n/a)"),
+                 ("guards", "n/a"),
+                 ("PCIe", "host-dependent")]
+        return lines, dict(gpu_cap=kv_tok, ctx=ctx, cpu_bytes=cpu_bytes,
+                           engine="radiance", boot=boot)
     toks = L.get("kv_cache_size_tokens")
     gpu_cap = int(toks) if toks and toks.isdigit() else None
-    if gpu_cap is None and cmd:
-        try:
-            logs = subprocess.run(['podman','logs','--tail','2000','vllm-radiance.1'], capture_output=True, text=True, timeout=4)
-            sizes = _re.findall(r'GPU KV cache size:\s*([\d,]+) tokens', logs.stdout + logs.stderr)
-            if sizes: gpu_cap = int(sizes[-1].replace(',', ''))
-        except Exception: pass
     conc = L.get("kv_cache_max_concurrency")
+    backend = L.get("kv_offloading_backend")
+    kv_tier = backend if backend and backend not in ("None", "null", "") else "none"
+    # CPU tier budget: the engine publishes kv_offloading_size (GiB) only for
+    # the legacy --kv-offloading-size flag; OffloadingConnector tiers live in
+    # kv_connector_extra_config.cpu_bytes_to_use, which /metrics does not
+    # expose (verified: only perc gauges, counters, histograms; no capacity
+    # gauge). Metrics-only rule: no log scraping, so the operator declares it
+    # via --cpu-tier-gib or RADIANCE_TOP_CPU_TIER_GIB (the launcher prints
+    # the ready-made command).
+    size = L.get("kv_offloading_size")
+    cpu_bytes = None
+    declared = _args.cpu_tier_gib or os.environ.get("RADIANCE_TOP_CPU_TIER_GIB")
+    if declared:
+        try: cpu_bytes = float(declared) * 2**30
+        except ValueError: pass
+    if cpu_bytes is None and size and size not in ("None", "null", ""):
+        try: cpu_bytes = float(size) * 2**30
+        except ValueError: pass
     lines = [("model", (model or "?").split("/")[-1]),
              ("ctx", str(ctx) if ctx else "?"),
              ("gpu-util", L.get("gpu_memory_utilization") or "?"),
              ("cache", L.get("cache_dtype") or "?"),
              ("prefix", "on" if L.get("enable_prefix_caching") == "True" else "off"),
              ("GPU KV", f"{fmt(gpu_cap)} tok" + (f" x{float(conc):.2f}" if conc else "")),
-             ("KV tier", f"RAM {cb/2**30:.0f} GiB ({L.get('kv_offloading_backend','?')})" if cb else "none"),
-             ("evict", ext.get("eviction_policy") or "?"),
-             ("fs tier", "yes" if ext.get("secondary_tiers") else "none"),
-             ("spec", f"{spec.get('method','?')} x{spec.get('num_speculative_tokens','?')}"),
-             ("guards", ", ".join(guards) if guards else "none"),
+             ("KV tier", kv_tier + (f" {cpu_bytes/2**30:g} GiB" if cpu_bytes else "")),
+             ("evict", "?"),
+             ("fs tier", "n/a"),
+             ("spec", "on (depth n/a)" if spec_on else "off"),
+             ("guards", "n/a"),
              ("PCIe", "host-dependent")]
-    return lines, dict(gpu_cap=gpu_cap, ctx=ctx, cpu_bytes=cb)
+    return lines, dict(gpu_cap=gpu_cap, ctx=ctx, cpu_bytes=cpu_bytes)
 
 class PrefillProgress:
-    """Pure-prefill step throughput from bounded, local engine iteration logs.
+    """Pure-prefill step throughput from engine iteration logs.
 
-    Mixed prefill/decode steps cannot isolate prefill time and are excluded.
-    Counter-credit rates are deliberately not used as a progress substitute.
+    This build is metrics-only: no log follow (no podman, no journalctl), so
+    the live-PP lane stays empty and the counter-credit PP columns (pp/pp60/
+    pp100) from /metrics are the prefill view. feed() is kept for callers that
+    are handed log lines directly.
     """
     pattern = re.compile(r'Iteration\((\d+)\):.*?(\d+) context tokens,\s*(\d+) generation requests,.*?iteration elapsed time:\s*([\d.]+) ms')
 
@@ -270,12 +412,7 @@ class PrefillProgress:
         self.events = collections.deque()
         self.started = time.time()
         self.total_tokens = self.total_seconds = 0.0
-        self.process = None
         self.stopping = threading.Event()
-        if start:
-            self.thread = threading.Thread(target=self._follow, daemon=True)
-            self.thread.start()
-            atexit.register(self.close)
 
     def feed(self, line, stamp=None):
         match = self.pattern.search(line)
@@ -293,31 +430,8 @@ class PrefillProgress:
                 self.total_seconds += seconds
         return True
 
-    def _follow(self):
-        while not self.stopping.is_set():
-            try:
-                self.process = subprocess.Popen(['podman','logs','--follow','--tail','0','vllm-radiance.1'],
-                                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-                for line in self.process.stdout:
-                    if self.stopping.is_set(): break
-                    self.feed(line)
-            except OSError:
-                pass
-            finally:
-                self._stop_process()
-            self.stopping.wait(1.0)
-
-    def _stop_process(self):
-        process = self.process
-        if process is not None and process.poll() is None:
-            process.terminate()
-            try: process.wait(timeout=1)
-            except subprocess.TimeoutExpired:
-                process.kill(); process.wait()
-
     def close(self):
         self.stopping.set()
-        self._stop_process()
 
     def snapshot(self, now=None):
         now = time.time() if now is None else now
@@ -329,7 +443,7 @@ class PrefillProgress:
         out = {'now': None, 'min': min((e[1]/e[3] for e in pure), default=None),
                'max': max((e[1]/e[3] for e in pure), default=None),
                'mean': tokens/seconds if seconds else None, None: tokens/seconds if seconds else None}
-        state = 'waiting for local step logs'
+        state = 'metrics-only: no live step source'
         if events:
             last = events[-1]
             if now-last[0] <= max(5.0, 2*last[3]+2):
@@ -337,7 +451,7 @@ class PrefillProgress:
                 elif last[1]: out['now'] = last[1]/last[3]; state = 'pure-prefill step tokens / elapsed'
                 else: out['now'] = 0.0; state = 'decode step; no prefill'
             else: state = 'no fresh step log'
-        for span in (60,120,300,600):
+        for span in (60, 120, 300, 600):
             covered = [e for e in pure if now-span <= e[0] <= now]
             duration = sum(e[3] for e in covered)
             out[span] = sum(e[1] for e in covered)/duration if duration and now-started >= span else None
@@ -351,7 +465,7 @@ class PrefillProgress:
 
 
 class Top:
-    RINGS = ("pp_live", "pp", "ppitn", "tg", "tg_s", "gpu", "pins", "ramhit", "ttft", "itl",
+    RINGS = ("pp", "ppitn", "tg", "tg_s", "gpu", "pins", "ramhit", "evict", "ttft", "itl",
              "spec", "re", "queue", "prefill",
              "decode", "e2e", "tpot", "prompt", "gen", "preempt", "hit")
     def __init__(self, live_prefill=False):
@@ -361,28 +475,22 @@ class Top:
         self.gpu_history = collections.defaultdict(lambda: collections.deque(maxlen=605))
         self.local_metrics = urlsplit(URL).hostname in ("localhost", "127.0.0.1", "::1")
         self.prefill = PrefillProgress(start=True) if live_prefill and self.local_metrics else None
-        self.pp_stats = {}; self.pp_state = "local iteration logs unavailable"
         self.t0 = time.time()
         self.pstart = self._server_start()
         self.act = collections.defaultdict(float)   # per-metric active seconds
         self.life = {}                               # metric -> lifetime mean
         self.wavg = {}                               # (ring, span) -> wall avg
         self.cfg, self.facts = get_cfg()
+        if self.facts.get("boot"): self.pstart = self.facts["boot"]  # radiance uptime_s -> true boot epoch
     def _server_start(self):
-        # vLLM build has no start-time metric; ask podman for the container's
-        # start (this tool runs on the host). Fallback: viewer start.
-        import subprocess
-        from datetime import datetime
+        # Engine start time from /metrics (prometheus_client exposes
+        # process_start_time_seconds unprefixed; accept the vllm: form too).
+        # Fallback: viewer start.
         try:
-            out = subprocess.run(["podman", "inspect", "-f", "{{.State.StartedAt}}",
-                                  "vllm-radiance.1"], capture_output=True, text=True, timeout=5)
-            s = out.stdout.strip()
-            if s:
-                # podman prints "YYYY-MM-DD HH:MM:SS.nnnnnnnnn +ZZZZ TZNAME"
-                p = s.split()
-                if len(p) >= 3:
-                    return datetime.fromisoformat(
-                        p[0] + "T" + p[1].split(".")[0] + p[2]).timestamp()
+            for ln in grab(URL).splitlines():
+                if ln.startswith("process_start_time_seconds") or \
+                   ln.startswith("vllm:process_start_time_seconds"):
+                    return float(ln.rpartition(" ")[2])
         except Exception:
             pass
         return self.t0
@@ -396,6 +504,15 @@ class Top:
         except Exception: self.dead = True; return
         self.dead = False
         S, X = parse(txt)
+        if ENGINE[0] != "radiance" and X.get("engine") == "radiance":
+            # engine switched under us (vllm-radiance -> radiance restart):
+            # remap names and rebase everything that references old counters
+            ENGINE[0] = "radiance"; apply_radiance()
+            self.hist = []; self.ring.clear(); self.since_start = None; self.wavg = {}
+            for a in ("base", "baseX"):
+                if hasattr(self, a): delattr(self, a)
+            self.act = collections.defaultdict(float); self.life = {}
+            self.note = "engine=radiance - remapped + rebased"
         if self.model == "?":
             i = txt.find('model_name="')
             self.model = txt[i+12:txt.find('"', i+12)].split("/")[-1] if i > 0 else "?"
@@ -416,11 +533,6 @@ class Top:
         if self.since_start is None: self.since_start = self.hist[-1]
         while len(self.hist) > 1 and t - self.hist[1][0] >= HISTORY_SECONDS: self.hist.pop(0)
         self.compute()
-        if self.prefill:
-            self.pp_stats, self.pp_state = self.prefill.snapshot()
-            self.v["pp_live"] = self.pp_stats.get("now")
-            self.ring["pp_live"].append(self.pp_stats.get("now"))
-            self.ring["pp_live"] = self.ring["pp_live"][-600:]
     def compute(self):
         h = self.hist; t, S, X = h[-1]
         t0, S0, X0 = window_baseline(h, WINSZ[WK], self.since_start)
@@ -448,7 +560,7 @@ class Top:
         tg_s = (S[KEYS["gen"]] - S0[KEYS["gen"]]) / dic if dic > 0 else None
         # 100% = server-LIFETIME averages (whole server, not the window):
         # PP-100% = all prefill tokens / uptime; TG-100% = gen / all steps.
-        up = max(1.0, t - (S.get(KEYS["pstart"]) or self.pstart or t))
+        up = max(1.0, t - (S.get(KEYS["pstart"]) or S.get("process_start_time_seconds") or self.pstart or t))
         pp_life = (S[KEYS["itn"]] - S[KEYS["gen"]]) / up
         tgs_life = S[KEYS["gen"]] / S[KEYS["itc2"]] if S[KEYS["itc2"]] > 0 else None
         tg = d(S0[KEYS["gen"]], S[KEYS["gen"]])
@@ -476,6 +588,30 @@ class Top:
                       stb=d(S0[KEYS["sb"]], S[KEYS["sb"]]) / 1e9, ltb=d(S0[KEYS["lb"]], S[KEYS["lb"]]) / 1e9,
                       af=int(S[KEYS["af"]] - S0[KEYS["af"]]), pre=int(S[KEYS["pre"]] - S0[KEYS["pre"]]),
                       gpu_tok=S[KEYS["gpu"]] * self.facts["gpu_cap"] if self.facts["gpu_cap"] is not None else None)
+        if ENGINE[0] == "radiance":
+            # PP row (shared formula) = intake = recompute + cache-served ✓.
+            # ppitn/tg_s now-lanes read the engine's steady-window gauges;
+            # pp_life = prefill credit + cache-served over uptime; queue depth
+            # gauge feeds the Q flag; CTX-IN hit% = cached tokens / prompt total.
+            self.v["ppitn"] = X.get("g_pp")
+            self.v["tg_s"] = X.get("g_tg")
+            self.v["pp_life"] = (S[KEYS["itn"]] + X.get("p_hit", 0)) / up
+            self.v["wcap"] = X.get("g_q", 0)
+            # radiance RAM tier: no fill gauge published. hits % = tokens
+            # served from the host tier (hit-cut credits) over prompt intake;
+            # evict/s = KV block churn counter rate; cksf = store_full ckpt
+            # evictions (the tier refusing a store -> real pressure, flag C).
+            dpa0 = (X.get("p_comp", 0) + X.get("p_hit", 0)) - \
+                   (X0.get("p_comp", 0) + X0.get("p_hit", 0))
+            dhc = X.get("p_hitcut", 0) - X0.get("p_hitcut", 0)
+            self.v["ramhit"] = 100 * dhc / dpa0 if dpa0 >= 10 else None
+            self.v["evict"] = (X.get("p_evict", 0) - X0.get("p_evict", 0)) / dt
+            self.v["cksf"] = X.get("p_cksf", 0) - X0.get("p_cksf", 0)
+            dp = S[KEYS["pt_tot"]] - S0[KEYS["pt_tot"]]
+            dh = X.get("p_hit", 0) - X0.get("p_hit", 0)
+            self.v["hit"] = (100 * dh / dp if dp > 0
+                             else (100 * X.get("p_hit", 0) / S[KEYS["pt_tot"]]
+                                   if S[KEYS["pt_tot"]] > 0 else None))
         self.v["press"] = pressure_flags(self.v)
         # 1-SECOND INSTANT samples for rate rings: each sample = tokens/second
         # over the last poll only. A prefill second reads gen=0 (excluded from
@@ -514,6 +650,15 @@ class Top:
             dd = S[KEYS["d"]] - S1[KEYS["d"]]
             inst["spec"] = 100 * (S[KEYS["acc"]] - S1[KEYS["acc"]]) / dd if dd > 0 else None
             inst["re"] = 100 * (X.get("p_comp", 0) - X1.get("p_comp", 0)) / dpa if dpa >= 20 else None
+            if ENGINE[0] == "radiance":
+                # gauges replace the counter-burst deltas: engine-measured
+                # steady-window prefill t/s and decode t/s as the now-samples
+                inst["ppitn"] = X.get("g_pp")
+                inst["tg_s"] = X.get("g_tg")
+                # RAM lane: hit-cut credits burst at request end -> use the
+                # window ratio; evict rate is a true per-second counter delta
+                inst["ramhit"] = self.v.get("ramhit")
+                inst["evict"] = (X.get("p_evict", 0) - X1.get("p_evict", 0)) / dt1
         for k in self.RINGS:
             val = inst.get(k, self.v.get(k))
             if val is None and k == "ramhit": val = 0.0   # graph continuity
@@ -529,6 +674,12 @@ class Top:
             self.wavg[("pp", span)] = (X.get("p_comp", 0) - X0w.get("p_comp", 0)) / dtw
             self.wavg[("ppitn", span)] = ((S[KEYS["itn"]] - S[KEYS["gen"]]) -
                                           (S0w[KEYS["itn"]] - S0w[KEYS["gen"]])) / dtw
+            if ENGINE[0] == "radiance":
+                # PP lane = prompt intake (prefill credit + cache-served);
+                # tg_s lane = decode t/s wall rate (gauge drives the now-sample)
+                self.wavg[("ppitn", span)] = ((S[KEYS["itn"]] + X.get("p_hit", 0)) -
+                                              (S0w[KEYS["itn"]] + X0w.get("p_hit", 0))) / dtw
+                self.wavg[("tg_s", span)] = (S[KEYS["gen"]] - S0w[KEYS["gen"]]) / dtw
             self.wavg[("tg", span)] = (S[KEYS["gen"]] - S0w[KEYS["gen"]]) / dtw
             ddw = S[KEYS["d"]] - S0w[KEYS["d"]]
             self.wavg[("spec", span)] = (100 * (S[KEYS["acc"]] - S0w[KEYS["acc"]]) / ddw
@@ -588,6 +739,21 @@ class Top:
             self.life["tg"] = B[KEYS["gen"]] / self.act["tg"]
         if self.life.get("pp") is not None:
             self.life["pp"] = min(6000.0, self.life["pp"])  # poll DPI clamp
+        if ENGINE[0] == "radiance":
+            # ppitn mean = intake over prefill-active seconds; tg_s mean =
+            # decode t/s over decode-active seconds (matches the gauge lane);
+            # hit mean = cache-served / prompt intake, lifetime
+            self.life["ppitn"] = ((B[KEYS["itn"]] + bx["p_hit"]) / self.act["ppitn"]
+                                  if self.act["ppitn"] > 0 else None)
+            # pp_life: with /server_info uptime_s the v-branch value is
+            # since-boot (true); when boot is unknown keep it viewer-uptime,
+            # counters baselined at first sample (self.base)
+            if self.facts.get("boot") is None:
+                self.v["pp_life"] = (B[KEYS["itn"]] + bx["p_hit"]) / max(1.0, t - self.t0)
+            self.life["tg_s"] = (B[KEYS["gen"]] / self.act["tg"]
+                                 if self.act["tg"] > 5 else None)
+            self.life["hit"] = (100 * bx["p_hit"] / B[KEYS["pt_tot"]]
+                                if B[KEYS["pt_tot"]] > 0 else None)
 
 def draw(s, top, H, W, paused):
     def put(y, x, txt, cp=0, attr=0):
@@ -628,7 +794,7 @@ def draw(s, top, H, W, paused):
         put(2, 2, "GPU sensors unavailable" if top.local_metrics else
             "GPU sensors unavailable for remote metrics; run radiance-top on the GPU host", 7)
     hardware_height = max(1, len(gpu_rows) * group_height) + 2
-    foot = " q quit   p pause   w window 30/60/120/300/600/since-start   1 aggregate/per-GPU   vLLM request stats + local GPU sensors"
+    foot = " q quit   p pause   w window 30/60/120/300/600/since-start   1 aggregate/per-GPU   vLLM/radiance request stats + local GPU sensors"
     put(H - 1, 0, foot[:W].ljust(W), 0, curses.A_REVERSE)
     if top.dead:
         put(hardware_height + 2, 2, "SERVER DOWN / LOADING - polling...", 3); return
@@ -657,8 +823,6 @@ def draw(s, top, H, W, paused):
         def cell(value):
             if value is None: return "-"
             return token_text(value) if ring in ("prompt", "gen") else f % value
-        if ring == "pp_live":
-            return tuple(cell(top.pp_stats.get(key)) for key, _, _ in columns)
         vals = [x for x in top.ring[ring] if x is not None]
         pool = [x for x in vals if x > 0]
         cur = top.ring[ring][-1] if top.ring[ring] else None
@@ -671,8 +835,11 @@ def draw(s, top, H, W, paused):
     # ---- TOKEN FLOW ----
     colhdr = f"{'':7} {'unit':<4}" + "".join(f"{label:>{width}}" for _, label, width in columns)
     put(R["col1"], 2, colhdr, 7, curses.A_DIM)
-    put(R["col1"] + 1, 2, "TOKEN FLOW   PP = pure-prefill step rate; P-CRED = credited counter", 0, curses.A_BOLD)
-    graph(R["tf"], "PP", "t/s", "pp_live", tail=top.pp_state)
+    put(R["col1"] + 1, 2, ("TOKEN FLOW   PP = steady prefill gauge (intake in windows); P-CRED = recompute-credited"
+                           if ENGINE[0] == "radiance" else
+                           "TOKEN FLOW   PP = prefill step tokens/s (itn-gen); P-CRED = recompute-credited"), 0, curses.A_BOLD)
+    graph(R["tf"], "PP", "t/s", "ppitn",
+          tail="steady gauge (intake windows)" if ENGINE[0] == "radiance" else "step counters (itn-gen)")
     graph(R["tf"] + 1 * (1 + SP), "P-CRED", "t/s", "pp")
     graph(R["tf"] + 2 * (1 + SP), "TG", "t/s", "tg")
     graph(R["tf"] + 3 * (1 + SP), "SPEC", "%", "spec", rate=False)
@@ -720,11 +887,22 @@ def draw(s, top, H, W, paused):
     put(R["gpu"], 2, f"GPU KV   {b}  {v['gpu']*100:5.1f}%  {fmt(v['gpu_tok'])} / {fmt(top.facts['gpu_cap'])} tok", cg)
     _gs = spark(top.ring["gpu"], SPW).rstrip()
     put(R["gpu"], SX, " " * (SPW - len(_gs)) + _gs, 4)
-    b2 = bigbar(v["pins"], BARW); c2 = 2 if v["pins"] >= .85 else 0
-    # RAM KV capacity: 16 GiB tier / 71.1 MB CPU block (1664 tok x 42725 B)
-    # = 229 blocks = 381K tok; pins is the fraction of THAT pool in use.
-    put(R["pins"], 2, f"RAM pins {b2}  {v['pins']*100:5.1f}%  budget {fmt(top.facts.get('cpu_bytes') / 2**30) if top.facts.get('cpu_bytes') else '?'} GiB", c2)
-    _ps = spark(top.ring["pins"], SPW).rstrip()
+    if ENGINE[0] == "radiance":
+        # no host-tier fill gauge in radiance: bar = KV block eviction churn
+        # (evict/s, 500/s full bar); C lights when the tier refuses stores
+        ev = v.get("evict", 0.0)
+        b2 = bigbar(min(1.0, (ev or 0.0) / 500.0), BARW)
+        c2 = 2 if v.get("cksf", 0) > 0 else 0
+        put(R["pins"], 2, f"RAM evict {b2} {ev:7.1f}/s  (tier churn; store refusals light C)", c2)
+        _ps = spark(top.ring["evict"], SPW).rstrip()
+    else:
+        b2 = bigbar(v["pins"], BARW); c2 = 2 if v["pins"] >= .85 else 0
+        # pins = vllm:kv_offload_cpu_cache_usage_perc — the engine's own fraction
+        # of its CPU tier pool in use. Budget GiB comes from kv_offloading_size
+        # when published, else the --cpu-tier-gib declaration (this campaign's
+        # profiles use a 10 GiB ARC tier).
+        put(R["pins"], 2, f"RAM pins {b2}  {v['pins']*100:5.1f}%  budget {fmt(top.facts.get('cpu_bytes') / 2**30) if top.facts.get('cpu_bytes') else '?'} GiB", c2)
+        _ps = spark(top.ring["pins"], SPW).rstrip()
     put(R["pins"], SX, " " * (SPW - len(_ps)) + _ps, 4)
     rh = v["ramhit"]
     b3 = bigbar((rh or 0.0) / 100.0, BARW)
@@ -739,8 +917,8 @@ def draw(s, top, H, W, paused):
         put(cy, 2, "CONFIG", 7, curses.A_BOLD | curses.A_DIM)
         kv = {k: str(val) for k, val in top.cfg}
         kv.pop("model", None)
-        items = [k for k in ("ctx", "gpu-util", "cache", "prefix", "spec", "guards",
-                             "GPU KV", "KV tier", "evict", "fs tier", "PCIe") if k in kv]
+        items = [k for k in ("ctx", "gpu-util", "cache", "prefix", "spec", "engine",
+                             "guards", "GPU KV", "KV tier", "evict", "fs tier", "PCIe") if k in kv]
         NC = 4; KW = 10; CWID = max(22, (W - 8) // NC)
         for n2, k in enumerate(items):
             r, c = divmod(n2, NC)
@@ -792,7 +970,7 @@ def plain():
         else:
             v = top.v
             f = lambda x, s: (s % x) if x is not None else "-"
-            print(f"{time.strftime('%H:%M:%S')} gpu {v['gpu']*100:5.1f}% run {v['run']:.0f} pp-live {f(top.pp_stats.get('now'),'%.1f')} p-cred {v['pp']:7.1f} pp60 {v['ppitn']:7.1f} pp100 {v['pp_life']:6.1f} tg60 {v['tg_s'] if v['tg_s'] is not None else -1:6.2f} "
+            print(f"{time.strftime('%H:%M:%S')} gpu {v['gpu']*100:5.1f}% run {v['run']:.0f} pp {v['ppitn'] if v['ppitn'] is not None else -1:7.1f} p-cred {v['pp']:7.1f} pp60 {v['ppitn']:7.1f} pp100 {v['pp_life']:6.1f} tg60 {v['tg_s'] if v['tg_s'] is not None else -1:6.2f} "
                   f"tg {v['tg']:6.1f} nreq {v['nreq']:3.0f} queue {f(v['queue'],'%6.2f')} ttft {f(v['ttft'],'%6.2f')} "
                   f"prefill {f(v['prefill'],'%6.2f')} decode {f(v['decode'],'%6.2f')} tpot {f(v['tpot'],'%5.0f')} "
                   f"tg300 {f(top.wavg.get(('tg',300)), '%.2f')} tg600 {f(top.wavg.get(('tg',600)), '%.2f')} "

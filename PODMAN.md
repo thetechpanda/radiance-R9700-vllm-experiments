@@ -7,6 +7,12 @@ title: "Podman operation"
 
 [Home](README.md) · [Hardware](docs/HARDWARE.md) · [Build and launch guide](docs/SCRIPTS.md)
 
+## 19 October recommendation — not a service change
+
+The completed dual-card model/speculation campaign recommends Swift-Quark RTN MXFP4 with speculation off for four-agent work: TP=2, context 131070, four slots, BF16 KV, utilisation 0.98 and a 10 GiB ARC CPU tier. This differs from the earlier INT4/FP8-KV/MTP profiles below. The service definition was not changed by the campaign; this page does not assert the currently running configuration.
+
+[Campaign profile and limits](docs/DUAL-R9700-SPEC-CAMPAIGN.md#serving-outcome) · [Sweep CSV, S4/S6](data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv) · [Initial reference, E1](data/rocm-10.1/dual-r9700-spec-campaign-2026-10-19.csv)
+
 ## Recorded single-card deployment — 18 October 2026
 
 The inspected deployment used rootful Podman 5.7.0. `podman pod ps` is empty: the workload is a **standalone container**, named `vllm-radiance.1`. Use container commands rather than `podman pod start`.
@@ -143,4 +149,4 @@ The deployment mounts a persistent Hugging Face cache and compiler/calibration c
 
 <!-- NAVIGATION START -->
 
-[Home](index.md) · [Overview](README.md) · [ROCm 10.1 results](docs/FINAL-REPORT-20261018.md) · [Charts](docs/CHARTS.md)
+[Home](index.md) · [Overview](README.md) · [Latest campaign](docs/RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](docs/CHARTS.md)

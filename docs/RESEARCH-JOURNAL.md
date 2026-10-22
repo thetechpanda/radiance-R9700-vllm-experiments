@@ -65,4 +65,4 @@ The later GPU A/dual 1–4-agent matrix completed. Single-card 10 GiB-tier laten
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [ROCm 10.1 results](FINAL-REPORT-20261018.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)

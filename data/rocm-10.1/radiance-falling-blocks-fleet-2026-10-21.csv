@@ -1,0 +1,5 @@
+fleet,agent,seed,turns,exit_status,deliverables_complete,clean_delivery,output_tokens,cache_read_tokens,cache_hit_pct,agent_timeout_seconds,reported_syntax,game_file
+radiance,0,100,18,124,true,false,22361,202368,87.8,3600,PASS,../../examples/rocm-10.1/falling-blocks/radiance-20261021/agent-0/index.html
+radiance,1,101,8,124,true,false,14243,74240,80.1,3600,PASS,../../examples/rocm-10.1/falling-blocks/radiance-20261021/agent-1/index.html
+radiance,2,102,32,0,true,true,26927,609536,94.3,3600,PASS,../../examples/rocm-10.1/falling-blocks/radiance-20261021/agent-2/index.html
+radiance,3,103,15,0,true,true,18504,201344,89.2,3600,PASS,../../examples/rocm-10.1/falling-blocks/radiance-20261021/agent-3/index.html

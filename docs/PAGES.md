@@ -23,4 +23,4 @@ Use the standard [local Jekyll preview procedure](https://docs.github.com/en/pag
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [ROCm 10.1 results](FINAL-REPORT-20261018.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)

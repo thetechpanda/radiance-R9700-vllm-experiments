@@ -25,6 +25,11 @@ The [versioned data folders](../data/README.md) contain selected results. Legacy
 | [GPU A growth](../data/rocm-10.1/single-card-gpu-a-text-growth-2026-10-18.csv) | Four completed single-card cells; TP=1, MTP=4, 10 GiB CPU tier |
 | [Single/dual follow-up](../data/rocm-10.1/follow-up-single-vs-dual-text-growth-2026-10-18.csv) | Eight cells, including those same four GPU A rows; do not add both exports as independent samples |
 | [Single-card configuration](../data/rocm-10.1/single-card-gpu-a-configuration.json) | Checkpoint and reviewed launch settings |
+| [Dual R9700 spec-decode campaign](../data/rocm-10.1/dual-r9700-spec-campaign-2026-10-19.csv) | Eight cells; TP=2, 131070, 4 slots, bf16 KV, 10 GiB ARC tier; MTP K4 and DFlash2 K7 vs non-spec on three checkpoints |
+| [Dual R9700 agent-count sweep](../data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv) | 41 cells; 1–4 agents and Falling Blocks vision per setup, eight setups (three targets × non-spec/MTP K4, two × DFlash2 K7); 1,160 turns, zero errors |
+| [16K fast-lane repro](../data/rocm-10.1/dual-r9700-8k-repro-2026-10-19.csv) | Shallow-zone observations; R1/R2 complete, R3/R4 cancelled_by_scope; the 12.4% observed MTP gain is below the repeat-spread floor |
+
+`decode_tokens_s` is generated tokens over decode time (per request, steady-state); `turn_tg_avg` is the per-turn mean that includes accepted-draft bursts and must not be compared to `decode_tokens_s`. `kv_pool_tokens`/`kv_concurrency` are recorded engine boot values, not per-turn samples. Blank later rows mean no additional boot value was exported, not a zero-sized pool. `pp_effective_ingest_tok_s` is prompt tokens ÷ TTFT over non-cached turns — an effective client-side rate inflated by prefix-cache reuse, **not** kernel prefill throughput (the export does not directly measure kernel prefill speed). `prefix_cache_hit_frac` is the export's fraction of turns with TTFT recorded as 0.00 s, used as a cache-hit proxy; this is not an independently measured token-level cache-hit ratio. `ttft_0_30k_s` … `ttft_120k_plus_s` are mean TTFT by prompt-depth band; Blank/0.0 no-sample values mean no measured mean in that band, not zero latency; the heatmap renders them as dashes. See [the campaign write-up](DUAL-R9700-SPEC-CAMPAIGN.md) for the fast-lane transfer finding.
 
 TTFT is in seconds; decode estimates are tokens/s for short responses, not aggregate fleet throughput. Counts in these CSVs are timed turns. The later acceptance report additionally counts one empty completion in GPU A n4 and one in dual n2. Reported case wall time and harness elapsed time use different boundaries. See [accounting and review limits](FINAL-REPORT-20261018.md#evidence-and-accounting).
 
@@ -34,4 +39,4 @@ TTFT is in seconds; decode estimates are tokens/s for short responses, not aggre
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [ROCm 10.1 results](FINAL-REPORT-20261018.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)

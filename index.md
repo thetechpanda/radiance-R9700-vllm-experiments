@@ -21,9 +21,19 @@ A central workload asks how many concurrent agents can each sustain roughly **13
 
 ## Results
 
+### Latest: dual-card model and speculation sweep — 19 October
+
+The completed **41-cell / 1,160-turn** sweep recommends Swift-Quark RTN MXFP4 with speculation off for four-agent load. The measured profile uses TP=2, context 131070, four slots, BF16 KV and a 10 GiB CPU tier; it is a recommendation, not an applied service change. Speculative lanes are candidates at 1–2 agents; small gaps below the ≈15% repeat-spread floor remain unresolved.
+
+[Campaign and limits](docs/DUAL-R9700-SPEC-CAMPAIGN.md) · [Sweep CSV: S1–Z5](data/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.csv) · [All current charts](docs/CHARTS.md)
+
+![Eight setups across 1–4 agents](graphs/rocm-10.1/dual-r9700-agent-count-sweep-2026-10-19.svg)
+
+### Earlier: single-card capacity and coding fleets — 18 October
+
 The measured ROCm 10.1 single-card 10 GiB-tier profile supported 1–2 deep agents with useful latency, then saturated at 3–4. The dual deployment completed the four-agent matrix and coding fleet with substantially better latency and completion.
 
-- [Latest ROCm 10.1 matrix and per-agent fleet report](docs/FINAL-REPORT-20261018.md)
+- [18 October INT4 matrix and per-agent fleet report](docs/FINAL-REPORT-20261018.md)
 
 - [ROCm 7.14 and ROCm 10.1 evidence](docs/ROCM-VERSIONS.md)
 - [Chart gallery](docs/CHARTS.md)
@@ -34,4 +44,4 @@ The recorded campaigns use different settings. Read the configuration and proven
 
 ## Generated games
 
-Play the [eleven ROCm 10.1 games](examples/rocm-10.1/falling-blocks/index.html), grouped by fleet and attempt, or browse the historical collection. Explore the [Falling Blocks game gallery](examples/rocm-7.14/falling-blocks/index.html), the [real-agent task record](docs/REAL-AGENT-TEST.md) and the [artefact provenance](examples/rocm-7.14/falling-blocks/README.md).
+Play the [fifteen ROCm 10.1 games](examples/rocm-10.1/falling-blocks/index.html), grouped by fleet and attempt — the 21 October radiance-engine fleet is the newest set — or browse the historical collection. Explore the [Falling Blocks game gallery](examples/rocm-7.14/falling-blocks/index.html), the [real-agent task record](docs/REAL-AGENT-TEST.md) and the [artefact provenance](examples/rocm-7.14/falling-blocks/README.md).

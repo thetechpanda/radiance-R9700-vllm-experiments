@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="560" viewBox="0 0 1100 560" role="img" font-family="system-ui, sans-serif" fill="#e2e8f0">
+<title>How much KV fits: the pool ceiling ladder, radiance 1.9.0 (22 Oct 2026)</title>
+<desc>Horizontal bar ladder of KV pool ceilings in tokens for radiance 1.9.0 on 2x R9700 32 GiB, 22 Oct 2026. Bar width is proportional to pool tokens at a scale of 110 px per 200,000 tokens (axis 0 to 1.4M). Dashed bars are projections, not boot-measured.</desc>
+<rect width="1100" height="560" fill="#0b1220" />
+<text x="30.0" y="36.0" font-size="18" fill="#e2e8f0" text-anchor="start">How much KV fits: the pool ceiling ladder, radiance 1.9.0 (22 Oct 2026)</text>
+<text x="30.0" y="60.0" font-size="14" fill="#94a3b8" text-anchor="start">pool = min(what fits, slots x context). amber = live GPU pool, cool = host tier, dashed = projection not boot-measured.</text>
+<line x1="300" y1="88" x2="300" y2="470" stroke="#263449" />
+<line x1="410" y1="88" x2="410" y2="470" stroke="#263449" />
+<line x1="520" y1="88" x2="520" y2="470" stroke="#263449" />
+<line x1="630" y1="88" x2="630" y2="470" stroke="#263449" />
+<line x1="740" y1="88" x2="740" y2="470" stroke="#263449" />
+<line x1="850" y1="88" x2="850" y2="470" stroke="#263449" />
+<line x1="960" y1="88" x2="960" y2="470" stroke="#263449" />
+<line x1="1070" y1="88" x2="1070" y2="470" stroke="#263449" />
+<line x1="876.72" y1="88" x2="876.72" y2="470" stroke="#94a3b8" stroke-dasharray="4 4" opacity="0.8" />
+<text x="876.72" y="82.0" font-size="11" fill="#94a3b8" text-anchor="middle">4 x 262,144 (256k-class x4)</text>
+<text x="292.0" y="122.0" font-size="13" fill="#e2e8f0" text-anchor="end">TP2, elastic ceiling (slots ignored)</text>
+<rect x="300" y="104" width="706.5" height="28" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="6 4" />
+<text x="998.5" y="122.0" font-size="12" fill="#e2e8f0" text-anchor="end">1,284,500<tspan font-size="10.5" fill="#94a3b8"> · 9.8 sessions</tspan></text>
+<text x="292.0" y="178.0" font-size="13" fill="#e2e8f0" text-anchor="end">TP2, 6 slots, 204800 context (default)</text>
+<rect x="300" y="160" width="675.85" height="28" fill="#fbbf24" stroke="#fde68a" stroke-width="1.5" />
+<text x="967.85" y="178.0" font-size="12" font-weight="bold" fill="#0b1220" text-anchor="end">1,228,816<tspan font-size="10.5" font-weight="bold" fill="#0b1220" opacity="0.75"> · 6.0 sessions</tspan></text>
+<text x="292.0" y="234.0" font-size="13" fill="#e2e8f0" text-anchor="end">TP2, 6 slots, 131072 context</text>
+<rect x="300" y="216" width="432.55" height="28" fill="#fbbf24" />
+<text x="724.55" y="234.0" font-size="12" fill="#0b1220" text-anchor="end">786,448<tspan font-size="10.5" fill="#0b1220" opacity="0.75"> · 6.0 sessions</tspan></text>
+<text x="292.0" y="290.0" font-size="13" fill="#e2e8f0" text-anchor="end">TP2, 4 slots, 131072 context</text>
+<rect x="300" y="272" width="288.37" height="28" fill="#fbbf24" />
+<text x="580.37" y="290.0" font-size="12" fill="#0b1220" text-anchor="end">524,304<tspan font-size="10.5" fill="#0b1220" opacity="0.75"> · 4.0 sessions</tspan></text>
+<text x="292.0" y="346.0" font-size="13" fill="#e2e8f0" text-anchor="end">host tier TTM max 15.29 GiB</text>
+<rect x="300" y="328" width="259.27" height="28" fill="none" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="6 4" />
+<text x="551.27" y="346.0" font-size="12" fill="#e2e8f0" text-anchor="end">471,400<tspan font-size="10.5" fill="#94a3b8"> · tier</tspan></text>
+<text x="292.0" y="402.0" font-size="13" fill="#e2e8f0" text-anchor="end">TP1, 4 slots, 131072 context</text>
+<rect x="300" y="384" width="222.53" height="28" fill="#fbbf24" />
+<text x="514.53" y="402.0" font-size="12" fill="#0b1220" text-anchor="end">404,608<tspan font-size="10.5" fill="#0b1220" opacity="0.75"> · 3.1 sessions</tspan></text>
+<text x="292.0" y="458.0" font-size="13" fill="#e2e8f0" text-anchor="end">host tier 13 GiB (finished convos)</text>
+<rect x="300" y="440" width="220.5" height="28" fill="#38bdf8" />
+<text x="512.5" y="458.0" font-size="12" fill="#0b1220" text-anchor="end">400,912<tspan font-size="10.5" fill="#0b1220" opacity="0.75"> · tier</tspan></text>
+<text x="300.0" y="486.0" font-size="11" fill="#94a3b8" text-anchor="middle">0</text>
+<text x="410.0" y="486.0" font-size="11" fill="#94a3b8" text-anchor="middle">200k</text>
+<text x="520.0" y="486.0" font-size="11" fill="#94a3b8" text-anchor="middle">400k</text>
+<text x="630.0" y="486.0" font-size="11" fill="#94a3b8" text-anchor="middle">600k</text>
+<text x="740.0" y="486.0" font-size="11" fill="#94a3b8" text-anchor="middle">800k</text>
+<text x="850.0" y="486.0" font-size="11" fill="#94a3b8" text-anchor="middle">1.0M</text>
+<text x="960.0" y="486.0" font-size="11" fill="#94a3b8" text-anchor="middle">1.2M</text>
+<text x="1070.0" y="486.0" font-size="11" fill="#94a3b8" text-anchor="middle">1.4M</text>
+<text x="685.0" y="510.0" font-size="13" fill="#94a3b8" text-anchor="middle">KV pool tokens</text>
+<text x="30.0" y="546.0" font-size="13" fill="#94a3b8" text-anchor="start">data/rocm-10.1/radiance-pool-ceiling-2026-10-22.csv</text>
+</svg>

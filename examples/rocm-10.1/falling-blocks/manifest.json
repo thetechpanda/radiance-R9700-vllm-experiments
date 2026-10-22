@@ -196,5 +196,69 @@
       "line_clear": "CONFIRMED"
     },
     "provenance": "Coding-agent output from the Falling Blocks fleet on the single GPU A (TP1, 131070 context, MTP4) with raised per-request output budget 65536 and 5400 s per-agent wall, ROCm 10.1, campaign 20261018T025319Z, 18 October 2026. Verified by inline-script syntax compile and headless behavioural probes (movement, rotation, pause/resume, hard-drop scoring, reset, confirmed line clear); mocked DOM, not browser qualification. Four-line-clear banner text and sound-effect identifiers renamed for public naming; game rules unchanged."
+  },
+  {
+    "fleet": "radiance-20261021",
+    "agent": 0,
+    "seed": 100,
+    "file": "radiance-20261021/agent-0/index.html",
+    "exit_status": 124,
+    "bytes": 19567,
+    "sha256": "500080e5931b85a0da2ffaab8fce6d72b374275318a92d25b07c0a505772697d",
+    "original_bytes": 19567,
+    "original_sha256": "500080e5931b85a0da2ffaab8fce6d72b374275318a92d25b07c0a505772697d",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS (node --check, embedded script)"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet acceptance on the radiance 1.9.0 engine (Swift-1.5-Qwen3.8-27b-W4A16-AWQ, MTP-4 lane, TP2, 131072 context, 10 GiB CPU KV tier), ROCm 10.1, run accept-20261021T135029Z, 21 October 2026. Verified by node --check on the embedded script (campaign check; not browser qualification). Published as index.html; bytes unchanged from the agent-produced falling-blocks.html."
+  },
+  {
+    "fleet": "radiance-20261021",
+    "agent": 1,
+    "seed": 101,
+    "file": "radiance-20261021/agent-1/index.html",
+    "exit_status": 124,
+    "bytes": 18407,
+    "sha256": "40f3fcff9a731da51f8a5e2bfd359251c378d9461e66c8adfc9b72621094490f",
+    "original_bytes": 18407,
+    "original_sha256": "40f3fcff9a731da51f8a5e2bfd359251c378d9461e66c8adfc9b72621094490f",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS (node --check, embedded script)"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet acceptance on the radiance 1.9.0 engine (Swift-1.5-Qwen3.8-27b-W4A16-AWQ, MTP-4 lane, TP2, 131072 context, 10 GiB CPU KV tier), ROCm 10.1, run accept-20261021T135029Z, 21 October 2026. Verified by node --check on the embedded script (campaign check; not browser qualification). Published as index.html; bytes unchanged from the agent-produced falling-blocks.html."
+  },
+  {
+    "fleet": "radiance-20261021",
+    "agent": 2,
+    "seed": 102,
+    "file": "radiance-20261021/agent-2/index.html",
+    "exit_status": 0,
+    "bytes": 19624,
+    "sha256": "128f7ebc4982c8369539d3b4e3f057c457fe7c155eef4d5d13a58ce0b67fdb2b",
+    "original_bytes": 19624,
+    "original_sha256": "128f7ebc4982c8369539d3b4e3f057c457fe7c155eef4d5d13a58ce0b67fdb2b",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS (node --check, embedded script)"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet acceptance on the radiance 1.9.0 engine (Swift-1.5-Qwen3.8-27b-W4A16-AWQ, MTP-4 lane, TP2, 131072 context, 10 GiB CPU KV tier), ROCm 10.1, run accept-20261021T135029Z, 21 October 2026. Verified by node --check on the embedded script (campaign check; not browser qualification). Published as index.html; bytes unchanged from the agent-produced falling-blocks.html."
+  },
+  {
+    "fleet": "radiance-20261021",
+    "agent": 3,
+    "seed": 103,
+    "file": "radiance-20261021/agent-3/index.html",
+    "exit_status": 0,
+    "bytes": 18632,
+    "sha256": "b57bc39313ee6933ce989f1d2de055ee149a0609d14925afc72f64077be51719",
+    "original_bytes": 18632,
+    "original_sha256": "b57bc39313ee6933ce989f1d2de055ee149a0609d14925afc72f64077be51719",
+    "renamed": true,
+    "verification": {
+      "syntax": "PASS (node --check, embedded script)"
+    },
+    "provenance": "Coding-agent output from the Falling Blocks fleet acceptance on the radiance 1.9.0 engine (Swift-1.5-Qwen3.8-27b-W4A16-AWQ, MTP-4 lane, TP2, 131072 context, 10 GiB CPU KV tier), ROCm 10.1, run accept-20261021T135029Z, 21 October 2026. Verified by node --check on the embedded script (campaign check; not browser qualification). Published as index.html; bytes unchanged from the agent-produced falling-blocks.html."
   }
 ]

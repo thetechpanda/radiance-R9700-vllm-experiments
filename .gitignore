@@ -7,6 +7,7 @@ __pycache__/
 # local workspace paths. Excluded from the site via _config.yml; keep it
 # out of the repository entirely.
 runbook.md
+HANDOVER-*.md
 
 .sass-cache/
 .jekyll-cache/
@@ -47,3 +48,8 @@ runbook.md
 /data/rocm-7.14/host-memory-trace-for-the-guardrail-trial.csv
 /data/rocm-7.14/host-memory-trace-for-the-speculative-depth-a-b.csv
 /data/rocm-7.14/host-memory-trace-for-the-six-agent-real-agent-campaign.csv
+
+src/**
+# Agent instruction file — not a site page; self-referential NAVIGATION marker
+# makes the nav generator truncate it (see journal 2026-10-19).
+AGENTS.md

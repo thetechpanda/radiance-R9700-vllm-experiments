@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Falling Blocks</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #101010;
+    --grid: #232323;
+    --fg: #e8e8e8;
+    --dim: #7a7a7a;
+    --block: #e8e8e8;
+    --border: #5a5a5a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Courier New", ui-monospace, Menlo, Consolas, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 8px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  h1 {
+    font-size: 14px;
+    letter-spacing: 4px;
+    margin: 6px 0 10px;
+    color: var(--fg);
+    text-transform: uppercase;
+  }
+  #layout {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    max-width: 720px;
+    width: 100%;
+  }
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--grid);
+    padding: 6px;
+    text-align: center;
+  }
+  .panel .label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--dim);
+    margin-bottom: 4px;
+  }
+  .panel .value {
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+  #boardWrap {
+    position: relative;
+    line-height: 0;
+  }
+  #board {
+    display: block;
+    background: var(--panel);
+    border: 2px solid var(--border);
+    width: min(56vh, 92vw, 360px);
+    height: auto;
+    aspect-ratio: 3 / 5;
+    touch-action: none;
+  }
+  .mini {
+    display: block;
+    background: #0c0c0c;
+    border: 1px solid var(--grid);
+    width: 96px;
+    height: 72px;
+  }
+  #controls {
+    margin-top: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    max-width: 720px;
+  }
+  #controls button {
+    background: var(--panel);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 10px 12px;
+    min-width: 44px;
+    min-height: 44px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  #controls button:active { background: var(--border); }
+  #help {
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--dim);
+    text-align: center;
+    letter-spacing: 1px;
+    line-height: 1.6;
+  }
+  @media (max-width: 560px) {
+    .side { flex-direction: row; width: 100%; justify-content: center; }
+    #layout { flex-direction: column; align-items: center; }
+    .panel .value { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<h1>Falling Blocks</h1>
+
+<div id="layout">
+  <div class="side">
+    <div class="panel">
+      <div class="label">SCORE</div>
+      <div class="value" id="score">0</div>
+    </div>
+    <div class="panel">
+      <div class="label">LEVEL</div>
+      <div class="value" id="level">1</div>
+    </div>
+    <div class="panel">
+      <div class="label">LINES</div>
+      <div class="value" id="lines">0</div>
+    </div>
+  </div>
+
+  <div id="boardWrap">
+    <canvas id="board" width="240" height="400"></canvas>
+  </div>
+
+  <div class="side">
+    <div class="panel">
+      <div class="label">HOLD</div>
+      <canvas class="mini" id="hold" width="96" height="72"></canvas>
+    </div>
+    <div class="panel">
+      <div class="label">NEXT</div>
+      <canvas class="mini" id="next" width="96" height="216"></canvas>
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <button data-act="left">&#9664;</button>
+  <button data-act="right">&#9654;</button>
+  <button data-act="down">&#9660;</button>
+  <button data-act="rotCW">&#10227;</button>
+  <button data-act="rotCCW">&#10224;</button>
+  <button data-act="drop">&#9661;&#9661;</button>
+  <button data-act="hold">HOLD</button>
+  <button data-act="pause">PAUSE</button>
+  <button data-act="restart">RESET</button>
+</div>
+
+<div id="help">
+  &larr;/&rarr; MOVE &nbsp; &uarr;/X ROTATE &nbsp; Z ROTATE&minus; &nbsp; &darr; SOFT &nbsp; SPACE DROP &nbsp;
+  C/SFT HOLD &nbsp; P PAUSE &nbsp; R RESTART
+</div>
+
+<script>
+"use strict";
+/* ============================== Constants ============================== */
+const COLS = 12, ROWS = 20;
+const SEED = 102;
+const LOCK_DELAY_MS = 500;
+const MAX_LOCK_RESETS = 15;
+const DAS_MS = 160, ARR_MS = 40;      // key repeat
+const SOFT_DROP_MS = 45;              // interval while holding down
+const CLEAR_SCORES = { 1: 100, 2: 300, 3: 500, 4: 800 };
+const LINES_PER_LEVEL = 5;
+
+const PAL = {
+  bg: "#0a0a0a", panel: "#101010", grid: "#232323",
+  block: "#e8e8e8", glyph: "#1c1c1c", border: "#5a5a5a",
+  fg: "#e8e8e8", dim: "#7a7a7a"
+};
+
+/* ============================== RNG (seed 102) ============================== */
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* ============================== Pieces ==============================
+   Each piece: 4 rotation states, each a 4x4 matrix of 0/1. */
+function mat(rows) {
+  // rows: array of 4 strings of 4 chars, '#' = filled
+  const m = [];
+  for (let y = 0; y < 4; y++)
+    for (let x = 0; x < 4; x++)
+      if (rows[y][x] === "#") m.push([x, y]);
+  return m; // list of [x, y] filled cells
+}
+function rotateState(cells) {
+  // rotate clockwise: (x, y) -> (3 - y, x) in 4x4 box
+  const out = new Set();
+  for (const [x, y] of cells) out.add((3 - y) * 4 + x);
+  const res = [];
+  for (const v of out) res.push([(v / 4) | 0, v % 4]);
+  return res;
+}
+const BASE = {
+  I: mat(["....", "####", "....", "...."]),
+  O: mat([".##.", ".##.", "....", "...."]),
+  T: mat([".#..", "###.", "....", "...."]),
+  S: mat([".##.", "##..", "....", "...."]),
+  Z: mat(["##..", ".##.", "....", "...."]),
+  J: mat(["#...", "###.", "....", "...."]),
+  L: mat(["..#.", "###.", "....", "...."])
+};
+const SHAPES = {};
+for (const t of Object.keys(BASE)) {
+  const states = [BASE[t]];
+  for (let i = 1; i < 4; i++) states.push(rotateState(states[i - 1]));
+  SHAPES[t] = states;
+}
+const PIECE_TYPES = ["I", "O", "T", "S", "Z", "J", "L"];
+const SPAWN_COL = { I: 4, O: 4, T: 4, S: 4, Z: 4, J: 4, L: 4 };
+
+/* ============================== Game state ============================== */
+let board, current, nextQueue, bag, rng;
+let heldType, holdUsed;
+let score, lines, level;
+let state;                 // 'play' | 'pause' | 'over'
+let gravityTimer, lockTimer, grounded;
+let lockResets;
+let lastTime = 0;
+
+function newGame() {
+  board = new Int8Array(ROWS * COLS);
+  rng = mulberry32(SEED);
+  bag = [];
+  nextQueue = [];
+  while (nextQueue.length < 3) refillQueue();
+  heldType = null;
+  holdUsed = false;
+  score = 0; lines = 0; level = 1;
+  state = "play";
+  gravityTimer = 0;
+  spawn();
+  updateHud();
+}
+
+function refillQueue() {
+  if (bag.length === 0) {
+    bag = PIECE_TYPES.slice();
+    // Fisher-Yates with seeded rng
+    for (let i = bag.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+  }
+  nextQueue.push(bag.pop());
+}
+
+function spawn() {
+  const type = nextQueue.shift();
+  refillQueue();
+  current = { type, rot: 0, x: SPAWN_COL[type], y: 0 };
+  gravityTimer = 0;
+  lockTimer = 0;
+  grounded = false;
+  lockResets = 0;
+  if (collides(current)) {
+    current = null;
+    state = "over";
+  }
+  updateHud();
+}
+
+/* ============================== Collision ============================== */
+function collides(pc) {
+  const cells = SHAPES[pc.type][pc.rot];
+  for (const [dx, dy] of cells) {
+    const x = pc.x + dx, y = pc.y + dy;
+    if (x < 0 || x >= COLS || y >= ROWS) return true;
+    if (y >= 0 && board[y * COLS + x]) return true;
+  }
+  return false;
+}
+
+/* ============================== Moves ============================== */
+function tryMove(dx, dy) {
+  if (!current || state !== "play") return false;
+  const test = { type: current.type, rot: current.rot, x: current.x + dx, y: current.y + dy };
+  if (collides(test)) return false;
+  current.x = test.x; current.y = test.y;
+  onSuccessfulMove();
+  return true;
+}
+
+function tryRotate(dir) {
+  if (!current || state !== "play") return;
+  const nr = (current.rot + dir + 4) % 4;
+  const test = { type: current.type, rot: nr, x: current.x, y: current.y };
+  if (collides(test)) return;
+  current.rot = nr;
+  onSuccessfulMove();
+}
+
+function onSuccessfulMove() {
+  grounded = collides({ type: current.type, rot: current.rot, x: current.x, y: current.y + 1 });
+  if (grounded && lockResets < MAX_LOCK_RESETS) {
+    lockTimer = 0;
+    lockResets++;
+  }
+}
+
+function softDrop() {
+  if (tryMove(0, 1)) { score += 1; updateHud(); return true; }
+  return false;
+}
+
+function hardDrop() {
+  if (!current || state !== "play") return;
+  let dist = 0;
+  while (tryMove(0, 1)) dist++;
+  score += dist * 2;
+  lockPiece();
+}
+
+function doHold() {
+  if (!current || state !== "play" || holdUsed) return;
+  holdUsed = true;
+  const t = current.type;
+  const wasGrounded = grounded;
+  const wasResets = lockResets;
+  if (heldType === null) {
+    heldType = t;
+    const type = nextQueue.shift();
+    refillQueue();
+    current = { type, rot: 0, x: SPAWN_COL[type], y: 0 };
+  } else {
+    const swap = heldType;
+    heldType = t;
+    current = { type: swap, rot: 0, x: SPAWN_COL[swap], y: 0 };
+  }
+  gravityTimer = 0;
+  // grounded state recomputed on spawn
+  grounded = collides({ type: current.type, rot: current.rot, x: current.x, y: current.y + 1 });
+  lockTimer = 0;
+  lockResets = grounded ? 0 : 0;
+  if (collides(current)) { // cannot place held piece
+    state = "over";
+  }
+  updateHud();
+}
+
+/* ============================== Locking & clearing ============================== */
+function lockPiece() {
+  const cells = SHAPES[current.type][current.rot];
+  for (const [dx, dy] of cells) {
+    const x = current.x + dx, y = current.y + dy;
+    if (y >= 0) board[y * COLS + x] = 1;
+  }
+  current = null;
+  holdUsed = false;
+  clearLines();
+  spawn();
+}
+
+function clearLines() {
+  let n = 0;
+  for (let y = ROWS - 1; y >= 0; y--) {
+    let full = true;
+    for (let x = 0; x < COLS; x++) {
+      if (!board[y * COLS + x]) { full = false; break; }
+    }
+    if (full) {
+      n++;
+      for (let yy = y; yy > 0; yy--)
+        board.set(board.subarray((yy - 1) * COLS, yy * COLS), yy * COLS);
+      board.fill(0, 0, COLS);
+      y++; // re-check this row index after compaction
+    }
+  }
+  if (n > 0) {
+    score += CLEAR_SCORES[n] * level;
+    lines += n;
+    level = 1 + Math.floor(lines / LINES_PER_LEVEL);
+    updateHud();
+  }
+}
+
+function gravityInterval() {
+  return Math.max(100, 800 - (level - 1) * 70);
+}
+
+/* ============================== Input ============================== */
+const keys = { left: null, right: null, down: null }; // {held:bool, das:0, arr:0}
+
+function keyAction(action, isDown) {
+  if (action === "pause") {
+    if (isDown) togglePause();
+    return;
+  }
+  if (action === "restart") {
+    if (isDown) newGame();
+    return;
+  }
+  if (!isDown) {
+    if (action === "left")  releaseKey("left");
+    if (action === "right") releaseKey("right");
+    if (action === "down")  releaseKey("down");
+    return;
+  }
+  switch (action) {
+    case "left":  pressKey("left");  tryMove(-1, 0); break;
+    case "right": pressKey("right"); tryMove(1, 0);  break;
+    case "down":  pressKey("down");  softDrop();     break;
+    case "rotCW":  tryRotate(1);  break;
+    case "rotCCW": tryRotate(-1); break;
+    case "drop": hardDrop(); break;
+    case "hold": doHold(); break;
+  }
+}
+
+function pressKey(name) {
+  if (keys[name]) return;
+  keys[name] = { das: 0, arr: 0 };
+}
+function releaseKey(name) {
+  keys[name] = null;
+}
+
+function updateRepeat(dt) {
+  const handle = (name, dir) => {
+    const k = keys[name];
+    if (!k) return;
+    k.das += dt;
+    if (k.das >= DAS_MS) {
+      k.arr += dt;
+      while (k.arr >= ARR_MS) {
+        k.arr -= ARR_MS;
+        tryMove(dir, 0);
+      }
+    }
+  };
+  handle("left", -1);
+  handle("right", 1);
+  if (keys["down"]) {
+    keys["down"].das += dt;
+    keys["down"].arr += dt;
+    while (keys["down"].arr >= SOFT_DROP_MS) {
+      keys["down"].arr -= SOFT_DROP_MS;
+      softDrop();
+    }
+  }
+}
+
+const KEYMAP = {
+  ArrowLeft: "left", ArrowRight: "right", ArrowDown: "down",
+  ArrowUp: "rotCW", x: "rotCW", X: "rotCW",
+  z: "rotCCW", Z: "rotCCW",
+  " ": "drop", c: "hold", C: "hold", Shift: "hold",
+  p: "pause", P: "pause",
+  r: "restart", R: "restart"
+};
+
+window.addEventListener("keydown", (e) => {
+  const act = KEYMAP[e.key];
+  if (!act) return;
+  e.preventDefault();
+  if (e.repeat) return;
+  keyAction(act, true);
+});
+window.addEventListener("keyup", (e) => {
+  const act = KEYMAP[e.key];
+  if (!act) return;
+  e.preventDefault();
+  keyAction(act, false);
+});
+
+// Touch / mouse buttons
+document.querySelectorAll("#controls button").forEach((btn) => {
+  const act = btn.dataset.act;
+  const down = (e) => { e.preventDefault(); keyAction(act, true); };
+  const up = (e) => { e.preventDefault(); keyAction(act, false); };
+  btn.addEventListener("pointerdown", down);
+  btn.addEventListener("pointerup", up);
+  btn.addEventListener("pointerleave", up);
+  btn.addEventListener("pointercancel", up);
+  btn.addEventListener("contextmenu", (e) => e.preventDefault());
+});
+
+function togglePause() {
+  if (state === "play") state = "pause";
+  else if (state === "pause") state = "play";
+  updateHud();
+}
+
+/* ============================== HUD ============================== */
+const elScore = document.getElementById("score");
+const elLevel = document.getElementById("level");
+const elLines = document.getElementById("lines");
+function updateHud() {
+  elScore.textContent = score;
+  elLevel.textContent = level;
+  elLines.textContent = lines;
+}
+
+/* ============================== Rendering ============================== */
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const holdCanvas = document.getElementById("hold");
+const holdCtx = holdCanvas.getContext("2d");
+const nextCanvas = document.getElementById("next");
+const nextCtx = nextCanvas.getContext("2d");
+
+function fitCanvas(cnv, cssW, cssH) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.round(cssW * dpr), h = Math.round(cssH * dpr);
+  if (cnv.width !== w || cnv.height !== h) {
+    cnv.width = w; cnv.height = h;
+  }
+  const c = cnv.getContext("2d");
+  c.setTransform(w / cssW, 0, 0, h / cssH, 0, 0);
+  return c;
+}
+
+function drawCell(c, px, py, size, type, style) {
+  c.save();
+  if (style === "dim") {
+    c.fillStyle = "#4a4a4a";
+  } else {
+    c.fillStyle = PAL.block;
+  }
+  const r = Math.max(2, size * 0.15);
+  c.beginPath();
+  c.roundRect(px + 1, py + 1, size - 2, size - 2, r);
+  c.fill();
+  c.strokeStyle = PAL.border;
+  c.lineWidth = 1;
+  c.stroke();
+  if (type) {
+    c.fillStyle = PAL.glyph;
+    c.font = "bold " + Math.round(size * 0.5) + "px 'Courier New', monospace";
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+    c.fillText(type, px + size / 2, py + size / 2 + 1);
+  }
+  c.restore();
+}
+
+function drawMini(cnv, c, types, cell) {
+  const w = cnv.width / (window.devicePixelRatio || 1);
+  const h = cnv.height / (window.devicePixelRatio || 1);
+  c.clearRect(0, 0, w, h);
+  types.forEach((type, i) => {
+    if (!type) return;
+    const cells = SHAPES[type][0];
+    // bounding box of the state
+    let minX = 4, minY = 4, maxX = 0, maxY = 0;
+    for (const [x, y] of cells) {
+      minX = Math.min(minX, x); minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+    }
+    const bw = maxX - minX + 1, bh = maxY - minY + 1;
+    const ox = (w - bw * cell) / 2;
+    const oy = i * (h / Math.max(1, types.filter(Boolean).length || 1));
+    const slotH = h / Math.max(1, types.length);
+    const oy2 = i * slotH + (slotH - bh * cell) / 2;
+    for (const [x, y] of cells)
+      drawCell(c, ox + (x - minX) * cell, oy2 + (y - minY) * cell, cell, type, "full");
+  });
+}
+
+function render() {
+  // Fit board canvas to its CSS size
+  const rect = canvas.getBoundingClientRect();
+  const cssW = rect.width || 240, cssH = rect.height || 400;
+  const c = fitCanvas(canvas, cssW, cssH);
+  const cell = cssW / COLS;
+
+  c.fillStyle = PAL.panel;
+  c.fillRect(0, 0, cssW, cssH);
+
+  // grid
+  c.strokeStyle = PAL.grid;
+  c.lineWidth = 1;
+  for (let x = 1; x < COLS; x++) {
+    c.beginPath();
+    c.moveTo(x * cell + 0.5, 0);
+    c.lineTo(x * cell + 0.5, cssH);
+    c.stroke();
+  }
+  for (let y = 1; y < ROWS; y++) {
+    c.beginPath();
+    c.moveTo(0, y * cell + 0.5);
+    c.lineTo(cssW, y * cell + 0.5);
+    c.stroke();
+  }
+
+  // locked stack (monochrome)
+  for (let y = 0; y < ROWS; y++)
+    for (let x = 0; x < COLS; x++)
+      if (board[y * COLS + x])
+        drawCell(c, x * cell, y * cell, cell, null, "full");
+
+  // current piece (with letter glyph, no ghost)
+  if (current && state !== "over") {
+    for (const [dx, dy] of SHAPES[current.type][current.rot]) {
+      const px = (current.x + dx) * cell, py = (current.y + dy) * cell;
+      if (py >= -cell) drawCell(c, px, py, cell, current.type, "full");
+    }
+  }
+
+  // overlays
+  if (state === "pause" || state === "over") {
+    c.fillStyle = "rgba(10,10,10,0.85)";
+    c.fillRect(0, 0, cssW, cssH);
+    c.fillStyle = PAL.fg;
+    c.textAlign = "center";
+    c.font = "bold " + Math.round(cell * 1.4) + "px 'Courier New', monospace";
+    c.fillText(state === "pause" ? "PAUSED" : "GAME OVER", cssW / 2, cssH / 2 - cell);
+    c.font = Math.round(cell * 0.8) + "px 'Courier New', monospace";
+    c.fillStyle = PAL.dim;
+    if (state === "over")
+      c.fillText("SCORE " + score, cssW / 2, cssH / 2 + cell * 0.5);
+    c.fillText(state === "pause" ? "P TO RESUME" : "R TO RESTART", cssW / 2, cssH / 2 + cell * 1.8);
+  }
+
+  // mini panels
+  const hrect = holdCanvas.getBoundingClientRect();
+  const hc = fitCanvas(holdCanvas, hrect.width || 96, hrect.height || 72);
+  drawMini(holdCanvas, hc, [heldType], 14);
+
+  const nrect = nextCanvas.getBoundingClientRect();
+  const nc = fitCanvas(nextCanvas, nrect.width || 96, nrect.height || 216);
+  drawMini(nextCanvas, nc, nextQueue.slice(0, 3), 14);
+}
+
+/* ============================== Main loop ============================== */
+function tick(time) {
+  if (!lastTime) lastTime = time;
+  let dt = time - lastTime;
+  lastTime = time;
+  if (dt > 250) dt = 250; // tab-switch clamp
+
+  if (state === "play") {
+    updateRepeat(dt);
+
+    // gravity
+    if (current) {
+      const groundedNow = collides({ type: current.type, rot: current.rot, x: current.x, y: current.y + 1 });
+      if (groundedNow) {
+        grounded = true;
+        lockTimer += dt;
+        if (lockTimer >= LOCK_DELAY_MS) lockPiece();
+      } else {
+        grounded = false;
+        lockTimer = 0;
+        gravityTimer += dt;
+        const interval = gravityInterval();
+        while (gravityTimer >= interval) {
+          gravityTimer -= interval;
+          if (!tryMove(0, 1)) break;
+        }
+      }
+    }
+  }
+
+  render();
+  requestAnimationFrame(tick);
+}
+
+/* roundRect polyfill for older browsers */
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, r) {
+    if (typeof r === "number") r = [r, r, r, r];
+    this.moveTo(x + r[0], y);
+    this.arcTo(x + w, y, x + w, y + h, r[1]);
+    this.arcTo(x + w, y + h, x, y + h, r[2]);
+    this.arcTo(x, y + h, x, y, r[3]);
+    this.arcTo(x, y, x + w, y, r[0]);
+    this.closePath();
+    return this;
+  };
+}
+
+newGame();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

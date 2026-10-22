@@ -44,9 +44,12 @@ The benchmark uses deterministic generated records, not captured sessions. It re
 ```bash
 python3 scripts/radiance-top --url http://127.0.0.1:8000/metrics
 python3 scripts/radiance-top --plain --url http://127.0.0.1:8000/metrics --interval 2
+python3 scripts/radiance-top --url http://127.0.0.1:8001/metrics --api-key "$RADIANCE_API_KEY"
 ```
 
 The TUI refreshes model request/KV counters and probes AMD GPU utilisation/VRAM through Linux DRM sysfs when available. `q` or Escape quits. `--plain` prints one line per interval for log capture. Metrics names vary across vLLM/Radiance versions; unknown fields remain labelled unavailable instead of being guessed.
+
+**radiance engine.** The monitor auto-detects the radiance engine (the `radiance:` metric families) and remaps names. The PP and TG now-lanes read the engine's own steady-window gauges — `radiance:prefill_tokens_per_second` and `radiance:decode_tokens_per_second` — while the window columns credit counters: prompt intake (prefill credit plus cache-served tokens) for PP, `generation_tokens_total` for TG. Draft acceptance maps to `radiance:draft_*`, preemptions to `radiance:num_requests_preempted`, TPOT to the renamed `vllm:time_per_output_token_seconds`, e2e to `vllm:e2e_request_latency_seconds`. radiance gates `/metrics` and `/v1/models` behind a bearer key — pass `--api-key` or set `RADIANCE_TOP_API_KEY`. The CONFIG grid reads `/server_info` (version, TP, quant, prefix cache, speculation, KV capacity) and takes the boot epoch from `uptime_s`, so the lifetime columns are since-boot. radiance has no host-tier fill gauge, so its RAM lane reads the engine's own tier counters: RAM hits from `prefix_hit_cut_tokens_total` over prompt intake, and a RAM evict/s bar from `prefix_cache_evictions_total` (a `store_full` checkpoint eviction lights the `C` pressure flag — the tier refusing a store). The per-request queue/prefill rows and allocation-failure counts are not published by radiance: those lanes read `-`/n/a, never a guess.
 
 ![radiance-top displaying per-GPU hardware, server performance, and request flow](../scripts/radiance-top.png)
 
@@ -216,4 +219,4 @@ After importing games and their reviewed `manifest.json`, run `python3 tools/bui
 
 <!-- NAVIGATION START -->
 
-[Home](../index.md) · [Overview](../README.md) · [ROCm 10.1 results](FINAL-REPORT-20261018.md) · [Charts](CHARTS.md)
+[Home](../index.md) · [Overview](../README.md) · [Latest campaign](RADIANCE-CAMPAIGN-2026-10-21.md) · [Charts](CHARTS.md)
