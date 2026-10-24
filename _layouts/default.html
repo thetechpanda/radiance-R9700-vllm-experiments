@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.title | default: site.title | escape }} · R9700 field notes</title>
   <meta name="description" content="{{ page.description | default: site.description | escape }}">
-  <link rel="stylesheet" href="{{ '/assets/css/editorial.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/css/editorial.css' | relative_url }}?v={{ site.time | date: '%s' }}">
 </head>
 <body>
   <a class="skip-link" href="#content">Skip to content</a>
@@ -22,12 +22,16 @@
     </nav>
   </header>
   <main id="content" class="article {% if page.permalink == '/' or page.name == 'README.md' %}home-article{% endif %}">
-    {{ content }}
+    {{ content | replace: '<table', '<div class="table-scroll"><table' | replace: '</table>', '</table></div>' }}
   </main>
   <footer class="site-footer">
+    {% if page.human_preface %}
+    <p><strong>Human-written preface:</strong> Written by the author, with AI assistance for English copy-editing and site integration. The author’s responsibility and safety notes are included on this page.</p>
+    {% else %}
     <p><strong>AI-generated article:</strong> This article is fully AI-generated and has not been human-edited; the article itself is an output of this research and part of the evaluation.</p>
+    {% endif %}
     <p>One machine. Recorded experiments. Read the configuration before comparing the numbers.</p>
-    <p><a href="{{ '/docs/BENCHMARKS.html' | relative_url }}">Method</a> · <a href="{{ '/docs/MODELS.html' | relative_url }}">Models</a> · <a href="{{ '/docs/EXCLUDED-TESTS.html' | relative_url }}">Exclusions</a> · <a href="{{ '/docs/REPRODUCIBILITY.html' | relative_url }}">Disclosure</a> · <a href="{{ '/docs/RESEARCH-HISTORY.html' | relative_url }}">History</a> · <a href="{{ '/README.html#humans' | relative_url }}">Humans</a> · <a href="{{ '/README.html#licence' | relative_url }}">CC BY 4.0</a></p>
+    <p><a href="{{ '/docs/BENCHMARKS.html' | relative_url }}">Method</a> · <a href="{{ '/docs/MODELS.html' | relative_url }}">Models</a> · <a href="{{ '/docs/EXCLUDED-TESTS.html' | relative_url }}">Exclusions</a> · <a href="{{ '/docs/REPRODUCIBILITY.html' | relative_url }}">Disclosure</a> · <a href="{{ '/docs/RESEARCH-HISTORY.html' | relative_url }}">History</a> · <a href="{{ '/HUMANS.html' | relative_url }}">Humans</a> · <a href="{{ '/README.html#licence' | relative_url }}">CC BY 4.0</a></p>
   </footer>
 </body>
 </html>

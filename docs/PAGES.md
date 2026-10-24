@@ -17,7 +17,7 @@ The workflow uses GitHub's `actions/jekyll-build-pages` action, checks the resul
 
 ## Editorial sources and preview
 
-`README.md` is the canonical main article. Run `python3 tools/build_home.py` to regenerate the same story in `index.md` with its home permalink. The original Humans and RTFM sections are preserved verbatim. Earlier results and their deep-link targets live in `HISTORICAL-OVERVIEW.md`.
+`README.md` is the canonical main article. Run `python3 tools/build_home.py` to regenerate the same story in `index.md` with its home permalink. The author’s preface, responsibility statement and safety guidance are in [HUMANS.md](../HUMANS.md). Earlier results and their deep-link targets live in `HISTORICAL-OVERVIEW.md`.
 
 The setup story, research history, code corner and disclosure live in `docs/ENVIRONMENT.md`, `docs/RESEARCH-HISTORY.md`, `docs/CODE-CORNER.md` and `docs/REPRODUCIBILITY.md`. `AGENTS.md` is versioned repository maintenance guidance and remains excluded from the site. The marked code inventory is generated; the surrounding narrative is edited by hand.
 

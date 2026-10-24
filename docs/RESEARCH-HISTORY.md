@@ -8,7 +8,7 @@ description: "A source-led account of the machine, failed approaches, measured c
 
 A result table makes an experiment look tidier than it was. This record includes rewiring, kernel work, model conversion, cache calibration, builds that needed repairs, agents that produced nothing, and measurements whose labels later proved wrong. Those are part of the work, not debris to sweep away before publication.
 
-The author gives the reason plainly in the [human disclaimer](../README.md#humans): this was done because it was fun. The original question was practical: **how many coding agents could carry roughly 131k histories on one R9700 plus host RAM, with useful waits and completed work?** The investigation changed the machine and eventually the engine. It never became a clean experiment with only one variable changing.
+The author gives the reason plainly in the [human disclaimer](../HUMANS.md#humans): this was done because it was fun. The original question was practical: **how many coding agents could carry roughly 131k histories on one R9700 plus host RAM, with useful waits and completed work?** The investigation changed the machine and eventually the engine. It never became a clean experiment with only one variable changing.
 
 This account distinguishes the dates and claims in the surviving records from later interpretation. The [journal](RESEARCH-JOURNAL.md), campaign CSVs, configuration records, artefact manifests and [correction ledger](EDITORIAL-REVIEW.md) are its sources. Missing evidence remains missing.
 

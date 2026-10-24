@@ -23,12 +23,11 @@ Comments are welcome, but that doesn't mean they'll be listened to. I have no pl
 
 If any of this turns out to be useful to you, I'm happy it was.
 
-## RTFM
+<span id="rtfm"></span>
 
-Before running any script, code or command in this repository, READ IT TOP TO BOTTOM.
-You are still responsible for running commands on your local machine. During the experiments I had folders deleted, models mangled, server hanging in kernel panic, grub bootloader misconfigured, signed kernels panicking because of misconfigured secure boot, etc.
+## Before running code
 
-I would not have moved forward if I didn't know what I was doing(-ish) 🤷‍♂️.
+See the author’s current [Security Stance](HUMANS.md#security-stance) before using any scripts or commands.
 
 ## ⚠️ DUAL R9700
 

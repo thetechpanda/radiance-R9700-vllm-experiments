@@ -44,7 +44,7 @@ Raw conversations, operator handovers and server logs remain outside the public 
 
 The author’s radiance fleet completed **18 editorial/evidence tasks across three passes**. The final pass rechecked the home-page percentages, both engine summaries, memory arithmetic, single-card accounting, chart data and publication structure. Remaining proofreading fixes corrected the sweep-only pool range, made memory-axis numbers consistent and removed a stale middle-of-page navigation fragment.
 
-The initial editorial pass completed native Jekyll builds for both root and repository-base-path hosting: **61 HTML pages, 1,324 internal links/assets, zero errors** in each build. Desktop and 390-pixel mobile inspection verified the main page, nested engine page, table scrolling and chart layout; malformed stat-card HTML found during inspection was corrected. CSV-derived chart values and source hashes, generator idempotence, released game paths and the original Humans/RTFM text were checked. New public text was scanned for private network addresses, operator paths and credential patterns.
+The initial editorial pass completed native Jekyll builds for both root and repository-base-path hosting: **61 HTML pages, 1,324 internal links/assets, zero errors** in each build. Desktop and 390-pixel mobile inspection verified the main page, nested engine page, table scrolling and chart layout; malformed stat-card HTML found during inspection was corrected. CSV-derived chart values and source hashes, generator idempotence, released game paths and the original responsibility and safety notes were checked. New public text was scanned for private network addresses, operator paths and credential patterns.
 
 No experiment was silently discarded to improve a headline. No live benchmark or production configuration was changed as part of this editorial work.
 
@@ -74,6 +74,23 @@ Follow-up validation: native root and repository-base-path builds each checked *
 ## Graph archive rendering correction — 22 October 2026
 
 A reader found the graph archive collapsing into deeply nested narrow panels with literal closing HTML tags. The earlier link checks had passed because the targets existed; they did not validate disclosure markup. Both graph generators emitted same-line `details`/`summary` markup that Kramdown misparsed with block HTML parsing enabled. The generators now use separate lines and explicit Markdown modes for panel bodies and plain-text summaries. The built-site checker now rejects nested, mismatched, unclosed and escaped disclosure tags. This was a presentation failure missed by the earlier acceptance checks.
+
+## Human preface integration — 24 October 2026
+
+At the author’s request, `HUMANS.md` is linked near the home-page disclosure and from the shared footer. The former home-page responsibility and safety sections have been removed from the home page. The author has revised the closing summary and removed the separate safety subsection; current safety guidance is in Security Stance; their old home-page anchors now lead to the preface link. The page has a human-written disclosure that records AI English copy-editing and integration. The rest of the preface remains the author’s account; this change does not add evidence or resolve its previously identified technical qualifications. Licence and game attribution scopes are unchanged.
+
+Validation for this integration: native Jekyll 3.10.0 builds for root and repository-base-path hosting each produced **67 HTML pages, 1,837 internal links/assets and zero link-check errors**. The home page and preface were inspected at desktop and 390-pixel mobile widths using webctl-puppet. At the time of that build, note migration, the unchanged home-page licence section, repeat home generation and whitespace checks passed. The author has since revised the preface and removed the separate safety subsection; later link checks use the Security Stance target. These checks cover site integration, not factual validation of the preface’s technical claims.
+
+The subsequent terminology pass applies inline-code styling to metrics, acronyms and technical names in the main article and human preface, standardises their spelling and capitalisation, and replaces obsolete safety-section references with Security Stance links. Link targets and terminal-output blocks were checked against the pre-pass copies; no benchmark data was edited. Historical reviewer prompts remain unchanged.
+
+## Human preface screenshot crop — 24 October 2026
+
+A proposed prose qualification pass was applied, then reverted at the author’s request because it changed the preface’s voice. The author’s wording is restored; the requested terminology formatting, layout changes and screenshot crop remain. No new experiment was run and no public CSV was changed.
+
+The `nvtop` screenshot was deterministically cropped to `(left=0, top=0, width=1500, height=760)` and saved as lossless `assets/nvtop.png`; its process-command rows are excluded. Every retained decoded pixel was compared with the source and matched. The uncropped image is withheld from the public source and build. This was an exact crop using standard image tools, explicitly requested by the author; no generative image editing was used.
+
+- Withheld original SHA-256: `9164b30b7941b4d5304658136326889071f5b148e8a25bae4ea7b76b4958f37f`
+- Released PNG SHA-256: `85df467670848756054277b64060127d70adfaee76dab4c565933476518d86c1`
 
 <!-- NAVIGATION START -->
 

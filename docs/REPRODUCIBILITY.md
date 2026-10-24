@@ -10,7 +10,7 @@ description: "What readers can rebuild, which scripts were recovered, how AI was
 
 **This is a curated research record, not a fully reproducible benchmark package.** You can inspect the released measurements, recalculate comparisons, regenerate selected figures and build the site. We have also recovered the original synthetic benchmark and editorial scripts. Model files, complete historical environments and all raw evidence are still not included.
 
-Disclosure date: **22 October 2026**. This is an account of work actually recorded, not a promise about future maintenance. The author's [Humans and RTFM sections](../README.md#humans) remain unchanged.
+Disclosure date: **22 October 2026**. This is an account of work actually recorded, not a promise about future maintenance. The author's responsibility statement is in the [human preface](../HUMANS.md#humans); safety guidance is in [Security Stance](../HUMANS.md#security-stance). The author has revised both since their original placement on the home page.
 
 ## Different kinds of reproduction
 
@@ -42,6 +42,8 @@ The [setup story](ENVIRONMENT.md), [hardware inventory](HARDWARE.md), engine pag
 
 ## AI assistance: division of work
 
+On **24 October 2026**, an OpenAI Codex assistant copy-edited the author's `HUMANS.md` for English, linked it from the home page and shared footer, and carried the existing responsibility and safety messages into it at the author's request. The author subsequently revised the closing summary and removed the separate safety subsection; current safety guidance is in Security Stance. The preface footer distinguishes this human-written page from the AI-generated article. This integration used no inference fleet or new benchmark runs.
+
 AI helped execute, analyse and document the broader investigation. We do not have a complete attribution ledger for every historical line of prose or code. The author retained the decisions, interpretation and responsibility stated in the human disclaimer.
 
 For the initial editorial rewrite, an **OpenAI Codex assistant** coordinated source inspection, arithmetic, editing, code/SVG generation and validation. Its exact model build was not recorded in the public repository. Two initial assistant-side subagents performed read-only evidence/publication audits. These were separate from the author's inference fleet.
@@ -55,6 +57,8 @@ Requested settings: **temperature 0.5**, **low reasoning effort**, **10,000 max 
 The recovered `tools/editorial_fleet/fleet.py`, `round2.py` and `round3.py` now publish the actual orchestration and prompts; `documentation_followup.py` and `documentation_proof.py` record the later tasks. They are available in the git checkout, excluded from rendered Pages. Original prompts preserve then-current mistakes, including the superseded fleet-exit claim. They are evidence of the process, not authoritative current facts. The exact historical repository snapshot for every request and all draft/tool traces are not included. The integer-only [fleet exit receipts](EDITORIAL-REVIEW.md#the-later-fleet-receipt-correction) are now public so that particular correction can be inspected directly.
 
 Agents repeated source errors and introduced new ones, including a wrong PP expansion and an incorrect per-card memory calculation. Source checking corrected those. Review agreement also failed to expose the original erroneous fleet CSV until actual exit receipts were revisited. That is a limit of the review, not a reason to present it as independent validation.
+
+The final human-preface prose rewrite was reverted at the author’s request to preserve the author’s voice. At the author's request, the `nvtop` image received an exact crop with standard image tools; retained pixels were verified unchanged, and the uncropped source is withheld. Source/released hashes and crop bounds are recorded in the [editorial audit](EDITORIAL-REVIEW.md#human-preface-screenshot-crop--24-october-2026). No generative image editing or new inference run was used for this cleanup.
 
 ## Recovered scripts and provenance
 

@@ -5,7 +5,7 @@ title: "Startup guide: radiance on the dual R9700"
 
 # Startup guide: radiance on the dual R9700
 
-A pre-trial plan derived from radiance's own docs (README, GUIDE, DOCKER, compose files) as of 2026-10-19 (`1.8.1`), mapped onto the recorded host ([Hardware](../HARDWARE.md): Minisforum MS-01, i5, 32 GiB DDR5, 2× R9700 32 GiB, GPU A PCIe 4.0 ×8, GPU B ×4 via OCuLink, Podman per [PODMAN.md](../../PODMAN.md)). Read every command before running it — the repository RTFM rule applies here too. Nothing below has been executed on this host.
+A pre-trial plan derived from radiance's own docs (README, GUIDE, DOCKER, compose files) as of 2026-10-19 (`1.8.1`), mapped onto the recorded host ([Hardware](../HARDWARE.md): Minisforum MS-01, i5, 32 GiB DDR5, 2× R9700 32 GiB, GPU A PCIe 4.0 ×8, GPU B ×4 via OCuLink, Podman per [PODMAN.md](../../PODMAN.md)). Read every command before running it; see the author’s [Security Stance](../../HUMANS.md#security-stance). Nothing below has been executed on this host.
 
 ## 0. Go / no-go checks
 
